@@ -1,0 +1,43 @@
+.divider {
+  position: relative;
+  width: 1px;
+  background-color: var(--border);
+  cursor: col-resize;
+  flex-shrink: 0;
+  z-index: 10;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -3px;
+    width: 7px;
+    height: 100%;
+  }
+
+  &:hover .handle,
+  &:active .handle {
+    opacity: 1;
+  }
+}
+
+.handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  opacity: 0;
+  transition: opacity 0.2s;
+
+  span {
+    display: block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: var(--text-secondary);
+  }
+}

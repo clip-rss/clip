@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+/*
+ * 全局 CSS 变量主题体系
+ * 亮色为默认，暗色通过 .dark 类切换
+ */
+
+/* ===== 亮色主题（默认） ===== */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f4f6;
+  --bg-tertiary: #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --accent: #2563eb;
+  --star: #f59e0b;
+  --danger: #dc2626;
+  --border: #e5e7eb;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  --font-size-base: 14px;
+  --font-size-small: 12px;
+  --font-size-title: 16px;
+  --radius-card: 6px;
+  --radius-button: 4px;
+}
+
+/* ===== 暗色主题 ===== */
+.dark {
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #252526;
+  --bg-tertiary: #333333;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --accent: #3b82f6;
+  --star: #fbbf24;
+  --danger: #ef4444;
+  --border: #3a3a3c;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* ===== Sepia 护眼主题 ===== */
+.sepia {
+  --bg-primary: #f5ecd7;
+  --bg-secondary: #ede4cc;
+  --bg-tertiary: #e2d9c0;
+  --text-primary: #3d3322;
+  --text-secondary: #6b5e4a;
+  --accent: #2563eb;
+  --star: #f59e0b;
+  --danger: #dc2626;
+  --border: #d4c9b0;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== Tailwind v4 主题映射 ===== */
+@theme {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-accent: var(--accent);
+  --color-star: var(--star);
+  --color-danger: var(--danger);
+  --color-border: var(--border);
+}
+
+/* ===== 全局基础样式 ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+/* ===== 滚动条统一样式 ===== */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-secondary);
+}

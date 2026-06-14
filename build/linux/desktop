@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=My Product
+Comment=A clip application
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/clip %u
+Terminal=false
+Type=Application
+Icon=clip
+Categories=Utility;
+StartupWMClass=clip
+
+ 

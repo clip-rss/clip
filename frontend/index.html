@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/wails.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clip</title>
+    <script>
+      // 防闪烁：在 React 渲染前同步应用主题 class
+      ;(function () {
+        try {
+          var stored = JSON.parse(localStorage.getItem('clip-theme') || '{}')
+          var pref = (stored.state && stored.state.preference) || 'system'
+          var mode = pref
+          if (pref === 'system') {
+            mode = window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light'
+          }
+          if (mode === 'dark') document.documentElement.classList.add('dark')
+          else if (mode === 'sepia') document.documentElement.classList.add('sepia')
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
