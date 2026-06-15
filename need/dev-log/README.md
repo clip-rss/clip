@@ -9,7 +9,7 @@
 | 00 | [项目初始化与基础架构](00-project-init.md) | ✅ 已完成 |
 | 01 | [主题系统与全局样式](01-theme-system.md) | 🟡 部分完成 |
 | 02 | [三栏布局框架](02-layout-framework.md) | ✅ 已完成 |
-| 03 | [顶部全局工具栏](03-toolbar.md) | 🟡 部分完成 |
+| 03 | [顶部全局工具栏](03-toolbar.md) | ✅ 已完成 |
 | 04 | [Go 后端数据层](04-backend-database.md) | ✅ 已完成 |
 | 05 | [RSS 抓取与解析](05-rss-fetcher.md) | ✅ 已完成 |
 | 06 | [定时调度器](06-scheduler.md) | ✅ 已完成 |

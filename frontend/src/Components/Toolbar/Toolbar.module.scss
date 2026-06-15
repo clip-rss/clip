@@ -19,6 +19,22 @@
   color: var(--text-primary);
 }
 
+// macOS：为系统原生红绿灯预留空间
+.macSpacer {
+  flex-shrink: 0;
+  width: 52px;
+  height: 100%;
+}
+
+// Windows：应用图标占位
+.winIcon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
 .search {
   display: flex;
   align-items: center;

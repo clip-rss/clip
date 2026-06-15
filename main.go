@@ -4,6 +4,8 @@ import (
 	"embed"
 	"log"
 
+	"changeme/api"
+
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -20,13 +22,16 @@ func main() {
 		Mac: application.MacOptions{
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
+		Services: []application.Service{
+			application.NewService(&api.SystemService{}),
+		},
 	})
 
 	app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title:    "Clip",
-		Width:    1200,
-		Height:   800,
-		MinWidth: 800,
+		Title:     "Clip",
+		Width:     1200,
+		Height:    800,
+		MinWidth:  800,
 		MinHeight: 600,
 		Mac: application.MacWindow{
 			InvisibleTitleBarHeight: 48,
