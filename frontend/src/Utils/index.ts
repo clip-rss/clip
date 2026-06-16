@@ -12,3 +12,7 @@ export {
   onFeedError,
   toApiError,
 } from './Api'
+
+// 树构建与时间格式化
+export { buildFeedTree } from './FeedTree'
+export { formatRelativeTime, latestUpdated } from './Time'

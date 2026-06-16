@@ -16,3 +16,6 @@ export type {
 // 事件名与负载
 export { ItemsUpdatedEvent, FeedErrorEvent } from './Events'
 export type { ItemsUpdatedPayload, FeedErrorPayload } from './Events'
+
+// 左侧栏类型
+export type { Selection, FeedTreeNode, FeedTree } from './Sidebar'
