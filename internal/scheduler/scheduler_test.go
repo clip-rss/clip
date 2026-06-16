@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"changeme/internal/fetcher"
-	"changeme/internal/store"
+	"github.com/clip-rss/clip/internal/fetcher"
+	"github.com/clip-rss/clip/internal/store"
 )
 
 // ---- 测试替身：FeedStore ----
