@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { SystemService } from '../../bindings/changeme/api'
+import { SystemService } from '../Utils/Api'
 
 export type Platform = 'mac' | 'windows'
 

@@ -20,5 +20,5 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
  * @returns {$CancellablePromise<string>}
  */
 export function Platform() {
-    return $Call.ByID(3690917299);
+    return $Call.ByID(2821667470);
 }

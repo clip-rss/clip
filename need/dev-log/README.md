@@ -13,7 +13,7 @@
 | 04 | [Go 后端数据层](04-backend-database.md) | ✅ 已完成 |
 | 05 | [RSS 抓取与解析](05-rss-fetcher.md) | ✅ 已完成 |
 | 06 | [定时调度器](06-scheduler.md) | ✅ 已完成 |
-| 07 | [Wails API 绑定层](07-wails-api.md) | ⬜ 待开发 |
+| 07 | [Wails API 绑定层](07-wails-api.md) | ✅ 已完成 |
 | 08 | [左侧栏 - 源与文件夹树](08-sidebar-feeds.md) | ⬜ 待开发 |
 | 09 | [中间栏 - 文章列表](09-article-list.md) | ⬜ 待开发 |
 | 10 | [右侧栏 - 阅读视图](10-reading-view.md) | ⬜ 待开发 |

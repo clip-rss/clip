@@ -17,13 +17,17 @@ type Store struct {
 // dbPathFunc 可在测试中替换的数据库路径函数
 var dbPathFunc = getDBPath
 
-// New 创建新的 Store 实例
+// New 创建新的 Store 实例，数据库路径由 dbPathFunc 解析（用户配置目录）。
 func New() (*Store, error) {
 	dbPath, err := dbPathFunc()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db path: %w", err)
 	}
+	return NewWithPath(dbPath)
+}
 
+// NewWithPath 在指定路径创建 Store 实例，便于自定义存储位置与测试。
+func NewWithPath(dbPath string) (*Store, error) {
 	// 确保目录存在
 	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
 		return nil, fmt.Errorf("failed to create db directory: %w", err)
@@ -173,6 +177,13 @@ CREATE TRIGGER IF NOT EXISTS items_fts_delete AFTER DELETE ON items BEGIN
 	INSERT INTO items_fts(items_fts, rowid, title, summary, note)
 	VALUES ('delete', old.id, old.title, old.summary, old.note);
 END;
+
+-- 应用设置表（键值对，全局设置以 JSON 存于单行）
+CREATE TABLE IF NOT EXISTS settings (
+	key TEXT PRIMARY KEY,
+	value TEXT NOT NULL,
+	updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 	`
 
 	_, err := s.db.Exec(schema)

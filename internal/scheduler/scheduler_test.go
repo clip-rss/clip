@@ -309,7 +309,8 @@ func TestRefreshErrorRecordsFailure(t *testing.T) {
 	ft := newFakeFetcher()
 	ft.errs["u1"] = errors.New("boom")
 
-	s := New(st, ft)
+	em := &fakeEmitter{}
+	s := New(st, ft, WithEmitter(em))
 	res, _ := s.RefreshFeed(context.Background(), 1)
 	if res.Err == nil {
 		t.Fatal("expected error result")
@@ -322,6 +323,12 @@ func TestRefreshErrorRecordsFailure(t *testing.T) {
 	}
 	if st.resets[1] != 0 {
 		t.Errorf("failed refresh must not reset backoff, resets = %d", st.resets[1])
+	}
+	if em.count() != 1 || em.events[0].name != FeedErrorEvent {
+		t.Fatalf("expected one %q event, got %+v", FeedErrorEvent, em.events)
+	}
+	if data, ok := em.events[0].data.(map[string]any); !ok || data["feedId"] != int64(1) {
+		t.Errorf("feed:error payload wrong: %+v", em.events[0].data)
 	}
 }
 

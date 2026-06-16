@@ -18,6 +18,8 @@ import (
 const (
 	// ItemsUpdatedEvent 新文章到达时推送给前端的事件名。
 	ItemsUpdatedEvent = "items:updated"
+	// FeedErrorEvent 订阅源抓取失败时推送给前端的事件名。
+	FeedErrorEvent = "feed:error"
 
 	defaultPollInterval = time.Minute
 	defaultInterval     = 30 * time.Minute
@@ -317,6 +319,10 @@ func (s *Scheduler) refreshFeed(ctx context.Context, feed store.Feed, force bool
 	if err != nil {
 		res.Err = err
 		_ = s.store.UpdateFeedError(feed.ID, err.Error())
+		s.emitter.Emit(FeedErrorEvent, map[string]any{
+			"feedId": feed.ID,
+			"error":  err.Error(),
+		})
 		return res
 	}
 
