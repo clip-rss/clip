@@ -1,4 +1,4 @@
-module changeme
+module github.com/clip-rss/clip
 
 go 1.25.0
 

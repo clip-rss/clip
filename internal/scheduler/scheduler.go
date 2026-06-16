@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"changeme/internal/fetcher"
-	"changeme/internal/store"
+	"github.com/clip-rss/clip/internal/fetcher"
+	"github.com/clip-rss/clip/internal/store"
 )
 
 const (
