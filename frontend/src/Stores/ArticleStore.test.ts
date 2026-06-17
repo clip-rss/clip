@@ -1,0 +1,111 @@
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
+import type { Item } from '../Types'
+
+vi.mock('../Utils', () => ({
+  ItemService: {
+    ListItems: vi.fn(),
+    MarkRead: vi.fn(),
+    MarkUnread: vi.fn(),
+    ToggleStar: vi.fn(),
+    BatchMarkRead: vi.fn(),
+  },
+  // SidebarStore.load 依赖（refreshSidebar 会触发）
+  CategoryService: { ListCategories: vi.fn() },
+  FeedService: { ListFeedsWithUnread: vi.fn() },
+  toApiError: (e: unknown) => String(e),
+}))
+
+import { ItemService } from '../Utils'
+import { useArticleStore } from './ArticleStore'
+
+const ListItems = ItemService.ListItems as Mock
+const MarkRead = ItemService.MarkRead as Mock
+const ToggleStar = ItemService.ToggleStar as Mock
+const BatchMarkRead = ItemService.BatchMarkRead as Mock
+
+function item(id: number, opts: Partial<Item> = {}): Item {
+  return { id, feedId: 1, isRead: false, isStarred: false, ...opts } as Item
+}
+
+function reset(): void {
+  useArticleStore.setState({
+    items: [],
+    loading: false,
+    error: null,
+    filter: 'unread',
+    sort: 'time',
+    selectedItemId: null,
+    currentSelection: { kind: 'all' },
+  })
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  ListItems.mockResolvedValue([])
+  MarkRead.mockResolvedValue(undefined)
+  ToggleStar.mockResolvedValue(undefined)
+  BatchMarkRead.mockResolvedValue(undefined)
+  reset()
+})
+
+describe('ArticleStore', () => {
+  it('load(feed) 按源拉取并清空已选', async () => {
+    useArticleStore.setState({ selectedItemId: 9 })
+    ListItems.mockResolvedValue([item(1)])
+    await useArticleStore.getState().load({ kind: 'feed', id: 5 })
+    expect(ListItems).toHaveBeenCalledWith(5, 2000, 0)
+    expect(useArticleStore.getState().items).toHaveLength(1)
+    expect(useArticleStore.getState().selectedItemId).toBeNull()
+  })
+
+  it('load(all) 用 feedID=0 拉取全部', async () => {
+    await useArticleStore.getState().load({ kind: 'all' })
+    expect(ListItems).toHaveBeenCalledWith(0, 2000, 0)
+  })
+
+  it('setFilter / setSort 更新状态', () => {
+    useArticleStore.getState().setFilter('starred')
+    useArticleStore.getState().setSort('source')
+    expect(useArticleStore.getState().filter).toBe('starred')
+    expect(useArticleStore.getState().sort).toBe('source')
+  })
+
+  it('selectItem 设置选中并对未读项乐观标记已读', () => {
+    useArticleStore.setState({ items: [item(10, { isRead: false })] })
+    useArticleStore.getState().selectItem(10)
+    const s = useArticleStore.getState()
+    expect(s.selectedItemId).toBe(10)
+    expect(s.items[0].isRead).toBe(true)
+    expect(MarkRead).toHaveBeenCalledWith(10)
+  })
+
+  it('selectItem 对已读项不再调用 MarkRead', () => {
+    useArticleStore.setState({ items: [item(10, { isRead: true })] })
+    useArticleStore.getState().selectItem(10)
+    expect(MarkRead).not.toHaveBeenCalled()
+  })
+
+  it('toggleStar 乐观翻转并调用后端', async () => {
+    useArticleStore.setState({ items: [item(10, { isStarred: false })] })
+    await useArticleStore.getState().toggleStar(10)
+    expect(ToggleStar).toHaveBeenCalledWith(10)
+    expect(useArticleStore.getState().items[0].isStarred).toBe(true)
+  })
+
+  it('markAllRead 批量标记并调用 BatchMarkRead', async () => {
+    useArticleStore.setState({
+      items: [item(1, { isRead: false }), item(2, { isRead: false }), item(3, { isRead: true })],
+    })
+    await useArticleStore.getState().markAllRead([1, 2])
+    expect(BatchMarkRead).toHaveBeenCalledWith([1, 2])
+    const items = useArticleStore.getState().items
+    expect(items.every((i) => i.isRead)).toBe(true)
+  })
+
+  it('batchStar 对每个 id 调用 ToggleStar', async () => {
+    useArticleStore.setState({ items: [item(1), item(2)] })
+    await useArticleStore.getState().batchStar([1, 2])
+    expect(ToggleStar).toHaveBeenCalledTimes(2)
+    expect(useArticleStore.getState().items.every((i) => i.isStarred)).toBe(true)
+  })
+})

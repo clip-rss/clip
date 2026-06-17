@@ -1,38 +1,36 @@
-import { Layout, Sidebar, Toolbar } from './Components'
-import { useSidebarStore } from './Stores'
+import { ArticleList, Layout, Sidebar, Toolbar } from './Components'
+import { useArticleStore } from './Stores'
 
 function App() {
   return (
     <Layout
       toolbar={<Toolbar />}
       sidebar={<Sidebar />}
-      list={<ListPlaceholder />}
-      reader={
-        <div className="p-4 text-text-secondary">
-          <p>右侧栏 - 阅读视图</p>
-        </div>
-      }
+      list={<ArticleList />}
+      reader={<ReaderPlaceholder />}
     />
   )
 }
 
-// 临时占位：展示当前左侧栏选中项，验证「点击源 → 中间栏更新」通路（阶段 09 替换为真实列表）
-function ListPlaceholder(): JSX.Element {
-  const selection = useSidebarStore((s) => s.selection)
-  const categories = useSidebarStore((s) => s.categories)
-  const feeds = useSidebarStore((s) => s.feeds)
+// 临时占位：展示当前选中的文章，验证「点击文章 → 右侧加载」通路（阶段 10 替换为真实阅读视图）
+function ReaderPlaceholder(): JSX.Element {
+  const selectedItemId = useArticleStore((s) => s.selectedItemId)
+  const item = useArticleStore((s) => s.items.find((it) => it.id === s.selectedItemId))
 
-  let label = '全部文章'
-  if (selection.kind === 'feed') {
-    label = feeds.find((f) => f.id === selection.id)?.title ?? `订阅源 #${selection.id}`
-  } else if (selection.kind === 'category') {
-    label = categories.find((c) => c.id === selection.id)?.name ?? `文件夹 #${selection.id}`
+  if (selectedItemId === null || !item) {
+    return (
+      <div className="p-4 text-text-secondary">
+        <p>右侧栏 - 阅读视图</p>
+        <p className="mt-2">选择一篇文章以阅读</p>
+      </div>
+    )
   }
 
   return (
-    <div className="p-4 text-text-secondary">
-      <p>中间栏 - 文章列表</p>
-      <p className="mt-2 text-text-primary">已选中：{label}</p>
+    <div className="p-6 max-w-[680px] mx-auto">
+      <h1 className="text-2xl font-bold text-text-primary">{item.title}</h1>
+      {item.author ? <p className="mt-2 text-sm text-text-secondary">{item.author}</p> : null}
+      <p className="mt-4 text-text-primary whitespace-pre-wrap">{item.summary}</p>
     </div>
   )
 }

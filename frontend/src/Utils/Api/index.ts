@@ -17,9 +17,21 @@ export {
 
 export { onItemsUpdated, onFeedError } from './Events'
 
+import { Browser } from '@wailsio/runtime'
+
 /** 将后端调用 reject 的错误归一化为可读字符串。 */
 export function toApiError(err: unknown): string {
   if (err instanceof Error) return err.message
   if (typeof err === 'string') return err
   return String(err)
+}
+
+/** 在系统默认浏览器中打开外部链接（Wails 运行时，兜底 window.open）。 */
+export function openURL(url: string): void {
+  if (!url) return
+  try {
+    Browser.OpenURL(url)
+  } catch {
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
 }
