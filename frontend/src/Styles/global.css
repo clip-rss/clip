@@ -98,8 +98,28 @@ body {
   font-size: var(--font-size-base);
   color: var(--text-primary);
   background-color: var(--bg-primary);
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+a[href] {
+  cursor: pointer;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+  cursor: text;
+  user-select: text;
+}
+
+.selectable {
+  user-select: text;
 }
 
 #root {

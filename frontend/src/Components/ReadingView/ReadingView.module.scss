@@ -53,7 +53,6 @@
   border-radius: var(--radius-button);
   background: transparent;
   color: var(--text-secondary);
-  cursor: pointer;
   transition: background-color 0.15s, color 0.15s;
 
   &:hover {
@@ -134,6 +133,7 @@
   padding-top: 16px;
   border-top: 1px solid var(--border);
   font-size: 12px;
+  font-style: italic;
   color: var(--text-secondary);
   text-align: center;
 }
@@ -143,6 +143,7 @@
   color: inherit;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  user-select: text;
 
   p {
     margin: 0 0 1em;
@@ -247,6 +248,7 @@
   justify-content: center;
   height: 100%;
   font-size: 16px;
+  font-style: italic;
   color: var(--text-secondary);
 }
 
@@ -283,7 +285,6 @@
   border-radius: 50%;
   background-color: rgba(0, 0, 0, 0.4);
   color: #ffffff;
-  cursor: pointer;
 
   &:hover {
     background-color: rgba(0, 0, 0, 0.6);
@@ -315,7 +316,6 @@
   border-radius: var(--radius-button);
   font-size: 14px;
   color: var(--text-primary);
-  cursor: pointer;
   outline: none;
   user-select: none;
 

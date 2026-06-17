@@ -32,7 +32,6 @@
   color: var(--text-primary);
   font-size: 14px;
   font-weight: 600;
-  cursor: pointer;
   transition: background-color 0.15s;
 
   &:hover {
@@ -57,7 +56,6 @@
   background: transparent;
   color: var(--text-secondary);
   font-size: 12px;
-  cursor: pointer;
   transition: background-color 0.15s, color 0.15s;
 
   &:hover {
@@ -89,7 +87,6 @@
   border-radius: var(--radius-button);
   font-size: 14px;
   color: var(--text-primary);
-  cursor: pointer;
   outline: none;
   user-select: none;
 
@@ -141,7 +138,6 @@
   padding: 8px 12px;
   box-sizing: border-box;
   border-bottom: 1px solid var(--border);
-  cursor: pointer;
 
   &:hover {
     background-color: var(--bg-tertiary);
@@ -245,7 +241,6 @@
   background: transparent;
   color: var(--text-secondary);
   opacity: 0;
-  cursor: pointer;
   transition: opacity 0.15s, background-color 0.15s, color 0.15s;
 
   &:hover {
@@ -281,5 +276,6 @@
 
 .emptyText {
   font-size: 16px;
+  font-style: italic;
   color: var(--text-secondary);
 }
