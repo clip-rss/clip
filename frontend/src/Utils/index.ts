@@ -21,3 +21,8 @@ export { formatRelativeTime, latestUpdated } from './Time'
 // 文章筛选排序
 export { categoryFeedIds, filterAndSortItems } from './ArticleFilter'
 export type { FilterSortOptions } from './ArticleFilter'
+
+// 阅读视图：HTML 清洗与排版样式
+export { sanitizeHtml } from './Sanitize'
+export { readerContentStyle, readerBackgroundClass } from './ReaderStyle'
+export type { ReaderContentStyle } from './ReaderStyle'

@@ -27,6 +27,20 @@
   --radius-button: 4px;
 }
 
+/* ===== 亮色主题（显式类，用于阅读区独立背景在暗色应用下重置 token） ===== */
+.light {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f4f6;
+  --bg-tertiary: #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --accent: #2563eb;
+  --star: #f59e0b;
+  --danger: #dc2626;
+  --border: #e5e7eb;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
 /* ===== 暗色主题 ===== */
 .dark {
   --bg-primary: #1e1e1e;

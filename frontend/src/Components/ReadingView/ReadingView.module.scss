@@ -1,0 +1,340 @@
+// 阅读视图样式。配色走 CSS 变量 token。
+
+.reader {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg-primary);
+  overflow: hidden;
+}
+
+/* ===== 浮动工具栏 ===== */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--bg-primary);
+  box-shadow: var(--shadow);
+  z-index: 5;
+}
+
+.toolbarTitle {
+  flex: 1;
+  min-width: 0;
+  margin-right: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 2px;
+}
+
+.toolbarBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-button);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+
+  &:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+
+    &:hover {
+      background: transparent;
+      color: var(--text-secondary);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+}
+
+.starred {
+  color: var(--star);
+
+  &:hover {
+    color: var(--star);
+  }
+}
+
+/* ===== 滚动正文区 ===== */
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  // 携带 token：当应用独立阅读背景类（.light/.sepia/.dark）时，子树 token 被重置，
+  // 标题/正文/边框等一并适配。
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.article {
+  margin: 0 auto;
+  padding: 24px 24px 64px;
+}
+
+.title {
+  margin-bottom: 12px;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.metaDot {
+  opacity: 0.6;
+}
+
+.divider {
+  height: 1px;
+  margin: 16px 0 24px;
+  background-color: var(--border);
+}
+
+.endHint {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* ===== 正文 HTML 统一排版 ===== */
+.content {
+  color: inherit;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+
+  p {
+    margin: 0 0 1em;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 1.4em 0 0.6em;
+    line-height: 1.3;
+    font-weight: 600;
+  }
+
+  ul,
+  ol {
+    margin: 0 0 1em;
+    padding-left: 1.5em;
+  }
+
+  li {
+    margin: 0.3em 0;
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 1em auto;
+    border-radius: 6px;
+    background-color: var(--bg-tertiary);
+    cursor: zoom-in;
+  }
+
+  blockquote {
+    margin: 0 0 1em;
+    padding: 0.5em 1em;
+    border-left: 3px solid var(--border);
+    color: var(--text-secondary);
+  }
+
+  pre {
+    margin: 0 0 1em;
+    padding: 12px 14px;
+    border-radius: 6px;
+    background-color: var(--bg-tertiary);
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9em;
+    line-height: 1.5;
+  }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9em;
+  }
+
+  :not(pre) > code {
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+    background-color: var(--bg-tertiary);
+  }
+
+  pre code {
+    padding: 0;
+    background: transparent;
+  }
+
+  table {
+    width: 100%;
+    margin: 0 0 1em;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+  }
+
+  hr {
+    margin: 1.5em 0;
+    border: none;
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* ===== 空状态 ===== */
+.empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+/* ===== 图片灯箱 ===== */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  cursor: zoom-out;
+  z-index: 200;
+}
+
+.lightboxImg {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  border-radius: 6px;
+  cursor: default;
+}
+
+.lightboxClose {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.4);
+  color: #ffffff;
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* ===== Radix 设置菜单 ===== */
+.menuContent {
+  min-width: 160px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background-color: var(--bg-primary);
+  box-shadow: var(--shadow);
+  z-index: 50;
+}
+
+.menuLabel {
+  padding: 6px 10px 2px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--radius-button);
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+
+  &[data-highlighted] {
+    background-color: var(--bg-secondary);
+  }
+}
+
+.menuCheck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  margin-right: 4px;
+  color: var(--accent);
+}
+
+.menuSeparator {
+  height: 1px;
+  margin: 4px 0;
+  background-color: var(--border);
+}

@@ -22,3 +22,13 @@ export type { Selection, FeedTreeNode, FeedTree } from './Sidebar'
 
 // 文章列表类型
 export type { ArticleFilter, ArticleSort } from './Article'
+
+// 阅读视图类型
+export type {
+  ReaderFontFamily,
+  ReaderFontSize,
+  ReaderLineHeight,
+  ReaderWidth,
+  ReaderBackground,
+  ReaderPrefs,
+} from './Reader'

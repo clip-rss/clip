@@ -16,7 +16,7 @@
 | 07 | [Wails API 绑定层](07-wails-api.md) | ✅ 已完成 |
 | 08 | [左侧栏 - 源与文件夹树](08-sidebar-feeds.md) | ✅ 已完成 |
 | 09 | [中间栏 - 文章列表](09-article-list.md) | ✅ 已完成 |
-| 10 | [右侧栏 - 阅读视图](10-reading-view.md) | ⬜ 待开发 |
+| 10 | [右侧栏 - 阅读视图](10-reading-view.md) | ✅ 已完成 |
 | 11 | [专注阅读模式](11-focus-mode.md) | ⬜ 待开发 |
 | 12 | [订阅管理功能](12-subscription-management.md) | ⬜ 待开发 |
 | 13 | [搜索功能](13-search.md) | ⬜ 待开发 |
