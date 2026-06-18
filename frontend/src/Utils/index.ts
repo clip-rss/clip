@@ -19,7 +19,7 @@ export { buildFeedTree } from './FeedTree'
 export { formatRelativeTime, latestUpdated } from './Time'
 
 // 文章筛选排序
-export { categoryFeedIds, filterAndSortItems } from './ArticleFilter'
+export { categoryFeedIds, filterAndSortItems, neighborItemId } from './ArticleFilter'
 export type { FilterSortOptions } from './ArticleFilter'
 
 // 阅读视图：HTML 清洗与排版样式

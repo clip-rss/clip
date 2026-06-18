@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useSidebarStore, useArticleStore } from '../../Stores'
-import { categoryFeedIds, filterAndSortItems, onItemsUpdated } from '../../Utils'
+import { useVisibleArticles } from '../../Hooks'
+import { onItemsUpdated } from '../../Utils'
 import ListHeader from './ListHeader'
 import ArticleRow from './ArticleRow'
 import EmptyState from './EmptyState'
@@ -12,9 +13,7 @@ const ROW_HEIGHT = 64
 function ArticleList(): JSX.Element {
   const selection = useSidebarStore((s) => s.selection)
   const feeds = useSidebarStore((s) => s.feeds)
-  const categories = useSidebarStore((s) => s.categories)
 
-  const items = useArticleStore((s) => s.items)
   const loading = useArticleStore((s) => s.loading)
   const filter = useArticleStore((s) => s.filter)
   const sort = useArticleStore((s) => s.sort)
@@ -45,21 +44,7 @@ function ArticleList(): JSX.Element {
     return map
   }, [feeds])
 
-  const allowedFeedIds = useMemo(() => {
-    if (selection.kind !== 'category') return null
-    return categoryFeedIds(categories, feeds, selection.id)
-  }, [selection, categories, feeds])
-
-  const visibleItems = useMemo(
-    () =>
-      filterAndSortItems(items, {
-        filter,
-        sort,
-        allowedFeedIds,
-        feedTitleOf: (id) => feedTitle.get(id) ?? '',
-      }),
-    [items, filter, sort, allowedFeedIds, feedTitle],
-  )
+  const visibleItems = useVisibleArticles()
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const virtualizer = useVirtualizer({

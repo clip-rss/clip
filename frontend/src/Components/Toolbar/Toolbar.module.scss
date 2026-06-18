@@ -115,4 +115,23 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+
+    &:hover {
+      background: transparent;
+      color: var(--text-secondary);
+    }
+  }
+}
+
+.iconButtonActive {
+  background-color: var(--bg-tertiary);
+  color: var(--accent);
+
+  &:hover {
+    color: var(--accent);
+  }
 }

@@ -86,3 +86,35 @@ export function filterAndSortItems(items: Item[], opts: FilterSortOptions): Item
     return publishedMs(b) - publishedMs(a) // 时间倒序（亦作 source 的次级排序）
   })
 }
+
+/**
+ * 在有序文章列表中，从 `currentId` 出发按方向寻找相邻的「候选」文章 id（专注模式 J/K 导航）。
+ *
+ * - `ordered`：范围内的完整有序列表（不应用读/未读等筛选），以保证 `currentId` 位置稳定——
+ *   即便当前文章因刚被标记已读而退出可见集，仍能据其原位置找到下一篇。
+ * - `candidateIds`：当前筛选下可见的 id 集合，作为落点的合法范围。
+ * - `currentId` 为 `null` 时返回方向起点的首个候选（`dir>0` 取首个，`dir<0` 取末个）。
+ *
+ * 找不到返回 `null`。
+ */
+export function neighborItemId(
+  ordered: Item[],
+  candidateIds: Set<number>,
+  currentId: number | null,
+  dir: 1 | -1,
+): number | null {
+  if (currentId === null) {
+    const seq = dir > 0 ? ordered : [...ordered].reverse()
+    for (const it of seq) {
+      if (candidateIds.has(it.id)) return it.id
+    }
+    return null
+  }
+
+  const idx = ordered.findIndex((it) => it.id === currentId)
+  if (idx === -1) return null
+  for (let i = idx + dir; i >= 0 && i < ordered.length; i += dir) {
+    if (candidateIds.has(ordered[i].id)) return ordered[i].id
+  }
+  return null
+}

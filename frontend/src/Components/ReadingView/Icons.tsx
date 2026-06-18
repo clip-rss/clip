@@ -93,3 +93,13 @@ export function CloseIcon(props: IconProps): JSX.Element {
     </svg>
   )
 }
+
+/** 返回箭头（专注模式「退出专注」按钮）。 */
+export function BackIcon(props: IconProps): JSX.Element {
+  return (
+    <svg {...svgProps(props)}>
+      <path d="M19 12H5" />
+      <path d="m12 19-7-7 7-7" />
+    </svg>
+  )
+}

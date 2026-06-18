@@ -1,0 +1,196 @@
+// 专注阅读模式样式。配色走 CSS 变量 token；overlay 可挂独立阅读背景类。
+
+/* ===== 全屏覆盖层 + 进出过渡 ===== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 300ms ease, transform 300ms ease;
+}
+
+.overlay.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ===== 顶部浮动控制条 ===== */
+.bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: 44px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--bg-secondary); // 不支持 color-mix 时的回退
+  background-color: color-mix(in srgb, var(--bg-primary) 88%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.bar.barVisible {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.barLeft {
+  display: flex;
+  align-items: center;
+  justify-self: start;
+}
+
+.barTitle {
+  justify-self: center;
+  max-width: 100%;
+  padding: 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.barActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  justify-self: end;
+}
+
+.exitBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px 0 8px;
+  border: none;
+  border-radius: var(--radius-button);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  transition: background-color 0.15s, color 0.15s;
+
+  &:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+}
+
+.barBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-button);
+  background: transparent;
+  color: var(--text-secondary);
+  transition: background-color 0.15s, color 0.15s;
+
+  &:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+
+    &:hover {
+      background: transparent;
+      color: var(--text-secondary);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+}
+
+.starred {
+  color: var(--star);
+
+  &:hover {
+    color: var(--star);
+  }
+}
+
+/* ===== 滚动正文区 ===== */
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-top: 32px; // 顶部留白，使首屏标题不被浮动控制条压住
+
+  // 纤细半透明滚动条，仅 hover 时可见
+  &::-webkit-scrollbar-thumb {
+    background-color: transparent;
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+  }
+}
+
+/* 切换文章时正文淡入（≈ 交叉淡化） */
+.fadeIn {
+  animation: focusFadeIn 200ms ease;
+}
+
+@keyframes focusFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ===== 空状态 ===== */
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 16px;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+/* ===== 降低动态偏好：关闭过渡与位移 ===== */
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .bar,
+  .fadeIn {
+    transition: none;
+    animation: none;
+  }
+
+  .overlay {
+    transform: none;
+  }
+}

@@ -1,9 +1,9 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
 import { useArticleStore, useSidebarStore, useReaderStore } from '../../Stores'
-import { formatRelativeTime, readerBackgroundClass, readerContentStyle } from '../../Utils'
+import { readerBackgroundClass, readerContentStyle } from '../../Utils'
 import ReaderToolbar from './ReaderToolbar'
-import ReaderContent from './ReaderContent'
+import ReaderArticle from './ReaderArticle'
 import Lightbox from './Lightbox'
 import styles from './ReadingView.module.scss'
 
@@ -67,21 +67,12 @@ function ReadingView(): JSX.Element {
         className={clsx(styles.scroll, bgClass)}
         onScroll={handleScroll}
       >
-        <div className={styles.article} style={{ maxWidth: contentStyle.maxWidth }}>
-          <h1 className={styles.title} style={{ fontFamily: contentStyle.fontFamily }}>
-            {item.title}
-          </h1>
-          <div className={styles.meta}>
-            {item.author ? <span>{item.author}</span> : null}
-            {item.author ? <span className={styles.metaDot}>·</span> : null}
-            <span>{formatRelativeTime(item.publishedAt)}</span>
-            {sourceName ? <span className={styles.metaDot}>·</span> : null}
-            {sourceName ? <span>{sourceName}</span> : null}
-          </div>
-          <div className={styles.divider} />
-          <ReaderContent html={item.content} style={contentStyle} onImageClick={setLightboxSrc} />
-          <div className={styles.endHint}>已是全部内容</div>
-        </div>
+        <ReaderArticle
+          item={item}
+          sourceName={sourceName}
+          contentStyle={contentStyle}
+          onImageClick={setLightboxSrc}
+        />
       </div>
       <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </div>

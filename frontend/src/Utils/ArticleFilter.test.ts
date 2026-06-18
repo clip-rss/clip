@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { categoryFeedIds, filterAndSortItems } from './ArticleFilter'
+import { categoryFeedIds, filterAndSortItems, neighborItemId } from './ArticleFilter'
 import type { Category, FeedWithUnread, Item } from '../Types'
 
 function cat(id: number, parentId: number | null = null): Category {
@@ -108,5 +108,48 @@ describe('filterAndSortItems', () => {
     })
     // A源(feed200)=id3 在前，B源(feed100)=id1,2（时间倒序）
     expect(r.map((i) => i.id)).toEqual([3, 1, 2])
+  })
+})
+
+describe('neighborItemId', () => {
+  // 有序（时间倒序）：[1, 2, 3, 4]
+  const ordered = [
+    item(1, 100, { publishedAt: '2026-06-17T08:00:00Z' }),
+    item(2, 100, { publishedAt: '2026-06-16T08:00:00Z' }),
+    item(3, 100, { publishedAt: '2026-06-15T08:00:00Z' }),
+    item(4, 100, { publishedAt: '2026-06-14T08:00:00Z' }),
+  ]
+  const allVisible = new Set([1, 2, 3, 4])
+
+  it('下一篇 / 上一篇（全部可见）', () => {
+    expect(neighborItemId(ordered, allVisible, 2, 1)).toBe(3)
+    expect(neighborItemId(ordered, allVisible, 2, -1)).toBe(1)
+  })
+
+  it('到达边界返回 null', () => {
+    expect(neighborItemId(ordered, allVisible, 1, -1)).toBeNull()
+    expect(neighborItemId(ordered, allVisible, 4, 1)).toBeNull()
+  })
+
+  it('跳过不可见项（候选集之外）', () => {
+    const candidates = new Set([1, 4]) // 2、3 不可见
+    expect(neighborItemId(ordered, candidates, 1, 1)).toBe(4)
+    expect(neighborItemId(ordered, candidates, 4, -1)).toBe(1)
+  })
+
+  it('当前项已退出候选集时仍按原位置定位下一可见项', () => {
+    // 当前 2 已读，候选集为剩余未读 [1, 3, 4]
+    const candidates = new Set([1, 3, 4])
+    expect(neighborItemId(ordered, candidates, 2, 1)).toBe(3)
+    expect(neighborItemId(ordered, candidates, 2, -1)).toBe(1)
+  })
+
+  it('currentId 为 null 时取方向起点首个候选', () => {
+    expect(neighborItemId(ordered, allVisible, null, 1)).toBe(1)
+    expect(neighborItemId(ordered, allVisible, null, -1)).toBe(4)
+  })
+
+  it('currentId 不在有序列表中返回 null', () => {
+    expect(neighborItemId(ordered, allVisible, 99, 1)).toBeNull()
   })
 })

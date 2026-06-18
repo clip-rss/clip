@@ -1,9 +1,14 @@
+import clsx from 'clsx'
 import { ThemeToggle } from '../ThemeToggle'
 import { usePlatform, type Platform } from '../../Hooks'
+import { useArticleStore, useLayoutStore } from '../../Stores'
 import styles from './Toolbar.module.scss'
 
 function Toolbar(): JSX.Element {
   const platform = usePlatform()
+  const focusMode = useLayoutStore((s) => s.focusMode)
+  const toggleFocus = useLayoutStore((s) => s.toggleFocus)
+  const hasSelection = useArticleStore((s) => s.selectedItemId !== null)
 
   return (
     <div className={styles.toolbar} data-wails-drag>
@@ -28,9 +33,12 @@ function Toolbar(): JSX.Element {
           ＋ 订阅
         </button>
         <button
-          className={styles.iconButton}
-          title="切换布局"
-          aria-label="切换布局"
+          className={clsx(styles.iconButton, focusMode && styles.iconButtonActive)}
+          onClick={toggleFocus}
+          disabled={!focusMode && !hasSelection}
+          title="专注模式 (Ctrl+Shift+F)"
+          aria-label="专注模式"
+          aria-pressed={focusMode}
         >
           <LayoutIcon />
         </button>

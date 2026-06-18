@@ -4,8 +4,13 @@ import { persist } from 'zustand/middleware'
 interface LayoutState {
   sidebarWidth: number
   listWidth: number
+  /** 专注阅读模式：隐藏三栏 chrome，仅显示全屏阅读区。不持久化。 */
+  focusMode: boolean
   setSidebarWidth: (width: number) => void
   setListWidth: (width: number) => void
+  enterFocus: () => void
+  exitFocus: () => void
+  toggleFocus: () => void
 }
 
 const SIDEBAR_MIN = 180
@@ -25,14 +30,28 @@ export const useLayoutStore = create<LayoutState>()(
     (set) => ({
       sidebarWidth: SIDEBAR_DEFAULT,
       listWidth: LIST_DEFAULT,
+      focusMode: false,
       setSidebarWidth(width: number) {
         set({ sidebarWidth: clamp(width, SIDEBAR_MIN, SIDEBAR_MAX) })
       },
       setListWidth(width: number) {
         set({ listWidth: clamp(width, LIST_MIN, LIST_MAX) })
       },
+      enterFocus() {
+        set({ focusMode: true })
+      },
+      exitFocus() {
+        set({ focusMode: false })
+      },
+      toggleFocus() {
+        set((s) => ({ focusMode: !s.focusMode }))
+      },
     }),
-    { name: 'clip-layout' },
+    {
+      name: 'clip-layout',
+      // 仅持久化栏宽；focusMode 为会话态，不应跨启动恢复。
+      partialize: (s) => ({ sidebarWidth: s.sidebarWidth, listWidth: s.listWidth }),
+    },
   ),
 )
 
