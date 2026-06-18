@@ -8,6 +8,7 @@
     "build:dev": "vite build --minify false --mode development",
     "build": "vite build --mode production",
     "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -33,6 +34,7 @@
     "jsdom": "^29.1.1",
     "prettier": "^3.8.4",
     "sass": "^1.101.0",
+    "typescript": "^6.0.3",
     "vite": "^8.0.5",
     "vitest": "^4.1.9"
   }
