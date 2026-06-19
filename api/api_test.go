@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -161,6 +162,49 @@ func TestPreviewFeed(t *testing.T) {
 	// 3) 空地址应报错。
 	if _, err := svc.PreviewFeed("  "); err == nil {
 		t.Error("expected empty url error")
+	}
+}
+
+// 复现并验证：支持条件 GET 的源（返回 ETag，对 If-None-Match 回 304）此前被抓过、
+// fetcher 已缓存 ETag 后，PreviewFeed/AddFeed 仍应强制全量抓取，不因 304 误判为「找不到源」。
+func TestPreviewAndAddForceFullFetchIgnoring304(t *testing.T) {
+	const etag = `"v1"`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("If-None-Match") == etag {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		w.Header().Set("ETag", etag)
+		w.Header().Set("Content-Type", "application/atom+xml")
+		_, _ = w.Write([]byte(sampleRSS))
+	}))
+	defer srv.Close()
+
+	st := newTestStore(t)
+	ft := fetcher.New()
+	svc := NewFeedService(st, ft, scheduler.New(st, ft))
+
+	// 预热：让 fetcher 缓存该源的 ETag（模拟之前已抓取/订阅过）。
+	if _, _, err := ft.FetchFeed(context.Background(), srv.URL); err != nil {
+		t.Fatalf("warm fetch: %v", err)
+	}
+
+	// PreviewFeed 不应因条件 GET 命中 304 而失败。
+	preview, err := svc.PreviewFeed(srv.URL)
+	if err != nil {
+		t.Fatalf("PreviewFeed after cached ETag: %v", err)
+	}
+	if preview.Title != "Example Feed" {
+		t.Errorf("preview title = %q, want Example Feed", preview.Title)
+	}
+
+	// AddFeed 同样应强制全量抓取，不因 304 报 empty feed。
+	feed, err := svc.AddFeed(srv.URL, 0)
+	if err != nil {
+		t.Fatalf("AddFeed after cached ETag: %v", err)
+	}
+	if feed.Title != "Example Feed" {
+		t.Errorf("feed title = %q, want Example Feed", feed.Title)
 	}
 }
 

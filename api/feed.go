@@ -47,7 +47,10 @@ func (s *FeedService) PreviewFeed(rawURL string) (*FeedPreview, error) {
 	ctx := context.Background()
 
 	// 先尝试直接当作 Feed 解析。
-	if parsed, _, err := s.fetcher.FetchFeed(ctx, rawURL); err == nil && parsed != nil {
+	// 用 Force 全量抓取：检测是用户主动行为，必须拿到完整内容；
+	// 普通 FetchFeed 会携带条件 GET 头，若该源此前抓过会命中 304（parsed 为 nil），
+	// 被误判为「非 Feed」而走到下面的网页发现分支并失败。
+	if parsed, _, err := s.fetcher.FetchFeedForce(ctx, rawURL); err == nil && parsed != nil {
 		return s.buildPreview(rawURL, parsed), nil
 	}
 
@@ -57,7 +60,7 @@ func (s *FeedService) PreviewFeed(rawURL string) (*FeedPreview, error) {
 		return nil, errors.New("未在该地址找到可订阅的源")
 	}
 	feedURL := discovered[0].URL
-	parsed, _, err := s.fetcher.FetchFeed(ctx, feedURL)
+	parsed, _, err := s.fetcher.FetchFeedForce(ctx, feedURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch feed: %w", err)
 	}
@@ -93,7 +96,8 @@ func (s *FeedService) AddFeed(feedURL string, categoryID int64) (*store.Feed, er
 	}
 
 	ctx := context.Background()
-	parsed, _, err := s.fetcher.FetchFeed(ctx, feedURL)
+	// 用 Force 全量抓取，避免命中条件 GET 缓存返回 304（如检测时已缓存过 ETag）。
+	parsed, _, err := s.fetcher.FetchFeedForce(ctx, feedURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch feed: %w", err)
 	}
