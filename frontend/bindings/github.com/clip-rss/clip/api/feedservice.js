@@ -21,11 +21,13 @@ import * as $models from "./models.js";
 
 /**
  * AddFeed 新增订阅源：抓取并解析以补全元信息，入库后立即拉取一次文章。
+ * categoryID 为 0 表示归入「未分类」。
  * @param {string} feedURL
+ * @param {number} categoryID
  * @returns {$CancellablePromise<store$0.Feed | null>}
  */
-export function AddFeed(feedURL) {
-    return $Call.ByID(3427241815, feedURL).then(/** @type {($result: any) => any} */(($result) => {
+export function AddFeed(feedURL, categoryID) {
+    return $Call.ByID(3427241815, feedURL, categoryID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -101,6 +103,20 @@ export function PauseFeed(id) {
 }
 
 /**
+ * PreviewFeed 检测并预览一个订阅地址，但不写入数据库。
+ * 统一处理两类输入：
+ *   - 直接的 RSS/Atom Feed 地址；
+ *   - 普通网页地址（解析其 <link rel="alternate"> 自动发现首个 Feed）。
+ * @param {string} rawURL
+ * @returns {$CancellablePromise<$models.FeedPreview | null>}
+ */
+export function PreviewFeed(rawURL) {
+    return $Call.ByID(1160128488, rawURL).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType8($result);
+    }));
+}
+
+/**
  * RefreshAll 手动刷新全部订阅源（条件 GET）。
  * @returns {$CancellablePromise<$models.RefreshOutcome[]>}
  */
@@ -147,3 +163,5 @@ const $$createType3 = $Create.Array($$createType2);
 const $$createType4 = $Create.Array($$createType0);
 const $$createType5 = store$0.FeedWithUnread.createFrom;
 const $$createType6 = $Create.Array($$createType5);
+const $$createType7 = $models.FeedPreview.createFrom;
+const $$createType8 = $Create.Nullable($$createType7);

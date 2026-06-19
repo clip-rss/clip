@@ -131,16 +131,23 @@
 
 /* ===== 文章行 ===== */
 .row {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  height: 64px;
+  height: 88px;
   padding: 8px 12px;
   box-sizing: border-box;
   border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  transition: background-color 0.2s;
 
   &:hover {
     background-color: var(--bg-tertiary);
+
+    .actions {
+      background: linear-gradient(to right, transparent, var(--bg-tertiary) 24px);
+    }
 
     .actionBtn {
       opacity: 1;
@@ -153,6 +160,14 @@
 
   &:hover {
     background-color: color-mix(in srgb, var(--accent) 8%, transparent);
+
+    .actions {
+      background: linear-gradient(
+        to right,
+        transparent,
+        color-mix(in srgb, var(--accent) 8%, var(--bg-secondary)) 24px
+      );
+    }
   }
 
   .title {
@@ -180,6 +195,7 @@
   flex-direction: column;
   gap: 2px;
   overflow: hidden;
+  padding-right: 16px;
 }
 
 .title {
@@ -223,11 +239,17 @@
   opacity: 0.6;
 }
 
+// 悬浮在文字上方，不占据行内布局空间
 .actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
-  align-self: center;
-  flex-shrink: 0;
+  align-items: center;
   gap: 2px;
+  padding: 0 12px 0 24px; // 左 24px 留出渐变淡出区
+  pointer-events: none; // 空白区不拦截点击，仍可点行选中文章
 }
 
 .actionBtn {
@@ -241,6 +263,7 @@
   background: transparent;
   color: var(--text-secondary);
   opacity: 0;
+  pointer-events: auto;
   transition: opacity 0.15s, background-color 0.15s, color 0.15s;
 
   &:hover {

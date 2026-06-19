@@ -15,7 +15,8 @@ export {
 } from './Api'
 
 // 树构建与时间格式化
-export { buildFeedTree } from './FeedTree'
+export { buildFeedTree, flattenCategories } from './FeedTree'
+export type { CategoryOption } from './FeedTree'
 export { formatRelativeTime, latestUpdated } from './Time'
 
 // 文章筛选排序

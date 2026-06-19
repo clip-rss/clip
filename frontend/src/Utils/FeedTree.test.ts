@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildFeedTree } from './FeedTree'
+import { buildFeedTree, flattenCategories } from './FeedTree'
 import type { Category, FeedWithUnread } from '../Types'
 
 function cat(id: number, name: string, parentId: number | null = null, sortOrder = 0): Category {
@@ -98,5 +98,27 @@ describe('buildFeedTree', () => {
     const tree = buildFeedTree(categories, feeds)
     const titles = tree.roots[0].feeds.map((f) => f.title)
     expect(titles).toEqual(['苹果', '香蕉'].sort((a, b) => a.localeCompare(b)))
+  })
+})
+
+describe('flattenCategories', () => {
+  it('空输入返回空数组', () => {
+    expect(flattenCategories([])).toEqual([])
+  })
+
+  it('按前序展开并标注层级深度', () => {
+    // 子分类用 sortOrder 决定顺序，避免依赖区域排序规则。
+    const categories = [cat(2, 'B 子', 1, 2), cat(1, '根', null, 0), cat(3, 'A 子', 1, 1)]
+    const flat = flattenCategories(categories)
+    expect(flat).toEqual([
+      { id: 1, name: '根', depth: 0 },
+      { id: 3, name: 'A 子', depth: 1 },
+      { id: 2, name: 'B 子', depth: 1 },
+    ])
+  })
+
+  it('指向不存在父级的分类视为根', () => {
+    const flat = flattenCategories([cat(1, '孤儿', 999)])
+    expect(flat).toEqual([{ id: 1, name: '孤儿', depth: 0 }])
   })
 })

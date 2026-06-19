@@ -36,7 +36,10 @@ function ConfirmDialog(props: ConfirmDialogProps): JSX.Element {
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className={styles.dialogOverlay} />
-        <Dialog.Content className={styles.dialogContent}>
+        <Dialog.Content
+          className={styles.dialogContent}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <Dialog.Title className={styles.dialogTitle}>{title}</Dialog.Title>
           {description ? (
             <Dialog.Description className={styles.dialogDesc}>{description}</Dialog.Description>

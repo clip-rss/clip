@@ -132,6 +132,16 @@ func (f *Fetcher) FetchMany(ctx context.Context, urls []string) []BatchResult {
 	return results
 }
 
+// Discover 抓取网页并提取其中声明的 Feed 链接（<link rel="alternate">）。
+// 用于「输入网站首页 URL 自动发现订阅源」：先 GET 页面 HTML，再解析其中的 Feed 声明。
+func (f *Fetcher) Discover(ctx context.Context, pageURL string) ([]DiscoveredFeed, error) {
+	res, err := f.client.Fetch(ctx, pageURL, ConditionalHeaders{})
+	if err != nil {
+		return nil, err
+	}
+	return DiscoverFeeds(res.Body, pageURL), nil
+}
+
 // SeedConditional 预置某 Feed 的条件 GET 头（例如从持久化层恢复）。
 func (f *Fetcher) SeedConditional(feedURL string, cond ConditionalHeaders) {
 	f.setCond(feedURL, cond)

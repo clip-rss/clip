@@ -55,7 +55,7 @@ func TestAddFeedFetchesAndPersists(t *testing.T) {
 	sch := scheduler.New(st, ft)
 	svc := NewFeedService(st, ft, sch)
 
-	feed, err := svc.AddFeed(srv.URL)
+	feed, err := svc.AddFeed(srv.URL, 0)
 	if err != nil {
 		t.Fatalf("AddFeed: %v", err)
 	}
@@ -76,8 +76,91 @@ func TestAddFeedFetchesAndPersists(t *testing.T) {
 	}
 
 	// 重复添加同 URL 应失败。
-	if _, err := svc.AddFeed(srv.URL); err == nil {
+	if _, err := svc.AddFeed(srv.URL, 0); err == nil {
 		t.Error("expected duplicate AddFeed to fail")
+	}
+}
+
+func TestAddFeedIntoCategory(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/rss+xml")
+		_, _ = w.Write([]byte(sampleRSS))
+	}))
+	defer srv.Close()
+
+	st := newTestStore(t)
+	ft := fetcher.New()
+	sch := scheduler.New(st, ft)
+	cat := &store.Category{Name: "技术"}
+	if err := st.CreateCategory(cat); err != nil {
+		t.Fatalf("CreateCategory: %v", err)
+	}
+	svc := NewFeedService(st, ft, sch)
+
+	feed, err := svc.AddFeed(srv.URL, cat.ID)
+	if err != nil {
+		t.Fatalf("AddFeed: %v", err)
+	}
+	if feed.CategoryID == nil || *feed.CategoryID != cat.ID {
+		t.Errorf("feed category = %v, want %d", feed.CategoryID, cat.ID)
+	}
+}
+
+func TestPreviewFeed(t *testing.T) {
+	st := newTestStore(t)
+	ft := fetcher.New()
+	svc := NewFeedService(st, ft, scheduler.New(st, ft))
+
+	// 1) 直接是 Feed 地址。
+	feedSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/rss+xml")
+		_, _ = w.Write([]byte(sampleRSS))
+	}))
+	defer feedSrv.Close()
+
+	preview, err := svc.PreviewFeed(feedSrv.URL)
+	if err != nil {
+		t.Fatalf("PreviewFeed(feed): %v", err)
+	}
+	if preview.Title != "Example Feed" || preview.ItemCount != 2 {
+		t.Errorf("preview = %+v, want title=Example Feed itemCount=2", preview)
+	}
+	if preview.URL != feedSrv.URL {
+		t.Errorf("preview url = %q, want %q", preview.URL, feedSrv.URL)
+	}
+	if preview.AlreadyAdded {
+		t.Error("preview.AlreadyAdded should be false before adding")
+	}
+
+	// 2) 普通网页地址 → 自动发现页面中声明的 Feed。
+	var pageURL string
+	mux := http.NewServeMux()
+	mux.HandleFunc("/feed.xml", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/rss+xml")
+		_, _ = w.Write([]byte(sampleRSS))
+	})
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(`<html><head><link rel="alternate" type="application/rss+xml" href="` + pageURL + `/feed.xml"></head><body>hi</body></html>`))
+	})
+	pageSrv := httptest.NewServer(mux)
+	defer pageSrv.Close()
+	pageURL = pageSrv.URL
+
+	preview2, err := svc.PreviewFeed(pageSrv.URL)
+	if err != nil {
+		t.Fatalf("PreviewFeed(page): %v", err)
+	}
+	if preview2.URL != pageSrv.URL+"/feed.xml" {
+		t.Errorf("discovered url = %q, want %q", preview2.URL, pageSrv.URL+"/feed.xml")
+	}
+	if preview2.Title != "Example Feed" {
+		t.Errorf("discovered title = %q, want Example Feed", preview2.Title)
+	}
+
+	// 3) 空地址应报错。
+	if _, err := svc.PreviewFeed("  "); err == nil {
+		t.Error("expected empty url error")
 	}
 }
 
@@ -86,10 +169,10 @@ func TestAddFeedRejectsEmptyAndBadURL(t *testing.T) {
 	ft := fetcher.New()
 	svc := NewFeedService(st, ft, scheduler.New(st, ft))
 
-	if _, err := svc.AddFeed("   "); err == nil {
+	if _, err := svc.AddFeed("   ", 0); err == nil {
 		t.Error("expected empty url error")
 	}
-	if _, err := svc.AddFeed("http://127.0.0.1:0/nope"); err == nil {
+	if _, err := svc.AddFeed("http://127.0.0.1:0/nope", 0); err == nil {
 		t.Error("expected fetch error for unreachable url")
 	}
 }

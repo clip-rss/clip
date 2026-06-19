@@ -11,6 +11,7 @@ export type {
   Settings,
   RefreshOutcome,
   ImportResult,
+  FeedPreview,
 } from './Models'
 
 // 事件名与负载

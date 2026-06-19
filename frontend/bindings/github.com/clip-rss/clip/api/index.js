@@ -18,6 +18,7 @@ export {
 };
 
 export {
+    FeedPreview,
     ImportResult,
     RefreshOutcome
 } from "./models.js";

@@ -13,4 +13,5 @@ export type {
 export type {
   RefreshOutcome,
   ImportResult,
+  FeedPreview,
 } from '../../bindings/github.com/clip-rss/clip/api'

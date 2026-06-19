@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Tooltip from '@radix-ui/react-tooltip'
+import * as Dialog from '@radix-ui/react-dialog'
 import clsx from 'clsx'
 import { useSidebarStore } from '../../Stores'
 import {
@@ -37,6 +38,7 @@ function Sidebar(props: SidebarProps): JSX.Element {
 
   const [creatingFolder, setCreatingFolder] = useState(false)
   const [uncatDragOver, setUncatDragOver] = useState(false)
+  const [importMsg, setImportMsg] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 初次加载 + 订阅后端事件，新文章/抓取错误时刷新未读与结构
@@ -152,6 +154,29 @@ function Sidebar(props: SidebarProps): JSX.Element {
         className={styles.hiddenInput}
         onChange={handleImportFile}
       />
+
+      <Dialog.Root open={importMsg !== null} onOpenChange={(o) => !o && setImportMsg(null)}>
+        <Dialog.Portal>
+          <Dialog.Overlay className={styles.dialogOverlay} />
+          <Dialog.Content
+            className={styles.dialogContent}
+            aria-describedby={undefined}
+            onInteractOutside={(e) => e.preventDefault()}
+          >
+            <Dialog.Title className={styles.dialogTitle}>导入 OPML</Dialog.Title>
+            <p className={styles.dialogDesc}>{importMsg}</p>
+            <div className={styles.dialogFooter}>
+              <button
+                type="button"
+                className={styles.dialogConfirm}
+                onClick={() => setImportMsg(null)}
+              >
+                知道了
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   )
 
@@ -161,10 +186,13 @@ function Sidebar(props: SidebarProps): JSX.Element {
     if (!file) return
     try {
       const content = await file.text()
-      await OPMLService.ImportOPML(content)
+      const res = await OPMLService.ImportOPML(content)
       await load()
+      setImportMsg(
+        `导入完成：新增 ${res.feeds} 个订阅源，跳过 ${res.skipped} 个重复，新建 ${res.categories} 个文件夹。`,
+      )
     } catch (err) {
-      console.error('OPML 导入失败：', toApiError(err))
+      setImportMsg(`OPML 导入失败：${toApiError(err)}`)
     }
   }
 

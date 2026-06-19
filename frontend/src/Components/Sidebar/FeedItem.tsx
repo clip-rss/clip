@@ -3,6 +3,7 @@ import * as ContextMenu from '@radix-ui/react-context-menu'
 import clsx from 'clsx'
 import { useSidebarStore } from '../../Stores'
 import type { FeedWithUnread } from '../../Types'
+import { EditFeedModal } from '../EditFeedModal'
 import UnreadBadge from './UnreadBadge'
 import ConfirmDialog from './ConfirmDialog'
 import RenameInput from './RenameInput'
@@ -28,6 +29,7 @@ function FeedItem(props: FeedItemProps): JSX.Element {
   const resumeFeed = useSidebarStore((s) => s.resumeFeed)
 
   const [editing, setEditing] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const paused = feed.status === 'paused'
@@ -72,7 +74,10 @@ function FeedItem(props: FeedItemProps): JSX.Element {
         <ContextMenu.Portal>
           <ContextMenu.Content className={styles.menuContent}>
             <ContextMenu.Item className={styles.menuItem} onSelect={() => setEditing(true)}>
-              编辑
+              重命名
+            </ContextMenu.Item>
+            <ContextMenu.Item className={styles.menuItem} onSelect={() => setEditOpen(true)}>
+              编辑…
             </ContextMenu.Item>
             <ContextMenu.Item
               className={styles.menuItem}
@@ -90,6 +95,8 @@ function FeedItem(props: FeedItemProps): JSX.Element {
           </ContextMenu.Content>
         </ContextMenu.Portal>
       </ContextMenu.Root>
+
+      <EditFeedModal feed={feed} open={editOpen} onOpenChange={setEditOpen} />
 
       <ConfirmDialog
         open={confirmOpen}

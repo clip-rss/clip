@@ -71,3 +71,41 @@ export function buildFeedTree(categories: Category[], feeds: FeedWithUnread[]): 
 
   return { roots, uncategorized: uncategorized.sort(compareFeed), totalUnread }
 }
+
+/** 归属文件夹下拉用的分类项：按树前序展开，depth 用于缩进。 */
+export interface CategoryOption {
+  id: number
+  name: string
+  depth: number
+}
+
+/**
+ * 将分类列表按父子层级前序展开为带缩进深度的扁平选项，供归属文件夹下拉使用。
+ * 根分类（parentId 为 null 或指向不存在父级）depth 为 0，子分类依次递增。
+ */
+export function flattenCategories(categories: Category[]): CategoryOption[] {
+  const validIds = new Set<number>()
+  for (const c of categories) validIds.add(c.id)
+
+  const childrenOf = new Map<number, Category[]>()
+  for (const c of categories) {
+    const parent = c.parentId !== null && validIds.has(c.parentId) ? c.parentId : 0
+    const list = childrenOf.get(parent)
+    if (list) list.push(c)
+    else childrenOf.set(parent, [c])
+  }
+
+  const out: CategoryOption[] = []
+  const visited = new Set<number>()
+  function walk(parentId: number, depth: number): void {
+    const children = (childrenOf.get(parentId) ?? []).slice().sort(compareCategory)
+    for (const c of children) {
+      if (visited.has(c.id)) continue // 防御性：避免环
+      visited.add(c.id)
+      out.push({ id: c.id, name: c.name, depth })
+      walk(c.id, depth + 1)
+    }
+  }
+  walk(0, 0)
+  return out
+}

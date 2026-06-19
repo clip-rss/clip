@@ -7,6 +7,86 @@
 import { Create as $Create } from "@wailsio/runtime";
 
 /**
+ * FeedPreview 添加订阅前的检测预览信息（不入库）。
+ */
+export class FeedPreview {
+    /**
+     * Creates a new FeedPreview instance.
+     * @param {Partial<FeedPreview>} [$$source = {}] - The source object to create the FeedPreview.
+     */
+    constructor($$source = {}) {
+        if (!("url" in $$source)) {
+            /**
+             * 实际可订阅的 Feed URL（网页输入时为发现到的地址）
+             * @member
+             * @type {string}
+             */
+            this["url"] = "";
+        }
+        if (!("title" in $$source)) {
+            /**
+             * 解析到的源标题
+             * @member
+             * @type {string}
+             */
+            this["title"] = "";
+        }
+        if (!("description" in $$source)) {
+            /**
+             * 源描述
+             * @member
+             * @type {string}
+             */
+            this["description"] = "";
+        }
+        if (!("link" in $$source)) {
+            /**
+             * 站点主页链接
+             * @member
+             * @type {string}
+             */
+            this["link"] = "";
+        }
+        if (!("icon" in $$source)) {
+            /**
+             * favicon URL
+             * @member
+             * @type {string}
+             */
+            this["icon"] = "";
+        }
+        if (!("itemCount" in $$source)) {
+            /**
+             * 当前抓取到的文章数
+             * @member
+             * @type {number}
+             */
+            this["itemCount"] = 0;
+        }
+        if (!("alreadyAdded" in $$source)) {
+            /**
+             * 该源是否已订阅
+             * @member
+             * @type {boolean}
+             */
+            this["alreadyAdded"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new FeedPreview instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {FeedPreview}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new FeedPreview(/** @type {Partial<FeedPreview>} */($$parsedSource));
+    }
+}
+
+/**
  * ImportResult 导入结果统计。
  */
 export class ImportResult {

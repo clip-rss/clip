@@ -8,7 +8,7 @@ import ArticleRow from './ArticleRow'
 import EmptyState from './EmptyState'
 import styles from './ArticleList.module.scss'
 
-const ROW_HEIGHT = 64
+const ROW_HEIGHT = 88
 
 function ArticleList(): JSX.Element {
   const selection = useSidebarStore((s) => s.selection)

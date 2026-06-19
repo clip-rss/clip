@@ -1,6 +1,11 @@
 package fetcher
 
-import "testing"
+import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
 
 const samplePage = `<!DOCTYPE html><html><head>
 <title>Blog</title>
@@ -29,6 +34,26 @@ func TestDiscoverFeeds(t *testing.T) {
 func TestDiscoverFeedsNone(t *testing.T) {
 	if feeds := DiscoverFeeds([]byte("<html><body>no feeds</body></html>"), "https://x.com"); len(feeds) != 0 {
 		t.Errorf("expected no feeds, got %+v", feeds)
+	}
+}
+
+func TestDiscover(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(samplePage))
+	}))
+	defer srv.Close()
+
+	feeds, err := New().Discover(context.Background(), srv.URL)
+	if err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if len(feeds) != 2 {
+		t.Fatalf("feeds = %d, want 2 (%+v)", len(feeds), feeds)
+	}
+	// 相对地址应基于页面 URL 解析为绝对地址。
+	if feeds[0].URL != srv.URL+"/feed.xml" {
+		t.Errorf("relative feed not resolved: %q, want %q", feeds[0].URL, srv.URL+"/feed.xml")
 	}
 }
 

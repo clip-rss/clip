@@ -4,7 +4,13 @@ import { usePlatform, type Platform } from '../../Hooks'
 import { useArticleStore, useLayoutStore } from '../../Stores'
 import styles from './Toolbar.module.scss'
 
-function Toolbar(): JSX.Element {
+interface ToolbarProps {
+  /** 「添加订阅」入口；点击「＋ 订阅」按钮触发。 */
+  onAddFeed?: () => void
+}
+
+function Toolbar(props: ToolbarProps): JSX.Element {
+  const { onAddFeed } = props
   const platform = usePlatform()
   const focusMode = useLayoutStore((s) => s.focusMode)
   const toggleFocus = useLayoutStore((s) => s.toggleFocus)
@@ -29,6 +35,7 @@ function Toolbar(): JSX.Element {
           className={styles.addButton}
           title="添加订阅"
           aria-label="添加订阅"
+          onClick={onAddFeed}
         >
           ＋ 订阅
         </button>
