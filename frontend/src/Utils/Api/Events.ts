@@ -3,8 +3,10 @@ import { Events } from '@wailsio/runtime'
 import {
   ItemsUpdatedEvent,
   FeedErrorEvent,
+  NotificationOpenEvent,
   type ItemsUpdatedPayload,
   type FeedErrorPayload,
+  type NotificationOpenPayload,
 } from '../../Types/Events'
 
 /**
@@ -21,4 +23,9 @@ export function onItemsUpdated(handler: (payload: ItemsUpdatedPayload) => void):
  */
 export function onFeedError(handler: (payload: FeedErrorPayload) => void): () => void {
   return Events.On(FeedErrorEvent, (ev) => handler(ev.data as FeedErrorPayload))
+}
+
+/** 订阅「点击通知」事件，返回取消订阅函数。 */
+export function onNotificationOpen(handler: (payload: NotificationOpenPayload) => void): () => void {
+  return Events.On(NotificationOpenEvent, (ev) => handler(ev.data as NotificationOpenPayload))
 }

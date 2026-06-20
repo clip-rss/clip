@@ -15,7 +15,7 @@ export {
   SystemService,
 } from '../../../bindings/github.com/clip-rss/clip/api'
 
-export { onItemsUpdated, onFeedError } from './Events'
+export { onItemsUpdated, onFeedError, onNotificationOpen } from './Events'
 
 import { Browser } from '@wailsio/runtime'
 

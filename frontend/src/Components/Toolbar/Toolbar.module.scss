@@ -169,3 +169,39 @@
     color: var(--accent);
   }
 }
+
+/* ===== 通知下拉菜单 ===== */
+.notifMenu {
+  min-width: 120px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background-color: var(--bg-primary);
+  box-shadow: var(--shadow);
+  z-index: 50;
+}
+
+.notifItem {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 10px 0 8px;
+  border-radius: var(--radius-button);
+  font-size: 14px;
+  color: var(--text-primary);
+  outline: none;
+  user-select: none;
+
+  &[data-highlighted] {
+    background-color: var(--bg-secondary);
+  }
+}
+
+.notifCheck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  margin-right: 4px;
+  color: var(--accent);
+}

@@ -4,13 +4,18 @@ import (
 	"context"
 	"embed"
 	"log"
+	"strconv"
+	"strings"
 
 	"github.com/clip-rss/clip/api"
 	"github.com/clip-rss/clip/internal/fetcher"
+	"github.com/clip-rss/clip/internal/notify"
 	"github.com/clip-rss/clip/internal/scheduler"
 	"github.com/clip-rss/clip/internal/store"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
+	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 )
 
 //go:embed all:frontend/dist
@@ -26,6 +31,20 @@ func (wailsEmitter) Emit(name string, data any) {
 	}
 }
 
+// wailsNotifSender 用 Wails notifications 服务实现 notify.Sender。
+type wailsNotifSender struct {
+	ns *notifications.NotificationService
+}
+
+func (s wailsNotifSender) Send(msg notify.Message) error {
+	return s.ns.SendNotification(notifications.NotificationOptions{
+		ID:    msg.ID,
+		Title: msg.Title,
+		Body:  msg.Body,
+		Data:  map[string]interface{}{"articleId": msg.ID},
+	})
+}
+
 func main() {
 	// 数据层。
 	st, err := store.New()
@@ -33,9 +52,17 @@ func main() {
 		log.Fatalf("failed to init store: %v", err)
 	}
 
+	// 通知服务（需同时注册为 application.Service 并注入调度器）。
+	notifSvc := notifications.New()
+	notifSender := wailsNotifSender{ns: notifSvc}
+	notifier := notify.NewService(st, notifSender)
+
 	// 抓取与调度层。
 	ft := fetcher.New()
-	sch := scheduler.New(st, ft, scheduler.WithEmitter(wailsEmitter{}))
+	sch := scheduler.New(st, ft,
+		scheduler.WithEmitter(wailsEmitter{}),
+		scheduler.WithNotifier(notifier),
+	)
 
 	// 绑定服务（暴露给前端）。
 	app := application.New(application.Options{
@@ -54,7 +81,37 @@ func main() {
 			application.NewService(api.NewCategoryService(st)),
 			application.NewService(api.NewSettingsService(st)),
 			application.NewService(api.NewOPMLService(st)),
+			application.NewService(notifSvc),
 		},
+	})
+
+	// 点击通知 → 调起窗口 + 向前端推送 article ID，前端自行定位。
+	var mainWindow application.Window
+	notifSvc.OnNotificationResponse(func(result notifications.NotificationResult) {
+		if result.Error != nil {
+			log.Printf("notification response error: %v", result.Error)
+			return
+		}
+		rawID, _ := result.Response.UserInfo["articleId"].(string)
+		if rawID == "" {
+			return
+		}
+		idStr := strings.TrimPrefix(rawID, "article:")
+		articleID, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			return
+		}
+		if mainWindow != nil {
+			mainWindow.UnMinimise()
+			mainWindow.Restore()
+			mainWindow.Focus()
+		}
+		app.Event.Emit("notification:open", map[string]any{"articleId": articleID})
+	})
+
+	// macOS：应用启动完毕后请求通知权限（用户授权后通知才能弹出）。
+	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(event *application.ApplicationEvent) {
+		notifSvc.RequestNotificationAuthorization()
 	})
 
 	// 启动后台调度（此时 application.Get() 已可用于事件推送）。
@@ -66,7 +123,7 @@ func main() {
 		_ = st.Close()
 	})
 
-	app.Window.NewWithOptions(application.WebviewWindowOptions{
+	mainWindow = app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:     "Clip",
 		Width:     1200,
 		Height:    800,
@@ -83,3 +140,4 @@ func main() {
 		log.Fatal(err)
 	}
 }
+

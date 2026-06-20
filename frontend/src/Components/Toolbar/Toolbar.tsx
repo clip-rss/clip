@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { ThemeToggle } from '../ThemeToggle'
 import { usePlatform, type Platform } from '../../Hooks'
 import { modKey } from '../../Utils'
-import { useArticleStore, useLayoutStore } from '../../Stores'
+import { useArticleStore, useLayoutStore, useSettingsStore } from '../../Stores'
 import styles from './Toolbar.module.scss'
 
 /** 搜索输入防抖间隔（毫秒）。 */
@@ -31,6 +32,13 @@ function Toolbar(props: ToolbarProps): JSX.Element {
   const [searchFocused, setSearchFocused] = useState(false)
   // 有焦点或已有查询内容时保持展开，避免活动搜索被收起截断。
   const searchExpanded = searchFocused || searchQuery !== ''
+
+  const settings = useSettingsStore((s) => s.settings)
+  const setNotificationMode = useSettingsStore((s) => s.setNotificationMode)
+  const mode: NotifMode = (settings?.notificationMode as NotifMode) || 'each'
+
+  // 应用启动时拉取设置。
+  useEffect(() => { useSettingsStore.getState().load() }, [])
 
   // 卸载时清掉未触发的防抖计时器。
   useEffect(() => () => window.clearTimeout(debounceRef.current), [])
@@ -101,6 +109,10 @@ function Toolbar(props: ToolbarProps): JSX.Element {
         >
           ＋ 订阅
         </button>
+        <NotifDropdown
+          mode={mode}
+          onSelect={setNotificationMode}
+        />
         <button
           className={clsx(
             styles.iconButton,
@@ -117,6 +129,64 @@ function Toolbar(props: ToolbarProps): JSX.Element {
         <ThemeToggle />
       </div>
     </div>
+  )
+}
+
+type NotifMode = 'each' | 'summary' | 'off'
+
+const NOTIF_LABEL: Record<NotifMode, string> = { each: '每篇新文章', summary: '仅摘要', off: '关闭' }
+
+function NotifDropdown(props: { mode: NotifMode; onSelect: (m: NotifMode) => void }): JSX.Element {
+  const { mode, onSelect } = props
+  const modes: NotifMode[] = ['each', 'summary', 'off']
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          className={styles.iconButton}
+          title={`通知：${NOTIF_LABEL[mode]}`}
+          aria-label={`通知：${NOTIF_LABEL[mode]}`}
+        >
+          <BellIcon active={mode !== 'off'} />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content className={styles.notifMenu} align="end" sideOffset={6}>
+          {modes.map((m) => (
+            <DropdownMenu.CheckboxItem
+              key={m}
+              className={styles.notifItem}
+              checked={mode === m}
+              onSelect={() => onSelect(m)}
+            >
+              <DropdownMenu.ItemIndicator className={styles.notifCheck}>
+                <CheckMark />
+              </DropdownMenu.ItemIndicator>
+              {NOTIF_LABEL[m]}
+            </DropdownMenu.CheckboxItem>
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  )
+}
+
+function BellIcon(props: { active: boolean }): JSX.Element {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+      {!props.active ? <line x1="2" y1="2" x2="22" y2="22" /> : null}
+    </svg>
+  )
+}
+
+function CheckMark(): JSX.Element {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
   )
 }
 

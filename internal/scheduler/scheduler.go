@@ -55,6 +55,23 @@ type nopEmitter struct{}
 
 func (nopEmitter) Emit(string, any) {}
 
+// NewItem 通知层需要的单篇文章信息。
+type NewItem struct {
+	ID    int64
+	Title string
+}
+
+// Notifier 通知接口——每次刷新后，调度器将新发现的文章传入。
+// 判断是否实际发送、内容格式与节流由通知层负责。
+type Notifier interface {
+	Notify(ctx context.Context, feed store.Feed, items []NewItem)
+}
+
+// nopNotifier 默认空实现。
+type nopNotifier struct{}
+
+func (nopNotifier) Notify(context.Context, store.Feed, []NewItem) {}
+
 // Config 调度器配置。
 type Config struct {
 	PollInterval    time.Duration // 扫描到期源的轮询间隔（默认 1 分钟）
@@ -85,10 +102,11 @@ type RefreshResult struct {
 
 // Scheduler 定时调度器。
 type Scheduler struct {
-	store   FeedStore
-	fetcher FeedFetcher
-	emitter Emitter
-	cfg     Config
+	store    FeedStore
+	fetcher  FeedFetcher
+	emitter  Emitter
+	notifier Notifier
+	cfg      Config
 
 	// now 提供当前时间，测试中可替换以控制退避判定。
 	now func() time.Time
@@ -111,6 +129,15 @@ func WithEmitter(e Emitter) Option {
 	}
 }
 
+// WithNotifier 设置通知发送器。
+func WithNotifier(n Notifier) Option {
+	return func(s *Scheduler) {
+		if n != nil {
+			s.notifier = n
+		}
+	}
+}
+
 // WithConfig 设置调度配置。
 func WithConfig(cfg Config) Option {
 	return func(s *Scheduler) { s.cfg = cfg.withDefaults() }
@@ -128,11 +155,12 @@ func withClock(now func() time.Time) Option {
 // New 创建调度器。
 func New(st FeedStore, ft FeedFetcher, opts ...Option) *Scheduler {
 	s := &Scheduler{
-		store:   st,
-		fetcher: ft,
-		emitter: nopEmitter{},
-		cfg:     Config{}.withDefaults(),
-		now:     time.Now,
+		store:    st,
+		fetcher:  ft,
+		emitter:  nopEmitter{},
+		notifier: nopNotifier{},
+		cfg:      Config{}.withDefaults(),
+		now:      time.Now,
 	}
 	for _, opt := range opts {
 		opt(s)
@@ -342,6 +370,7 @@ func (s *Scheduler) refreshFeed(ctx context.Context, feed store.Feed, force bool
 	}
 
 	newItems := 0
+	var createdItems []NewItem
 	for _, p := range parsed.Items {
 		item := toStoreItem(feed.ID, p, now)
 		if item.URL == "" {
@@ -353,6 +382,7 @@ func (s *Scheduler) refreshFeed(ctx context.Context, feed store.Feed, force bool
 		}
 		if created {
 			newItems++
+			createdItems = append(createdItems, NewItem{ID: item.ID, Title: item.Title})
 		}
 	}
 
@@ -368,6 +398,10 @@ func (s *Scheduler) refreshFeed(ctx context.Context, feed store.Feed, force bool
 			"feedId":   feed.ID,
 			"newItems": newItems,
 		})
+		// 首次抓取（last_updated 为空）不通知，避免订阅时刷屏。
+		if feed.LastUpdated != nil {
+			s.notifier.Notify(ctx, feed, createdItems)
+		}
 	}
 	return res
 }

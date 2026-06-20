@@ -4,3 +4,4 @@ export { useLayoutStore, SIDEBAR_MIN, SIDEBAR_MAX, LIST_MIN, LIST_MAX } from './
 export { useSidebarStore } from './SidebarStore'
 export { useArticleStore } from './ArticleStore'
 export { useReaderStore } from './ReaderStore'
+export { useSettingsStore } from './SettingsStore'

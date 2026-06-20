@@ -46,6 +46,11 @@ interface ArticleState {
   runSearch: () => Promise<void>
   /** 退出搜索模式，恢复原列表。 */
   clearSearch: () => void
+
+  /** 待定位文章 ID，由通知点击设置，load 完成时消费。 */
+  pendingSelectId: number | null
+  /** 通知点击后置位待定位 ID，下次 load 完成时自动选中。 */
+  scheduleSelect: (id: number) => void
 }
 
 function scopeFeedId(selection: Selection): number {
@@ -58,21 +63,25 @@ function refreshSidebar(): void {
 }
 
 export const useArticleStore = create<ArticleState>()((set, get) => {
-  async function fetchScope(selection: Selection): Promise<void> {
-    set({ loading: true, error: null })
-    try {
-      const items = await ItemService.ListItems(scopeFeedId(selection), LOAD_LIMIT, 0)
-      set({ items: items ?? [], loading: false })
-    } catch (err) {
-      set({ error: toApiError(err), loading: false })
-    }
-  }
-
   /** 局部更新某文章字段（同步 items 与 searchResults，保证两种列表显示一致）。 */
   function patchItem(id: number, patch: Partial<Item>): void {
     const apply = (list: Item[]): Item[] =>
       list.map((it) => (it.id === id ? ({ ...it, ...patch } as Item) : it))
     set({ items: apply(get().items), searchResults: apply(get().searchResults) })
+  }
+
+  // 封装 load：完成后消费 pendingSelectId，若有匹配则自动选中。
+  async function fetchAndResolve(selection: Selection): Promise<void> {
+    set({ loading: true, error: null })
+    try {
+      const items = await ItemService.ListItems(scopeFeedId(selection), LOAD_LIMIT, 0)
+      const pending = get().pendingSelectId
+      const selectedId =
+        pending !== null && (items ?? []).some((it) => it.id === pending) ? pending : null
+      set({ items: items ?? [], loading: false, selectedItemId: selectedId, pendingSelectId: null })
+    } catch (err) {
+      set({ error: toApiError(err), loading: false })
+    }
   }
 
   return {
@@ -87,14 +96,15 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     searchResults: [],
     searching: false,
     searchActive: false,
+    pendingSelectId: null,
 
     async load(selection) {
-      set({ currentSelection: selection, selectedItemId: null })
-      await fetchScope(selection)
+      set({ currentSelection: selection, selectedItemId: null, pendingSelectId: null })
+      await fetchAndResolve(selection)
     },
 
     async reload() {
-      await fetchScope(get().currentSelection)
+      await fetchAndResolve(get().currentSelection)
     },
 
     setFilter(filter) {
@@ -222,6 +232,10 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
 
     clearSearch() {
       set({ searchQuery: '', searchResults: [], searching: false, searchActive: false })
+    },
+
+    scheduleSelect(id) {
+      set({ pendingSelectId: id })
     },
   }
 })

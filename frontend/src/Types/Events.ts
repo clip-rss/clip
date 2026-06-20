@@ -17,3 +17,11 @@ export interface FeedErrorPayload {
   feedId: number
   error: string
 }
+
+/** 点击通知时推送的事件名（对应 main.go notification:open）。 */
+export const NotificationOpenEvent = 'notification:open'
+
+/** notification:open 事件负载。 */
+export interface NotificationOpenPayload {
+  articleId: number
+}

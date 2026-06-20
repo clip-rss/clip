@@ -23,7 +23,7 @@ func TestSettingsRoundTrip(t *testing.T) {
 		Language:              "en",
 		DefaultUpdateInterval: 15,
 		DefaultMaxItems:       50,
-		NotificationsEnabled:  false,
+		NotificationMode:      NotifyOff,
 	}
 	if err := st.UpdateSettings(want); err != nil {
 		t.Fatalf("UpdateSettings: %v", err)

@@ -9,13 +9,20 @@ import (
 // settingsKey 全局应用设置在 settings 表中的固定键名。
 const settingsKey = "app"
 
+// 通知模式取值。
+const (
+	NotifyEach    = "each"    // 每篇新文章一条通知
+	NotifySummary = "summary" // 每次刷新一条摘要通知
+	NotifyOff     = "off"     // 关闭通知
+)
+
 // Settings 应用全局设置。
 type Settings struct {
 	Theme                 string `json:"theme"`                 // system / light / dark
 	Language              string `json:"language"`              // zh / en
 	DefaultUpdateInterval int    `json:"defaultUpdateInterval"` // 默认更新间隔（分钟）
 	DefaultMaxItems       int    `json:"defaultMaxItems"`       // 默认每源最大保留条目数
-	NotificationsEnabled  bool   `json:"notificationsEnabled"`  // 是否启用新文章通知
+	NotificationMode      string `json:"notificationMode"`      // each / summary / off
 }
 
 // DefaultSettings 返回出厂默认设置。
@@ -25,7 +32,7 @@ func DefaultSettings() Settings {
 		Language:              "zh",
 		DefaultUpdateInterval: 30,
 		DefaultMaxItems:       100,
-		NotificationsEnabled:  true,
+		NotificationMode:      NotifyEach,
 	}
 }
 

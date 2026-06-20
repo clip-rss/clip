@@ -10,6 +10,7 @@ export {
   SystemService,
   onItemsUpdated,
   onFeedError,
+  onNotificationOpen,
   toApiError,
   openURL,
 } from './Api'

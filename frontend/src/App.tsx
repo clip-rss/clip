@@ -8,7 +8,7 @@ import {
   Sidebar,
   Toolbar,
 } from './Components'
-import { useAppHotkeys } from './Hooks'
+import { useAppHotkeys, useNotificationNavigation } from './Hooks'
 
 function App() {
   const [addOpen, setAddOpen] = useState(false)
@@ -18,6 +18,7 @@ function App() {
   }
 
   useAppHotkeys({ onAddFeed: openAddFeed })
+  useNotificationNavigation()
 
   return (
     <>

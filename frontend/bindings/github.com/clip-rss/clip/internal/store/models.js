@@ -622,13 +622,13 @@ export class Settings {
              */
             this["defaultMaxItems"] = 0;
         }
-        if (!("notificationsEnabled" in $$source)) {
+        if (!("notificationMode" in $$source)) {
             /**
-             * 是否启用新文章通知
+             * each / summary / off
              * @member
-             * @type {boolean}
+             * @type {string}
              */
-            this["notificationsEnabled"] = false;
+            this["notificationMode"] = "";
         }
 
         Object.assign(this, $$source);
