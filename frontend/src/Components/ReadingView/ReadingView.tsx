@@ -1,16 +1,19 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
-import { useArticleStore, useSidebarStore, useReaderStore } from '../../Stores'
+import { useArticleStore, useSidebarStore, useReaderStore, useLayoutStore } from '../../Stores'
 import { readerBackgroundClass, readerContentStyle } from '../../Utils'
 import ReaderToolbar from './ReaderToolbar'
 import ReaderArticle from './ReaderArticle'
 import Lightbox from './Lightbox'
+import NotePanel from './NotePanel'
 import styles from './ReadingView.module.scss'
 
 function ReadingView(): JSX.Element {
   const item = useArticleStore((s) => s.items.find((it) => it.id === s.selectedItemId) ?? null)
   const feeds = useSidebarStore((s) => s.feeds)
   const prefs = useReaderStore()
+  const notePanelOpen = useLayoutStore((s) => s.notePanelOpen)
+  const closeNotePanel = useLayoutStore((s) => s.closeNotePanel)
 
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
 
@@ -74,6 +77,7 @@ function ReadingView(): JSX.Element {
           onImageClick={setLightboxSrc}
         />
       </div>
+      {notePanelOpen ? <NotePanel item={item} onClose={closeNotePanel} /> : null}
       <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </div>
   )

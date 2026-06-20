@@ -84,6 +84,26 @@
   }
 }
 
+/* 笔记按钮：有笔记时图标染色高亮 */
+.hasNote {
+  color: var(--accent);
+
+  &:hover {
+    color: var(--accent);
+  }
+}
+
+/* 笔记面板展开时按钮置为激活态 */
+.noteActive {
+  background-color: var(--bg-secondary);
+  color: var(--accent);
+
+  &:hover {
+    background-color: var(--bg-secondary);
+    color: var(--accent);
+  }
+}
+
 /* ===== 滚动正文区 ===== */
 .scroll {
   flex: 1;
@@ -94,6 +114,106 @@
   // 标题/正文/边框等一并适配。
   background-color: var(--bg-primary);
   color: var(--text-primary);
+}
+
+/* ===== 笔记底部抽屉 ===== */
+.notePanel {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 220px;
+  border-top: 1px solid var(--border);
+  background-color: var(--bg-primary);
+  animation: noteSlideUp 0.18s ease;
+}
+
+@keyframes noteSlideUp {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.noteHeader {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 34px;
+  padding: 0 8px 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.noteTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.noteHint {
+  margin-left: 8px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.noteStatus {
+  margin-left: auto;
+  margin-right: 4px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.noteClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--radius-button);
+  background: transparent;
+  color: var(--text-secondary);
+  transition: background-color 0.15s, color 0.15s;
+
+  &:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+}
+
+.noteEditor {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  resize: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.7;
+  user-select: auto;
+  -webkit-user-select: auto;
+
+  &::placeholder {
+    font-style: italic;
+    color: var(--text-secondary);
+  }
+
+  &:focus {
+    outline: none;
+  }
 }
 
 .article {

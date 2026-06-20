@@ -37,6 +37,8 @@ interface ArticleState {
   markUnread: (id: number) => Promise<void>
   markAllRead: (ids: number[]) => Promise<void>
   batchStar: (ids: number[]) => Promise<void>
+  /** 保存文章笔记：乐观更新本地 note 字段并写入后端。 */
+  saveNote: (id: number, note: string) => Promise<void>
 
   /** 仅更新搜索框文本（不触发请求；防抖在调用方）。 */
   setSearchQuery: (q: string) => void
@@ -161,6 +163,21 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
       } catch (err) {
         set({ error: toApiError(err) })
         await get().reload()
+      }
+    },
+
+    async saveNote(id, note) {
+      const cur =
+        get().items.find((it) => it.id === id) ??
+        get().searchResults.find((it) => it.id === id)
+      if (!cur || cur.note === note) return
+      const prev = cur.note
+      patchItem(id, { note })
+      try {
+        await ItemService.AddNote(id, note)
+      } catch (err) {
+        patchItem(id, { note: prev }) // 回滚
+        set({ error: toApiError(err) })
       }
     },
 

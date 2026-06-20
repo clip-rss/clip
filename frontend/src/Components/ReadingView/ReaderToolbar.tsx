@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { useArticleStore } from '../../Stores'
+import { useArticleStore, useLayoutStore } from '../../Stores'
 import { openURL } from '../../Utils'
 import type { Item } from '../../Types'
 import { ReadIcon, UnreadIcon, StarIcon, NoteIcon, ExternalLinkIcon } from './Icons'
@@ -16,6 +16,9 @@ function ReaderToolbar(props: ReaderToolbarProps): JSX.Element {
   const markRead = useArticleStore((s) => s.markRead)
   const markUnread = useArticleStore((s) => s.markUnread)
   const toggleStar = useArticleStore((s) => s.toggleStar)
+  const notePanelOpen = useLayoutStore((s) => s.notePanelOpen)
+  const toggleNotePanel = useLayoutStore((s) => s.toggleNotePanel)
+  const hasNote = item.note.trim() !== ''
 
   return (
     <div className={styles.toolbar}>
@@ -43,10 +46,15 @@ function ReaderToolbar(props: ReaderToolbarProps): JSX.Element {
         </button>
         <button
           type="button"
-          className={styles.toolbarBtn}
-          disabled
-          title="笔记（阶段 14）"
+          className={clsx(
+            styles.toolbarBtn,
+            notePanelOpen && styles.noteActive,
+            hasNote && styles.hasNote,
+          )}
+          onClick={toggleNotePanel}
+          title={notePanelOpen ? '关闭笔记' : hasNote ? '查看笔记' : '添加笔记'}
           aria-label="笔记"
+          aria-pressed={notePanelOpen}
         >
           <NoteIcon size={18} />
         </button>

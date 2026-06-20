@@ -142,6 +142,25 @@
   }
 }
 
+/* 笔记按钮：有笔记时染色，面板展开时激活态 */
+.hasNote {
+  color: var(--accent);
+
+  &:hover {
+    color: var(--accent);
+  }
+}
+
+.noteActive {
+  background-color: var(--bg-secondary);
+  color: var(--accent);
+
+  &:hover {
+    background-color: var(--bg-secondary);
+    color: var(--accent);
+  }
+}
+
 /* ===== 滚动正文区 ===== */
 .scroll {
   flex: 1;

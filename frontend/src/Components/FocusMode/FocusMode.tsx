@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import { useArticleStore, useLayoutStore, useReaderStore, useSidebarStore } from '../../Stores'
 import { useArticleNavigation, usePlatform } from '../../Hooks'
 import { readerBackgroundClass, readerContentStyle } from '../../Utils'
-import { ReaderArticle, Lightbox } from '../ReadingView'
+import { ReaderArticle, Lightbox, NotePanel } from '../ReadingView'
 import FocusControlBar from './FocusControlBar'
 import styles from './FocusMode.module.scss'
 
@@ -24,6 +24,8 @@ const FOCUS_MAX_WIDTH = '680px'
 function FocusMode(): JSX.Element | null {
   const focusMode = useLayoutStore((s) => s.focusMode)
   const exitFocus = useLayoutStore((s) => s.exitFocus)
+  const notePanelOpen = useLayoutStore((s) => s.notePanelOpen)
+  const closeNotePanel = useLayoutStore((s) => s.closeNotePanel)
   const platform = usePlatform()
 
   const item = useArticleStore((s) => s.items.find((it) => it.id === s.selectedItemId) ?? null)
@@ -179,6 +181,8 @@ function FocusMode(): JSX.Element | null {
           <div className={styles.empty}>未选择文章</div>
         )}
       </div>
+
+      {item && notePanelOpen ? <NotePanel item={item} onClose={closeNotePanel} /> : null}
 
       <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </div>

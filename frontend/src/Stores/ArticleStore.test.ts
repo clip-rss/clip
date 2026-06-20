@@ -9,6 +9,7 @@ vi.mock('../Utils', () => ({
     ToggleStar: vi.fn(),
     BatchMarkRead: vi.fn(),
     SearchItems: vi.fn(),
+    AddNote: vi.fn(),
   },
   // SidebarStore.load 依赖（refreshSidebar 会触发）
   CategoryService: { ListCategories: vi.fn() },
@@ -24,6 +25,7 @@ const MarkRead = ItemService.MarkRead as Mock
 const ToggleStar = ItemService.ToggleStar as Mock
 const BatchMarkRead = ItemService.BatchMarkRead as Mock
 const SearchItems = ItemService.SearchItems as Mock
+const AddNote = ItemService.AddNote as Mock
 
 function item(id: number, opts: Partial<Item> = {}): Item {
   return { id, feedId: 1, isRead: false, isStarred: false, ...opts } as Item
@@ -52,6 +54,7 @@ beforeEach(() => {
   ToggleStar.mockResolvedValue(undefined)
   BatchMarkRead.mockResolvedValue(undefined)
   SearchItems.mockResolvedValue([])
+  AddNote.mockResolvedValue(undefined)
   reset()
 })
 
@@ -114,6 +117,38 @@ describe('ArticleStore', () => {
     await useArticleStore.getState().batchStar([1, 2])
     expect(ToggleStar).toHaveBeenCalledTimes(2)
     expect(useArticleStore.getState().items.every((i) => i.isStarred)).toBe(true)
+  })
+
+  it('saveNote 乐观更新 note 并调用 AddNote', async () => {
+    useArticleStore.setState({ items: [item(10, { note: '' })] })
+    await useArticleStore.getState().saveNote(10, '我的笔记')
+    expect(AddNote).toHaveBeenCalledWith(10, '我的笔记')
+    expect(useArticleStore.getState().items[0].note).toBe('我的笔记')
+  })
+
+  it('saveNote note 未变化时跳过后端调用', async () => {
+    useArticleStore.setState({ items: [item(10, { note: '原文' })] })
+    await useArticleStore.getState().saveNote(10, '原文')
+    expect(AddNote).not.toHaveBeenCalled()
+  })
+
+  it('saveNote 同步 searchResults 中的同 id 文章', async () => {
+    useArticleStore.setState({
+      items: [],
+      searchResults: [item(20, { note: '' })],
+    })
+    await useArticleStore.getState().saveNote(20, '笔记内容')
+    expect(AddNote).toHaveBeenCalledWith(20, '笔记内容')
+    expect(useArticleStore.getState().searchResults[0].note).toBe('笔记内容')
+  })
+
+  it('saveNote 后端失败时回滚 note', async () => {
+    AddNote.mockRejectedValueOnce('boom')
+    useArticleStore.setState({ items: [item(10, { note: '旧' })] })
+    await useArticleStore.getState().saveNote(10, '新')
+    const s = useArticleStore.getState()
+    expect(s.items[0].note).toBe('旧') // 回滚
+    expect(s.error).toBe('boom')
   })
 
   it('runSearch 按当前 query 全库搜索并进入搜索态', async () => {

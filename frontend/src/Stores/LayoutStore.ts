@@ -6,6 +6,8 @@ interface LayoutState {
   listWidth: number
   /** 专注阅读模式：隐藏三栏 chrome，仅显示全屏阅读区。不持久化。 */
   focusMode: boolean
+  /** 笔记面板（阅读区底部抽屉）是否展开。会话态，不持久化。 */
+  notePanelOpen: boolean
   setSidebarWidth: (width: number) => void
   setListWidth: (width: number) => void
   resizeSidebar: (delta: number) => void
@@ -13,6 +15,8 @@ interface LayoutState {
   enterFocus: () => void
   exitFocus: () => void
   toggleFocus: () => void
+  toggleNotePanel: () => void
+  closeNotePanel: () => void
 }
 
 const SIDEBAR_MIN = 180
@@ -33,6 +37,7 @@ export const useLayoutStore = create<LayoutState>()(
       sidebarWidth: SIDEBAR_DEFAULT,
       listWidth: LIST_DEFAULT,
       focusMode: false,
+      notePanelOpen: false,
       setSidebarWidth(width: number) {
         set({ sidebarWidth: clamp(width, SIDEBAR_MIN, SIDEBAR_MAX) })
       },
@@ -53,6 +58,12 @@ export const useLayoutStore = create<LayoutState>()(
       },
       toggleFocus() {
         set((s) => ({ focusMode: !s.focusMode }))
+      },
+      toggleNotePanel() {
+        set((s) => ({ notePanelOpen: !s.notePanelOpen }))
+      },
+      closeNotePanel() {
+        set({ notePanelOpen: false })
       },
     }),
     {

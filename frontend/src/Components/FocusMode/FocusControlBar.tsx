@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { useArticleStore } from '../../Stores'
+import { useArticleStore, useLayoutStore } from '../../Stores'
 import { openURL } from '../../Utils'
 import type { Item } from '../../Types'
 import type { Platform } from '../../Hooks'
@@ -28,6 +28,8 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
   const markRead = useArticleStore((s) => s.markRead)
   const markUnread = useArticleStore((s) => s.markUnread)
   const toggleStar = useArticleStore((s) => s.toggleStar)
+  const notePanelOpen = useLayoutStore((s) => s.notePanelOpen)
+  const toggleNotePanel = useLayoutStore((s) => s.toggleNotePanel)
 
   return (
     <div
@@ -78,10 +80,15 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
             </button>
             <button
               type="button"
-              className={styles.barBtn}
-              disabled
-              title="笔记（阶段 14）"
+              className={clsx(
+                styles.barBtn,
+                notePanelOpen && styles.noteActive,
+                item.note.trim() !== '' && styles.hasNote,
+              )}
+              onClick={toggleNotePanel}
+              title={notePanelOpen ? '关闭笔记' : '笔记'}
               aria-label="笔记"
+              aria-pressed={notePanelOpen}
             >
               <NoteIcon size={18} />
             </button>

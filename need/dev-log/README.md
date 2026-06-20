@@ -20,7 +20,7 @@
 | 11 | [专注阅读模式](11-focus-mode.md) | ✅ 已完成 |
 | 12 | [订阅管理功能](12-subscription-management.md) | ✅ 已完成 |
 | 13 | [搜索功能](13-search.md) | ✅ 已完成 |
-| 14 | [笔记功能](14-notes.md) | ⬜ 待开发 |
+| 14 | [笔记功能](14-notes.md) | ✅ 已完成 |
 | 15 | [键盘快捷键系统](15-keyboard-shortcuts.md) | ⬜ 待开发 |
 | 16 | [通知系统](16-notifications.md) | ⬜ 待开发 |
 | 17 | [设置面板](17-settings.md) | ⬜ 待开发 |

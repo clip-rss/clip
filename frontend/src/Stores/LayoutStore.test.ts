@@ -2,7 +2,12 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { useLayoutStore, SIDEBAR_MIN, SIDEBAR_MAX, LIST_MIN, LIST_MAX } from './LayoutStore'
 
 beforeEach(() => {
-  useLayoutStore.setState({ sidebarWidth: 260, listWidth: 380, focusMode: false })
+  useLayoutStore.setState({
+    sidebarWidth: 260,
+    listWidth: 380,
+    focusMode: false,
+    notePanelOpen: false,
+  })
 })
 
 describe('LayoutStore 栏宽', () => {
@@ -62,5 +67,25 @@ describe('LayoutStore 专注模式', () => {
     expect(useLayoutStore.getState().focusMode).toBe(true)
     toggleFocus()
     expect(useLayoutStore.getState().focusMode).toBe(false)
+  })
+})
+
+describe('LayoutStore 笔记面板', () => {
+  it('默认关闭', () => {
+    expect(useLayoutStore.getState().notePanelOpen).toBe(false)
+  })
+
+  it('toggleNotePanel 取反', () => {
+    const { toggleNotePanel } = useLayoutStore.getState()
+    toggleNotePanel()
+    expect(useLayoutStore.getState().notePanelOpen).toBe(true)
+    toggleNotePanel()
+    expect(useLayoutStore.getState().notePanelOpen).toBe(false)
+  })
+
+  it('closeNotePanel 置为关闭', () => {
+    useLayoutStore.setState({ notePanelOpen: true })
+    useLayoutStore.getState().closeNotePanel()
+    expect(useLayoutStore.getState().notePanelOpen).toBe(false)
   })
 })
