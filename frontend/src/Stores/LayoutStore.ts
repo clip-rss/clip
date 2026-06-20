@@ -8,6 +8,8 @@ interface LayoutState {
   focusMode: boolean
   setSidebarWidth: (width: number) => void
   setListWidth: (width: number) => void
+  resizeSidebar: (delta: number) => void
+  resizeList: (delta: number) => void
   enterFocus: () => void
   exitFocus: () => void
   toggleFocus: () => void
@@ -36,6 +38,12 @@ export const useLayoutStore = create<LayoutState>()(
       },
       setListWidth(width: number) {
         set({ listWidth: clamp(width, LIST_MIN, LIST_MAX) })
+      },
+      resizeSidebar(delta: number) {
+        set((s) => ({ sidebarWidth: clamp(s.sidebarWidth + delta, SIDEBAR_MIN, SIDEBAR_MAX) }))
+      },
+      resizeList(delta: number) {
+        set((s) => ({ listWidth: clamp(s.listWidth + delta, LIST_MIN, LIST_MAX) }))
       },
       enterFocus() {
         set({ focusMode: true })

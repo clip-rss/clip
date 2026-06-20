@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import { useArticleStore } from '../../Stores'
 import { openURL } from '../../Utils'
 import type { Item } from '../../Types'
+import type { Platform } from '../../Hooks'
 import {
   BackIcon,
   ReadIcon,
@@ -15,6 +16,7 @@ import styles from './FocusMode.module.scss'
 interface FocusControlBarProps {
   item: Item | null
   visible: boolean
+  platform: Platform | null
   onExit: () => void
   onBarEnter: () => void
   onBarLeave: () => void
@@ -22,7 +24,7 @@ interface FocusControlBarProps {
 
 /** 专注模式顶部浮动控制条：退出 / 标题 / 操作。 */
 function FocusControlBar(props: FocusControlBarProps): JSX.Element {
-  const { item, visible, onExit, onBarEnter, onBarLeave } = props
+  const { item, visible, platform, onExit, onBarEnter, onBarLeave } = props
   const markRead = useArticleStore((s) => s.markRead)
   const markUnread = useArticleStore((s) => s.markUnread)
   const toggleStar = useArticleStore((s) => s.toggleStar)
@@ -33,7 +35,7 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
       onMouseEnter={onBarEnter}
       onMouseLeave={onBarLeave}
     >
-      <div className={styles.barLeft}>
+      <div className={clsx(styles.barLeft, platform === 'mac' && styles.barLeftMac)}>
         <button type="button" className={styles.exitBtn} onClick={onExit} aria-label="退出专注">
           <BackIcon size={18} />
           <span>退出专注</span>

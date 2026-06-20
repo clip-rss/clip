@@ -14,21 +14,17 @@ function Layout(props: LayoutProps): JSX.Element {
   const { toolbar, sidebar, list, reader } = props
   const sidebarWidth = useLayoutStore((s) => s.sidebarWidth)
   const listWidth = useLayoutStore((s) => s.listWidth)
-  const setSidebarWidth = useLayoutStore((s) => s.setSidebarWidth)
-  const setListWidth = useLayoutStore((s) => s.setListWidth)
+  const resizeSidebar = useLayoutStore((s) => s.resizeSidebar)
+  const resizeList = useLayoutStore((s) => s.resizeList)
 
   const handleSidebarResize = useCallback(
-    (delta: number) => {
-      setSidebarWidth(sidebarWidth + delta)
-    },
-    [sidebarWidth, setSidebarWidth],
+    (delta: number) => resizeSidebar(delta),
+    [resizeSidebar],
   )
 
   const handleListResize = useCallback(
-    (delta: number) => {
-      setListWidth(listWidth + delta)
-    },
-    [listWidth, setListWidth],
+    (delta: number) => resizeList(delta),
+    [resizeList],
   )
 
   return (

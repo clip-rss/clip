@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
 import { useArticleStore, useLayoutStore, useReaderStore, useSidebarStore } from '../../Stores'
-import { useArticleNavigation } from '../../Hooks'
+import { useArticleNavigation, usePlatform } from '../../Hooks'
 import { readerBackgroundClass, readerContentStyle } from '../../Utils'
 import { ReaderArticle, Lightbox } from '../ReadingView'
 import FocusControlBar from './FocusControlBar'
@@ -24,6 +24,7 @@ const FOCUS_MAX_WIDTH = '680px'
 function FocusMode(): JSX.Element | null {
   const focusMode = useLayoutStore((s) => s.focusMode)
   const exitFocus = useLayoutStore((s) => s.exitFocus)
+  const platform = usePlatform()
 
   const item = useArticleStore((s) => s.items.find((it) => it.id === s.selectedItemId) ?? null)
   const feeds = useSidebarStore((s) => s.feeds)
@@ -152,6 +153,7 @@ function FocusMode(): JSX.Element | null {
       <FocusControlBar
         item={item}
         visible={barVisible}
+        platform={platform}
         onExit={exitFocus}
         onBarEnter={() => {
           hoveringBar.current = true

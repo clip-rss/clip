@@ -21,6 +21,26 @@ describe('LayoutStore 栏宽', () => {
     setListWidth(9999)
     expect(useLayoutStore.getState().listWidth).toBe(LIST_MAX)
   })
+
+  it('resizeSidebar 累加 delta 且限制在 [MIN, MAX]', () => {
+    const { resizeSidebar } = useLayoutStore.getState()
+    resizeSidebar(10)
+    expect(useLayoutStore.getState().sidebarWidth).toBe(270)
+    resizeSidebar(-5)
+    expect(useLayoutStore.getState().sidebarWidth).toBe(265)
+    resizeSidebar(-9999)
+    expect(useLayoutStore.getState().sidebarWidth).toBe(SIDEBAR_MIN)
+  })
+
+  it('resizeList 累加 delta 且限制在 [MIN, MAX]', () => {
+    const { resizeList } = useLayoutStore.getState()
+    resizeList(20)
+    expect(useLayoutStore.getState().listWidth).toBe(400)
+    resizeList(-10)
+    expect(useLayoutStore.getState().listWidth).toBe(390)
+    resizeList(9999)
+    expect(useLayoutStore.getState().listWidth).toBe(LIST_MAX)
+  })
 })
 
 describe('LayoutStore 专注模式', () => {
