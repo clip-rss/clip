@@ -55,11 +55,14 @@ function Toolbar(props: ToolbarProps): JSX.Element {
   }
 
   return (
-    <div className={styles.toolbar} data-wails-drag>
+    <div
+      className={styles.toolbar}
+      style={{ '--wails-draggable': 'drag' } as any}
+    >
       <div className={styles.left}>
         <WindowControls platform={platform} />
         <span className={styles.title}>Clip</span>
-        <div className={styles.search} data-wails-no-drag>
+        <div className={styles.search}>
           <SearchIcon />
           <input
             ref={inputRef}
@@ -70,6 +73,7 @@ function Toolbar(props: ToolbarProps): JSX.Element {
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             onKeyDown={handleSearchKeyDown}
+            data-wails-no-drag
           />
           {searchQuery ? (
             <button
@@ -84,7 +88,7 @@ function Toolbar(props: ToolbarProps): JSX.Element {
           ) : null}
         </div>
       </div>
-      <div className={styles.right} data-wails-no-drag>
+      <div className={styles.right}>
         <button
           className={styles.addButton}
           title="添加订阅"
@@ -94,7 +98,10 @@ function Toolbar(props: ToolbarProps): JSX.Element {
           ＋ 订阅
         </button>
         <button
-          className={clsx(styles.iconButton, focusMode && styles.iconButtonActive)}
+          className={clsx(
+            styles.iconButton,
+            focusMode && styles.iconButtonActive,
+          )}
           onClick={toggleFocus}
           disabled={!focusMode && !hasSelection}
           title="专注模式 (Ctrl+Shift+F)"

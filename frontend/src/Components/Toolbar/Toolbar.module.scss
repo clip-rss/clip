@@ -22,7 +22,7 @@
 // macOS：为系统原生红绿灯预留空间
 .macSpacer {
   flex-shrink: 0;
-  width: 52px;
+  width: 80px;
   height: 100%;
 }
 
@@ -47,6 +47,7 @@
   background-color: var(--bg-primary);
   color: var(--text-secondary);
   transition: border-color 0.2s;
+  --wails-draggable: 'none';
 
   &:hover,
   &:focus-within {
@@ -92,6 +93,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  --wails-draggable: 'none';
 }
 
 .addButton {
