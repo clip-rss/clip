@@ -167,7 +167,7 @@ function FocusMode(): JSX.Element | null {
         }}
       />
 
-      <div ref={scrollRef} className={styles.scroll}>
+      <div ref={scrollRef} className={styles.scroll} data-reader-scroll="focus">
         {item ? (
           <div key={item.id} className={styles.fadeIn}>
             <ReaderArticle

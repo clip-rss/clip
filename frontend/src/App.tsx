@@ -8,15 +8,16 @@ import {
   Sidebar,
   Toolbar,
 } from './Components'
-import { useFocusHotkey } from './Hooks'
+import { useAppHotkeys } from './Hooks'
 
 function App() {
-  useFocusHotkey()
   const [addOpen, setAddOpen] = useState(false)
 
   function openAddFeed(): void {
     setAddOpen(true)
   }
+
+  useAppHotkeys({ onAddFeed: openAddFeed })
 
   return (
     <>

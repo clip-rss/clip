@@ -69,6 +69,7 @@ function ReadingView(): JSX.Element {
         ref={scrollRef}
         className={clsx(styles.scroll, bgClass)}
         onScroll={handleScroll}
+        data-reader-scroll="main"
       >
         <ReaderArticle
           item={item}

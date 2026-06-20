@@ -32,6 +32,11 @@ interface SidebarState {
   resumeFeed: (id: number) => Promise<void>
   /** 把订阅源移入分类；categoryId 为 0 表示移出到「未分类」。 */
   moveFeed: (feedId: number, categoryId: number) => Promise<void>
+
+  /** 刷新当前选中源（条件 GET）；非单源选中时刷新全部。 */
+  refreshSelected: () => Promise<void>
+  /** 强制全量刷新（忽略条件 GET）。 */
+  forceRefreshAll: () => Promise<void>
 }
 
 export const useSidebarStore = create<SidebarState>()(
@@ -151,6 +156,27 @@ export const useSidebarStore = create<SidebarState>()(
       async moveFeed(feedId, categoryId) {
         try {
           await CategoryService.MoveToCategory(feedId, categoryId)
+          await get().load()
+        } catch (err) {
+          set({ error: toApiError(err) })
+        }
+      },
+
+      async refreshSelected() {
+        const { selection } = get()
+        try {
+          if (selection.kind === 'feed') await FeedService.RefreshFeed(selection.id)
+          else await FeedService.RefreshAll()
+          // 新文章经后端 items:updated 事件驱动列表刷新；此处刷新源元信息（上次更新等）。
+          await get().load()
+        } catch (err) {
+          set({ error: toApiError(err) })
+        }
+      },
+
+      async forceRefreshAll() {
+        try {
+          await FeedService.ForceRefreshAll()
           await get().load()
         } catch (err) {
           set({ error: toApiError(err) })

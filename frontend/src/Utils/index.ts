@@ -26,6 +26,9 @@ export type { FilterSortOptions } from './ArticleFilter'
 // 搜索关键词高亮
 export { highlightText } from './Highlight'
 
+// 快捷键提示文案
+export { modKey, shortcutHint } from './Shortcut'
+
 // 阅读视图：HTML 清洗与排版样式
 export { sanitizeHtml } from './Sanitize'
 export { readerContentStyle, readerBackgroundClass } from './ReaderStyle'

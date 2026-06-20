@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import { ThemeToggle } from '../ThemeToggle'
-import { usePlatform, useSearchHotkey, type Platform } from '../../Hooks'
+import { usePlatform, type Platform } from '../../Hooks'
+import { modKey } from '../../Utils'
 import { useArticleStore, useLayoutStore } from '../../Stores'
 import styles from './Toolbar.module.scss'
 
@@ -27,8 +28,9 @@ function Toolbar(props: ToolbarProps): JSX.Element {
 
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<number | undefined>(undefined)
-
-  useSearchHotkey(() => inputRef.current?.focus())
+  const [searchFocused, setSearchFocused] = useState(false)
+  // 有焦点或已有查询内容时保持展开，避免活动搜索被收起截断。
+  const searchExpanded = searchFocused || searchQuery !== ''
 
   // 卸载时清掉未触发的防抖计时器。
   useEffect(() => () => window.clearTimeout(debounceRef.current), [])
@@ -62,7 +64,7 @@ function Toolbar(props: ToolbarProps): JSX.Element {
       <div className={styles.left}>
         <WindowControls platform={platform} />
         <span className={styles.title}>Clip</span>
-        <div className={styles.search}>
+        <div className={clsx(styles.search, searchExpanded && styles.searchExpanded)}>
           <SearchIcon />
           <input
             ref={inputRef}
@@ -73,6 +75,8 @@ function Toolbar(props: ToolbarProps): JSX.Element {
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             onKeyDown={handleSearchKeyDown}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
             data-wails-no-drag
           />
           {searchQuery ? (
@@ -91,7 +95,7 @@ function Toolbar(props: ToolbarProps): JSX.Element {
       <div className={styles.right}>
         <button
           className={styles.addButton}
-          title="添加订阅"
+          title={`添加订阅 (${modKey(platform)}N)`}
           aria-label="添加订阅"
           onClick={onAddFeed}
         >
@@ -104,7 +108,7 @@ function Toolbar(props: ToolbarProps): JSX.Element {
           )}
           onClick={toggleFocus}
           disabled={!focusMode && !hasSelection}
-          title="专注模式 (Ctrl+Shift+F)"
+          title={`专注模式 (${modKey(platform)}${platform === 'mac' ? '⇧F' : '+Shift+F'})`}
           aria-label="专注模式"
           aria-pressed={focusMode}
         >

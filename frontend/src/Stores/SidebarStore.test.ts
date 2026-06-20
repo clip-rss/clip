@@ -15,6 +15,9 @@ vi.mock('../Utils', () => ({
     DeleteFeed: vi.fn(),
     PauseFeed: vi.fn(),
     ResumeFeed: vi.fn(),
+    RefreshFeed: vi.fn(),
+    RefreshAll: vi.fn(),
+    ForceRefreshAll: vi.fn(),
   },
   toApiError: (e: unknown) => String(e),
 }))
@@ -28,6 +31,9 @@ const AddCategory = CategoryService.AddCategory as Mock
 const MoveToCategory = CategoryService.MoveToCategory as Mock
 const UpdateFeed = FeedService.UpdateFeed as Mock
 const DeleteFeed = FeedService.DeleteFeed as Mock
+const RefreshFeed = FeedService.RefreshFeed as Mock
+const RefreshAll = FeedService.RefreshAll as Mock
+const ForceRefreshAll = FeedService.ForceRefreshAll as Mock
 
 function reset(): void {
   useSidebarStore.setState({
@@ -48,6 +54,9 @@ beforeEach(() => {
   MoveToCategory.mockResolvedValue(undefined)
   UpdateFeed.mockResolvedValue(undefined)
   DeleteFeed.mockResolvedValue(undefined)
+  RefreshFeed.mockResolvedValue(undefined)
+  RefreshAll.mockResolvedValue([])
+  ForceRefreshAll.mockResolvedValue([])
   reset()
 })
 
@@ -116,5 +125,33 @@ describe('SidebarStore', () => {
     await useSidebarStore.getState().deleteFeed(10)
     expect(DeleteFeed).toHaveBeenCalledWith(10)
     expect(useSidebarStore.getState().selection).toEqual({ kind: 'all' })
+  })
+
+  it('refreshSelected 选中单源时刷新该源', async () => {
+    useSidebarStore.setState({ selection: { kind: 'feed', id: 7 } })
+    await useSidebarStore.getState().refreshSelected()
+    expect(RefreshFeed).toHaveBeenCalledWith(7)
+    expect(RefreshAll).not.toHaveBeenCalled()
+    expect(ListFeeds).toHaveBeenCalled() // 触发 load 刷新源元信息
+  })
+
+  it('refreshSelected 非单源选中时刷新全部', async () => {
+    useSidebarStore.setState({ selection: { kind: 'category', id: 2 } })
+    await useSidebarStore.getState().refreshSelected()
+    expect(RefreshAll).toHaveBeenCalled()
+    expect(RefreshFeed).not.toHaveBeenCalled()
+  })
+
+  it('refreshSelected 失败时记录 error', async () => {
+    RefreshAll.mockRejectedValueOnce(new Error('net'))
+    useSidebarStore.setState({ selection: { kind: 'all' } })
+    await useSidebarStore.getState().refreshSelected()
+    expect(useSidebarStore.getState().error).toContain('net')
+  })
+
+  it('forceRefreshAll 调用 ForceRefreshAll 后重新加载', async () => {
+    await useSidebarStore.getState().forceRefreshAll()
+    expect(ForceRefreshAll).toHaveBeenCalled()
+    expect(ListFeeds).toHaveBeenCalled()
   })
 })

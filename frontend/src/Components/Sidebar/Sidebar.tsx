@@ -4,6 +4,7 @@ import * as Tooltip from '@radix-ui/react-tooltip'
 import * as Dialog from '@radix-ui/react-dialog'
 import clsx from 'clsx'
 import { useSidebarStore } from '../../Stores'
+import { usePlatform, HOTKEY_OPML_IMPORT, HOTKEY_OPML_EXPORT } from '../../Hooks'
 import {
   buildFeedTree,
   formatRelativeTime,
@@ -11,6 +12,7 @@ import {
   onFeedError,
   onItemsUpdated,
   OPMLService,
+  shortcutHint,
   toApiError,
 } from '../../Utils'
 import FolderItem from './FolderItem'
@@ -40,6 +42,7 @@ function Sidebar(props: SidebarProps): JSX.Element {
   const [uncatDragOver, setUncatDragOver] = useState(false)
   const [importMsg, setImportMsg] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const platform = usePlatform()
 
   // 初次加载 + 订阅后端事件，新文章/抓取错误时刷新未读与结构
   useEffect(() => {
@@ -51,6 +54,18 @@ function Sidebar(props: SidebarProps): JSX.Element {
       offError()
     }
   }, [load])
+
+  // OPML 导入/导出快捷键经全局事件触发，复用本组件既有 UI 流程。
+  useEffect(() => {
+    const onImport = (): void => fileInputRef.current?.click()
+    const onExport = (): void => void handleExport()
+    window.addEventListener(HOTKEY_OPML_IMPORT, onImport)
+    window.addEventListener(HOTKEY_OPML_EXPORT, onExport)
+    return () => {
+      window.removeEventListener(HOTKEY_OPML_IMPORT, onImport)
+      window.removeEventListener(HOTKEY_OPML_EXPORT, onExport)
+    }
+  }, [])
 
   // 每分钟刷新一次「上次更新」相对时间文案
   const [, setTick] = useState(0)
@@ -138,10 +153,16 @@ function Sidebar(props: SidebarProps): JSX.Element {
           上次更新：{formatRelativeTime(lastUpdated)}
         </span>
         <div className={styles.footerActions}>
-          <IconAction label="导入 OPML" onClick={() => fileInputRef.current?.click()}>
+          <IconAction
+            label={`导入 OPML ${shortcutHint(platform, ['Shift', 'I'])}`}
+            onClick={() => fileInputRef.current?.click()}
+          >
             <ImportIcon size={16} />
           </IconAction>
-          <IconAction label="导出 OPML" onClick={handleExport}>
+          <IconAction
+            label={`导出 OPML ${shortcutHint(platform, ['Shift', 'E'])}`}
+            onClick={handleExport}
+          >
             <ExportIcon size={16} />
           </IconAction>
         </div>

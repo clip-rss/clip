@@ -39,19 +39,30 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 280px;
+  width: 160px;
   height: 32px;
   padding: 0 12px;
   border: 1px solid var(--border);
   border-radius: 20px;
   background-color: var(--bg-primary);
   color: var(--text-secondary);
-  transition: border-color 0.2s;
+  transition: width 0.25s ease, border-color 0.2s;
   --wails-draggable: 'none';
 
   &:hover,
   &:focus-within {
     border-color: var(--accent);
+  }
+}
+
+// 获得焦点或存在查询内容时展开为完整宽度
+.searchExpanded {
+  width: 280px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search {
+    transition: border-color 0.2s;
   }
 }
 
