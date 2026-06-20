@@ -68,6 +68,13 @@
   font-size: 12px;
 }
 
+// 搜索结果数提示
+.resultCount {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 /* ===== Radix 菜单 ===== */
 .menuContent {
   min-width: 140px;
@@ -208,6 +215,14 @@
 
 .titleUnread {
   font-weight: 600;
+}
+
+// 搜索关键词高亮（弱化处理，避免网页感）
+.mark {
+  padding: 0 1px;
+  border-radius: 2px;
+  background-color: color-mix(in srgb, var(--accent) 24%, transparent);
+  color: inherit;
 }
 
 .summary {

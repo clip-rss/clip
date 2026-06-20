@@ -3,6 +3,8 @@ import styles from './ArticleList.module.scss'
 
 interface EmptyStateProps {
   filter: ArticleFilter
+  /** 搜索模式：展示「未找到匹配…」文案。 */
+  searchQuery?: string
 }
 
 const EMPTY_TEXT: Record<ArticleFilter, string> = {
@@ -14,6 +16,12 @@ const EMPTY_TEXT: Record<ArticleFilter, string> = {
 }
 
 function EmptyState(props: EmptyStateProps): JSX.Element {
+  const { filter, searchQuery } = props
+  const text =
+    searchQuery !== undefined
+      ? `未找到匹配「${searchQuery}」的文章`
+      : EMPTY_TEXT[filter]
+
   return (
     <div className={styles.empty}>
       <svg
@@ -34,7 +42,7 @@ function EmptyState(props: EmptyStateProps): JSX.Element {
         <circle cx="64" cy="58" r="10" />
         <path d="M71 65l6 6" />
       </svg>
-      <p className={styles.emptyText}>{EMPTY_TEXT[props.filter]}</p>
+      <p className={styles.emptyText}>{text}</p>
     </div>
   )
 }

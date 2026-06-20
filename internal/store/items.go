@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 )
 
 // CreateItem 创建新文章条目
@@ -335,25 +336,101 @@ func (s *Store) UpdateItemNote(id int64, note string) error {
 	return nil
 }
 
-// SearchItems 全文搜索文章（使用 FTS5）
+// 列字段，搜索两种查询路径共用。
+const itemColumns = `i.id, i.feed_id, i.title, i.author, i.published_at, i.updated_at, i.url,
+	       i.content, i.summary, i.enclosure, i.categories, i.is_read, i.is_starred,
+	       i.read_at, i.note, i.created_at`
+
+// SearchItems 全文搜索文章（标题/摘要/笔记）。
+//
+// 分词器为 trigram，仅能匹配 ≥3 字符的子串；当关键词被空白切分后存在长度
+// 不足 3 的 token（如中文「周刊」、英文「Go」）时，FTS 无法命中，回退到
+// LIKE 子串匹配。多个 token 之间按 AND 处理（全部命中才算匹配）。
 func (s *Store) SearchItems(keyword string, limit, offset int) ([]Item, error) {
+	tokens := strings.Fields(keyword)
+	if len(tokens) == 0 {
+		return []Item{}, nil
+	}
+
+	if hasShortToken(tokens) {
+		return s.searchByLike(tokens, limit, offset)
+	}
+	return s.searchByFTS(tokens, limit, offset)
+}
+
+// searchByFTS 走 FTS5 MATCH，按相关度排序。
+func (s *Store) searchByFTS(tokens []string, limit, offset int) ([]Item, error) {
 	query := `
-		SELECT i.id, i.feed_id, i.title, i.author, i.published_at, i.updated_at, i.url,
-		       i.content, i.summary, i.enclosure, i.categories, i.is_read, i.is_starred,
-		       i.read_at, i.note, i.created_at
+		SELECT ` + itemColumns + `
 		FROM items i
 		INNER JOIN items_fts fts ON i.id = fts.rowid
 		WHERE items_fts MATCH ?
 		ORDER BY rank
 		LIMIT ? OFFSET ?
 	`
-	rows, err := s.db.Query(query, keyword, limit, offset)
+	rows, err := s.db.Query(query, buildFTSMatch(tokens), limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search items: %w", err)
 	}
 	defer rows.Close()
 
 	return s.scanItems(rows)
+}
+
+// searchByLike 子串匹配兜底：每个 token 需在 title/summary/note 任一字段出现，
+// token 之间 AND。按发布时间倒序。
+func (s *Store) searchByLike(tokens []string, limit, offset int) ([]Item, error) {
+	var clauses []string
+	var args []any
+	for _, tok := range tokens {
+		clauses = append(clauses, `(i.title LIKE ? ESCAPE '\' OR i.summary LIKE ? ESCAPE '\' OR i.note LIKE ? ESCAPE '\')`)
+		pat := "%" + escapeLike(tok) + "%"
+		args = append(args, pat, pat, pat)
+	}
+
+	query := `
+		SELECT ` + itemColumns + `
+		FROM items i
+		WHERE ` + strings.Join(clauses, " AND ") + `
+		ORDER BY i.published_at DESC
+		LIMIT ? OFFSET ?
+	`
+	args = append(args, limit, offset)
+
+	rows, err := s.db.Query(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search items (like): %w", err)
+	}
+	defer rows.Close()
+
+	return s.scanItems(rows)
+}
+
+// hasShortToken 报告是否存在长度不足 3 个字符（rune）的 token——trigram 无法命中。
+func hasShortToken(tokens []string) bool {
+	for _, tok := range tokens {
+		if len([]rune(tok)) < 3 {
+			return true
+		}
+	}
+	return false
+}
+
+// buildFTSMatch 将关键词 token 构造为安全的 FTS5 MATCH 串：
+// 每个 token 用双引号包裹为短语（内部 " 转义为 ""），token 间空格即隐式 AND。
+// 避免用户输入中的 * - : 等被当作 FTS 语法。
+func buildFTSMatch(tokens []string) string {
+	quoted := make([]string, len(tokens))
+	for i, tok := range tokens {
+		quoted[i] = `"` + strings.ReplaceAll(tok, `"`, `""`) + `"`
+	}
+	return strings.Join(quoted, " ")
+}
+
+// escapeLike 转义 LIKE 通配符，配合 ESCAPE '\' 使用。
+func escapeLike(s string) string {
+	r := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
+	return r.Replace(s)
 }
 
 // CleanupOldItems 清理旧文章（保留每个订阅源的 maxItems 条）

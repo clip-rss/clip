@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { formatRelativeTime, openURL } from '../../Utils'
+import { formatRelativeTime, highlightText, openURL } from '../../Utils'
 import type { Item } from '../../Types'
 import { StarIcon, ExternalLinkIcon } from './Icons'
 import styles from './ArticleList.module.scss'
@@ -10,6 +10,8 @@ interface ArticleRowProps {
   selected: boolean
   onSelect: (id: number) => void
   onToggleStar: (id: number) => void
+  /** 搜索关键词；存在时高亮标题/摘要的匹配片段。 */
+  query?: string
 }
 
 /** 去除摘要中的 HTML 标签并解码实体，仅取纯文本用于列表展示。 */
@@ -20,8 +22,11 @@ function htmlToText(html: string): string {
 }
 
 function ArticleRow(props: ArticleRowProps): JSX.Element {
-  const { item, sourceName, selected, onSelect, onToggleStar } = props
+  const { item, sourceName, selected, onSelect, onToggleStar, query } = props
   const summary = htmlToText(item.summary)
+  const q = query?.trim()
+  const titleNode = q ? highlightText(item.title, q, styles.mark) : item.title
+  const summaryNode = q ? highlightText(summary, q, styles.mark) : summary
 
   function handleStar(e: React.MouseEvent): void {
     e.stopPropagation()
@@ -44,8 +49,8 @@ function ArticleRow(props: ArticleRowProps): JSX.Element {
       <span className={clsx(styles.dot, item.isRead && styles.dotRead)} aria-hidden="true" />
 
       <div className={styles.body}>
-        <div className={clsx(styles.title, !item.isRead && styles.titleUnread)}>{item.title}</div>
-        {summary ? <div className={styles.summary}>{summary}</div> : null}
+        <div className={clsx(styles.title, !item.isRead && styles.titleUnread)}>{titleNode}</div>
+        {summary ? <div className={styles.summary}>{summaryNode}</div> : null}
         <div className={styles.meta}>
           {sourceName ? <span className={styles.source}>{sourceName}</span> : null}
           {sourceName ? <span className={styles.metaDot}>·</span> : null}

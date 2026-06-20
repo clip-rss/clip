@@ -16,6 +16,15 @@ interface ArticleState {
   /** 当前列表的选中范围，供事件驱动的 reload 复用。 */
   currentSelection: Selection
 
+  /** 搜索输入原文（受控搜索框）。 */
+  searchQuery: string
+  /** 全库搜索结果（独立于 items，不套用筛选/分类）。 */
+  searchResults: Item[]
+  /** 搜索请求进行中。 */
+  searching: boolean
+  /** 是否处于搜索模式（中间栏展示搜索结果）。 */
+  searchActive: boolean
+
   /** 按选中范围加载文章（清空已选文章）。 */
   load: (selection: Selection) => Promise<void>
   /** 重新拉取当前范围（保留已选文章），用于新文章事件。 */
@@ -28,6 +37,13 @@ interface ArticleState {
   markUnread: (id: number) => Promise<void>
   markAllRead: (ids: number[]) => Promise<void>
   batchStar: (ids: number[]) => Promise<void>
+
+  /** 仅更新搜索框文本（不触发请求；防抖在调用方）。 */
+  setSearchQuery: (q: string) => void
+  /** 按当前 searchQuery 执行全库搜索；空查询等价于清除。 */
+  runSearch: () => Promise<void>
+  /** 退出搜索模式，恢复原列表。 */
+  clearSearch: () => void
 }
 
 function scopeFeedId(selection: Selection): number {
@@ -50,11 +66,11 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     }
   }
 
-  /** 局部更新某文章字段。 */
+  /** 局部更新某文章字段（同步 items 与 searchResults，保证两种列表显示一致）。 */
   function patchItem(id: number, patch: Partial<Item>): void {
-    set({
-      items: get().items.map((it) => (it.id === id ? ({ ...it, ...patch } as Item) : it)),
-    })
+    const apply = (list: Item[]): Item[] =>
+      list.map((it) => (it.id === id ? ({ ...it, ...patch } as Item) : it))
+    set({ items: apply(get().items), searchResults: apply(get().searchResults) })
   }
 
   return {
@@ -65,6 +81,10 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     sort: 'time',
     selectedItemId: null,
     currentSelection: { kind: 'all' },
+    searchQuery: '',
+    searchResults: [],
+    searching: false,
+    searchActive: false,
 
     async load(selection) {
       set({ currentSelection: selection, selectedItemId: null })
@@ -85,7 +105,8 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
 
     selectItem(id) {
       set({ selectedItemId: id })
-      const item = get().items.find((it) => it.id === id)
+      const { items, searchResults } = get()
+      const item = items.find((it) => it.id === id) ?? searchResults.find((it) => it.id === id)
       if (!item || item.isRead) return
       patchItem(id, { isRead: true }) // 点击即标记已读（乐观）
       ItemService.MarkRead(id)
@@ -158,6 +179,32 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
         set({ error: toApiError(err) })
         await get().reload()
       }
+    },
+
+    setSearchQuery(q) {
+      set({ searchQuery: q })
+    },
+
+    async runSearch() {
+      // 读取最新输入（而非闭包捕获），避免防抖回调与 clearSearch 竞态。
+      const trimmed = get().searchQuery.trim()
+      if (!trimmed) {
+        get().clearSearch()
+        return
+      }
+      set({ searching: true, searchActive: true, selectedItemId: null, error: null })
+      try {
+        const results = await ItemService.SearchItems(trimmed, LOAD_LIMIT, 0)
+        // 防竞态：输入在请求期间变化（含被清除）则丢弃本次结果。
+        if (get().searchQuery.trim() !== trimmed) return
+        set({ searchResults: results ?? [], searching: false })
+      } catch (err) {
+        set({ error: toApiError(err), searching: false, searchResults: [] })
+      }
+    },
+
+    clearSearch() {
+      set({ searchQuery: '', searchResults: [], searching: false, searchActive: false })
     },
   }
 })

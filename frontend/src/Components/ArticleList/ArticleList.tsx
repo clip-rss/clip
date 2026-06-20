@@ -26,11 +26,16 @@ function ArticleList(): JSX.Element {
   const toggleStar = useArticleStore((s) => s.toggleStar)
   const markAllRead = useArticleStore((s) => s.markAllRead)
   const batchStar = useArticleStore((s) => s.batchStar)
+  const searchActive = useArticleStore((s) => s.searchActive)
+  const searchQuery = useArticleStore((s) => s.searchQuery)
+  const searching = useArticleStore((s) => s.searching)
+  const clearSearch = useArticleStore((s) => s.clearSearch)
 
-  // 选中范围变化 → 重新加载
+  // 选中范围变化 → 退出搜索并重新加载该范围
   useEffect(() => {
+    clearSearch()
     load(selection)
-  }, [selection, load])
+  }, [selection, load, clearSearch])
 
   // 新文章事件 → 重新拉取当前范围
   useEffect(() => {
@@ -62,7 +67,8 @@ function ArticleList(): JSX.Element {
     batchStar(visibleItems.filter((it) => !it.isStarred).map((it) => it.id))
   }
 
-  const showEmpty = !loading && visibleItems.length === 0
+  const busy = loading || (searchActive && searching)
+  const showEmpty = !busy && visibleItems.length === 0
 
   return (
     <div className={styles.list}>
@@ -73,10 +79,12 @@ function ArticleList(): JSX.Element {
         onSortChange={setSort}
         onMarkAllRead={handleMarkAllRead}
         onBatchStar={handleBatchStar}
+        searchActive={searchActive}
+        resultCount={visibleItems.length}
       />
 
       {showEmpty ? (
-        <EmptyState filter={filter} />
+        <EmptyState filter={filter} searchQuery={searchActive ? searchQuery : undefined} />
       ) : (
         <div ref={scrollRef} className={styles.scroll} role="listbox" aria-label="文章列表">
           <div className={styles.virtualInner} style={{ height: virtualizer.getTotalSize() }}>
@@ -94,6 +102,7 @@ function ArticleList(): JSX.Element {
                     selected={item.id === selectedItemId}
                     onSelect={selectItem}
                     onToggleStar={toggleStar}
+                    query={searchActive ? searchQuery : undefined}
                   />
                 </div>
               )

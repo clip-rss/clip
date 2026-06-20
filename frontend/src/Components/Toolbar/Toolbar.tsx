@@ -1,8 +1,12 @@
+import { useEffect, useRef } from 'react'
 import clsx from 'clsx'
 import { ThemeToggle } from '../ThemeToggle'
-import { usePlatform, type Platform } from '../../Hooks'
+import { usePlatform, useSearchHotkey, type Platform } from '../../Hooks'
 import { useArticleStore, useLayoutStore } from '../../Stores'
 import styles from './Toolbar.module.scss'
+
+/** 搜索输入防抖间隔（毫秒）。 */
+const SEARCH_DEBOUNCE_MS = 300
 
 interface ToolbarProps {
   /** 「添加订阅」入口；点击「＋ 订阅」按钮触发。 */
@@ -16,6 +20,40 @@ function Toolbar(props: ToolbarProps): JSX.Element {
   const toggleFocus = useLayoutStore((s) => s.toggleFocus)
   const hasSelection = useArticleStore((s) => s.selectedItemId !== null)
 
+  const searchQuery = useArticleStore((s) => s.searchQuery)
+  const setSearchQuery = useArticleStore((s) => s.setSearchQuery)
+  const runSearch = useArticleStore((s) => s.runSearch)
+  const clearSearch = useArticleStore((s) => s.clearSearch)
+
+  const inputRef = useRef<HTMLInputElement>(null)
+  const debounceRef = useRef<number | undefined>(undefined)
+
+  useSearchHotkey(() => inputRef.current?.focus())
+
+  // 卸载时清掉未触发的防抖计时器。
+  useEffect(() => () => window.clearTimeout(debounceRef.current), [])
+
+  function handleSearchChange(value: string): void {
+    setSearchQuery(value)
+    window.clearTimeout(debounceRef.current)
+    debounceRef.current = window.setTimeout(() => runSearch(), SEARCH_DEBOUNCE_MS)
+  }
+
+  function handleClear(): void {
+    window.clearTimeout(debounceRef.current)
+    clearSearch()
+    inputRef.current?.focus()
+  }
+
+  function handleSearchKeyDown(e: React.KeyboardEvent): void {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      window.clearTimeout(debounceRef.current)
+      clearSearch()
+      inputRef.current?.blur()
+    }
+  }
+
   return (
     <div className={styles.toolbar} data-wails-drag>
       <div className={styles.left}>
@@ -24,10 +62,26 @@ function Toolbar(props: ToolbarProps): JSX.Element {
         <div className={styles.search} data-wails-no-drag>
           <SearchIcon />
           <input
+            ref={inputRef}
+            id="toolbar-search"
             type="text"
-            placeholder="搜索文章..."
+            placeholder="搜索文章、笔记…"
             className={styles.searchInput}
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
           />
+          {searchQuery ? (
+            <button
+              type="button"
+              className={styles.searchClear}
+              onClick={handleClear}
+              title="清除搜索"
+              aria-label="清除搜索"
+            >
+              <ClearIcon />
+            </button>
+          ) : null}
         </div>
       </div>
       <div className={styles.right} data-wails-no-drag>
@@ -109,6 +163,23 @@ function SearchIcon(): JSX.Element {
     >
       <circle cx="11" cy="11" r="8" />
       <path d="m21 21-4.35-4.35" />
+    </svg>
+  )
+}
+
+function ClearIcon(): JSX.Element {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <path d="M18 6 6 18M6 6l12 12" />
     </svg>
   )
 }

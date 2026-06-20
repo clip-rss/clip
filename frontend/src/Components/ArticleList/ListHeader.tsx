@@ -11,6 +11,9 @@ interface ListHeaderProps {
   onSortChange: (sort: ArticleSort) => void
   onMarkAllRead: () => void
   onBatchStar: () => void
+  /** 搜索模式：头部替换为结果数提示，隐藏筛选/排序/批量。 */
+  searchActive?: boolean
+  resultCount?: number
 }
 
 const FILTER_OPTIONS: { value: ArticleFilter; label: string }[] = [
@@ -30,7 +33,25 @@ const FILTER_LABEL: Record<ArticleFilter, string> = {
 }
 
 function ListHeader(props: ListHeaderProps): JSX.Element {
-  const { filter, sort, onFilterChange, onSortChange, onMarkAllRead, onBatchStar } = props
+  const {
+    filter,
+    sort,
+    onFilterChange,
+    onSortChange,
+    onMarkAllRead,
+    onBatchStar,
+    searchActive = false,
+    resultCount = 0,
+  } = props
+
+  // 搜索模式：头部仅显示结果数，不展示筛选/排序/批量操作。
+  if (searchActive) {
+    return (
+      <div className={styles.header}>
+        <span className={styles.resultCount}>找到 {resultCount} 篇文章</span>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.header}>

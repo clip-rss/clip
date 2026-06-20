@@ -23,6 +23,9 @@ export { formatRelativeTime, latestUpdated } from './Time'
 export { categoryFeedIds, filterAndSortItems, neighborItemId } from './ArticleFilter'
 export type { FilterSortOptions } from './ArticleFilter'
 
+// 搜索关键词高亮
+export { highlightText } from './Highlight'
+
 // 阅读视图：HTML 清洗与排版样式
 export { sanitizeHtml } from './Sanitize'
 export { readerContentStyle, readerBackgroundClass } from './ReaderStyle'

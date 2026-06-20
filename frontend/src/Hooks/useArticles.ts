@@ -33,12 +33,15 @@ export function useVisibleArticles(): Item[] {
   const items = useArticleStore((s) => s.items)
   const filter = useArticleStore((s) => s.filter)
   const sort = useArticleStore((s) => s.sort)
+  const searchActive = useArticleStore((s) => s.searchActive)
+  const searchResults = useArticleStore((s) => s.searchResults)
   const { feedTitleOf, allowedFeedIds } = useScopeContext()
 
-  return useMemo(
-    () => filterAndSortItems(items, { filter, sort, allowedFeedIds, feedTitleOf }),
-    [items, filter, sort, allowedFeedIds, feedTitleOf],
-  )
+  return useMemo(() => {
+    // 搜索模式：全库结果，已按后端 rank/时间排序，不再套用筛选与分类限定。
+    if (searchActive) return searchResults
+    return filterAndSortItems(items, { filter, sort, allowedFeedIds, feedTitleOf })
+  }, [searchActive, searchResults, items, filter, sort, allowedFeedIds, feedTitleOf])
 }
 
 export interface ArticleNavigation {

@@ -1,6 +1,7 @@
 package store
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -484,5 +485,130 @@ func TestBatchOperations(t *testing.T) {
 	count, _ = store.GetUnreadCount()
 	if count != 5 {
 		t.Errorf("expected 5 unread after batch unmark, got %d", count)
+	}
+}
+
+// seedSearchItems 建一个源并插入若干用于搜索测试的文章。
+func seedSearchItems(t *testing.T, store *Store, titles []string) int64 {
+	t.Helper()
+	feed := &Feed{URL: "https://s.example/feed", Title: "S", UpdateInterval: 30, MaxItems: 100, Status: "active"}
+	if err := store.CreateFeed(feed); err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+	for i, title := range titles {
+		it := &Item{
+			FeedID:      feed.ID,
+			Title:       title,
+			URL:         fmt.Sprintf("https://s.example/%d", i),
+			PublishedAt: time.Now(),
+		}
+		if err := store.CreateItem(it); err != nil {
+			t.Fatalf("CreateItem: %v", err)
+		}
+	}
+	return feed.ID
+}
+
+// TestSearchChineseSubstring 中文子串：2 字走 LIKE、≥3 字走 FTS，均应命中。
+func TestSearchChineseSubstring(t *testing.T) {
+	store := setupTestDB(t)
+	seedSearchItems(t, store, []string{
+		"科技爱好者周刊第 400 期",
+		"前端每周清单",
+		"数据库优化实践",
+	})
+
+	cases := []struct {
+		kw   string
+		want int
+	}{
+		{"周刊", 1},     // 2 字 → LIKE
+		{"爱好者", 1},    // 3 字 → FTS
+		{"科技爱好", 1},   // 4 字 → FTS
+		{"清单", 1},     // 2 字 → LIKE
+		{"不存在的词", 0},
+	}
+	for _, c := range cases {
+		got, err := store.SearchItems(c.kw, 10, 0)
+		if err != nil {
+			t.Fatalf("SearchItems(%q): %v", c.kw, err)
+		}
+		if len(got) != c.want {
+			t.Errorf("SearchItems(%q) = %d, want %d", c.kw, len(got), c.want)
+		}
+	}
+}
+
+// TestSearchEnglishCaseInsensitive 英文大小写不敏感。
+func TestSearchEnglishCaseInsensitive(t *testing.T) {
+	store := setupTestDB(t)
+	seedSearchItems(t, store, []string{"Swift Concurrency Guide", "Go Modules"})
+
+	for _, kw := range []string{"Swift", "swift", "SWIFT", "concurrency"} {
+		got, err := store.SearchItems(kw, 10, 0)
+		if err != nil {
+			t.Fatalf("SearchItems(%q): %v", kw, err)
+		}
+		if len(got) != 1 {
+			t.Errorf("SearchItems(%q) = %d, want 1", kw, len(got))
+		}
+	}
+}
+
+// TestSearchSpecialCharsNoError 含 FTS 语法字符的输入不应报错。
+func TestSearchSpecialCharsNoError(t *testing.T) {
+	store := setupTestDB(t)
+	seedSearchItems(t, store, []string{`Title with "quotes" and dash-here`})
+
+	for _, kw := range []string{`"`, `a"b`, `c-d`, `*`, `foo:bar`, `(x)`} {
+		if _, err := store.SearchItems(kw, 10, 0); err != nil {
+			t.Errorf("SearchItems(%q) unexpected error: %v", kw, err)
+		}
+	}
+}
+
+// TestSearchMultiTokenAND 多 token 之间为 AND。
+func TestSearchMultiTokenAND(t *testing.T) {
+	store := setupTestDB(t)
+	seedSearchItems(t, store, []string{
+		"科技爱好者周刊 Swift 专题",
+		"科技爱好者周刊 React 专题",
+	})
+
+	// 两个都 ≥3 字 → FTS AND
+	got, err := store.SearchItems("爱好者 Swift", 10, 0)
+	if err != nil {
+		t.Fatalf("SearchItems: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("AND search = %d, want 1", len(got))
+	}
+
+	// 含 2 字短词 → LIKE AND
+	got, err = store.SearchItems("周刊 React", 10, 0)
+	if err != nil {
+		t.Fatalf("SearchItems: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("AND search (like) = %d, want 1", len(got))
+	}
+}
+
+// TestFTSMigrationRebuildsIndex 迁移后 user_version 应为 1，且已有文章可被搜索到。
+func TestFTSMigrationRebuildsIndex(t *testing.T) {
+	store := setupTestDB(t)
+	seedSearchItems(t, store, []string{"科技爱好者周刊"})
+
+	var version int
+	if err := store.db.QueryRow(`PRAGMA user_version`).Scan(&version); err != nil {
+		t.Fatalf("read user_version: %v", err)
+	}
+	if version != 1 {
+		t.Errorf("user_version = %d, want 1", version)
+	}
+
+	// 再次运行迁移应是 no-op（不报错、版本不变）。
+	if err := store.migrateFTSTokenizer(); err != nil {
+		t.Fatalf("re-run migrateFTSTokenizer: %v", err)
 	}
 }

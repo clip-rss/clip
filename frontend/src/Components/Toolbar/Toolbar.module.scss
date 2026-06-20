@@ -56,6 +56,7 @@
 
 .searchInput {
   flex: 1;
+  min-width: 0;
   border: none;
   background: transparent;
   color: var(--text-primary);
@@ -64,6 +65,26 @@
 
   &::placeholder {
     color: var(--text-secondary);
+    font-style: italic;
+  }
+}
+
+.searchClear {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: background-color 0.15s, color 0.15s;
+
+  &:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
   }
 }
 

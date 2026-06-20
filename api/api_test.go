@@ -329,6 +329,25 @@ func TestItemServiceOps(t *testing.T) {
 	}
 }
 
+// TestSearchItemsServiceChinese 验证绑定层经由 store 的中文子串搜索可用。
+func TestSearchItemsServiceChinese(t *testing.T) {
+	st := newTestStore(t)
+	feedID := seedFeed(t, st, "https://s.example/feed", "S")
+	svc := NewItemService(st)
+
+	it := &store.Item{FeedID: feedID, Title: "科技爱好者周刊", URL: "https://s.example/1"}
+	if _, err := st.CreateItemIfNotExists(it); err != nil {
+		t.Fatalf("seed item: %v", err)
+	}
+
+	if found, _ := svc.SearchItems("周刊", 10, 0); len(found) != 1 {
+		t.Errorf("SearchItems(周刊) = %d, want 1", len(found))
+	}
+	if empty, _ := svc.SearchItems("  ", 10, 0); len(empty) != 0 {
+		t.Errorf("blank search should be empty, got %d", len(empty))
+	}
+}
+
 // --- CategoryService ---
 
 func TestCategoryServiceCRUDAndMove(t *testing.T) {

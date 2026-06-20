@@ -149,13 +149,15 @@ CREATE INDEX IF NOT EXISTS idx_items_read ON items(is_read);
 CREATE INDEX IF NOT EXISTS idx_items_starred ON items(is_starred);
 
 -- FTS5 全文搜索索引（文章标题、摘要、笔记）
+-- 使用 trigram 分词器：英文不区分大小写，且支持中文子串匹配（≥3 字符）；
+-- 1~2 字短词由查询层用 LIKE 兜底（见 items.go: SearchItems）。
 CREATE VIRTUAL TABLE IF NOT EXISTS items_fts USING fts5(
 	title,
 	summary,
 	note,
 	content='items',
 	content_rowid='id',
-	tokenize='porter unicode61'
+	tokenize='trigram'
 );
 
 -- FTS5 触发器：插入
@@ -186,6 +188,68 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 	`
 
-	_, err := s.db.Exec(schema)
-	return err
+	if _, err := s.db.Exec(schema); err != nil {
+		return err
+	}
+
+	return s.migrateFTSTokenizer()
+}
+
+// migrateFTSTokenizer 将既有用户库的 FTS 索引从旧分词器（porter unicode61）
+// 重建为 trigram，以支持中文子串搜索。通过 PRAGMA user_version 做一次性门控。
+//
+// 新库：上面的 CREATE ... IF NOT EXISTS 已用 trigram 建好，这里仅把版本推进到 1，
+// 不会真正重建。旧库：DROP 重建 items_fts 与触发器，再从 items 回填索引。
+func (s *Store) migrateFTSTokenizer() error {
+	var version int
+	if err := s.db.QueryRow(`PRAGMA user_version`).Scan(&version); err != nil {
+		return fmt.Errorf("failed to read user_version: %w", err)
+	}
+	if version >= 1 {
+		return nil
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin fts migration: %w", err)
+	}
+	defer tx.Rollback()
+
+	// 重建 FTS 表与触发器为 trigram 分词器。旧库此处会真正切换分词器；
+	// 新库 items_fts 已是 trigram，DROP/CREATE 等价于无害重建。
+	stmts := []string{
+		`DROP TRIGGER IF EXISTS items_fts_insert`,
+		`DROP TRIGGER IF EXISTS items_fts_update`,
+		`DROP TRIGGER IF EXISTS items_fts_delete`,
+		`DROP TABLE IF EXISTS items_fts`,
+		`CREATE VIRTUAL TABLE items_fts USING fts5(
+			title, summary, note,
+			content='items', content_rowid='id',
+			tokenize='trigram'
+		)`,
+		`CREATE TRIGGER items_fts_insert AFTER INSERT ON items BEGIN
+			INSERT INTO items_fts(rowid, title, summary, note)
+			VALUES (new.id, new.title, new.summary, new.note);
+		END`,
+		`CREATE TRIGGER items_fts_update AFTER UPDATE ON items BEGIN
+			INSERT INTO items_fts(items_fts, rowid, title, summary, note)
+			VALUES ('delete', old.id, old.title, old.summary, old.note);
+			INSERT INTO items_fts(rowid, title, summary, note)
+			VALUES (new.id, new.title, new.summary, new.note);
+		END`,
+		`CREATE TRIGGER items_fts_delete AFTER DELETE ON items BEGIN
+			INSERT INTO items_fts(items_fts, rowid, title, summary, note)
+			VALUES ('delete', old.id, old.title, old.summary, old.note);
+		END`,
+		// 从外部内容表 items 重建全部索引。
+		`INSERT INTO items_fts(items_fts) VALUES('rebuild')`,
+		`PRAGMA user_version = 1`,
+	}
+	for _, stmt := range stmts {
+		if _, err := tx.Exec(stmt); err != nil {
+			return fmt.Errorf("fts migration step failed (%.40s...): %w", stmt, err)
+		}
+	}
+
+	return tx.Commit()
 }

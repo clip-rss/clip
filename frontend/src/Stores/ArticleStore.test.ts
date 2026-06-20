@@ -8,6 +8,7 @@ vi.mock('../Utils', () => ({
     MarkUnread: vi.fn(),
     ToggleStar: vi.fn(),
     BatchMarkRead: vi.fn(),
+    SearchItems: vi.fn(),
   },
   // SidebarStore.load 依赖（refreshSidebar 会触发）
   CategoryService: { ListCategories: vi.fn() },
@@ -22,6 +23,7 @@ const ListItems = ItemService.ListItems as Mock
 const MarkRead = ItemService.MarkRead as Mock
 const ToggleStar = ItemService.ToggleStar as Mock
 const BatchMarkRead = ItemService.BatchMarkRead as Mock
+const SearchItems = ItemService.SearchItems as Mock
 
 function item(id: number, opts: Partial<Item> = {}): Item {
   return { id, feedId: 1, isRead: false, isStarred: false, ...opts } as Item
@@ -36,6 +38,10 @@ function reset(): void {
     sort: 'time',
     selectedItemId: null,
     currentSelection: { kind: 'all' },
+    searchQuery: '',
+    searchResults: [],
+    searching: false,
+    searchActive: false,
   })
 }
 
@@ -45,6 +51,7 @@ beforeEach(() => {
   MarkRead.mockResolvedValue(undefined)
   ToggleStar.mockResolvedValue(undefined)
   BatchMarkRead.mockResolvedValue(undefined)
+  SearchItems.mockResolvedValue([])
   reset()
 })
 
@@ -107,5 +114,58 @@ describe('ArticleStore', () => {
     await useArticleStore.getState().batchStar([1, 2])
     expect(ToggleStar).toHaveBeenCalledTimes(2)
     expect(useArticleStore.getState().items.every((i) => i.isStarred)).toBe(true)
+  })
+
+  it('runSearch 按当前 query 全库搜索并进入搜索态', async () => {
+    SearchItems.mockResolvedValue([item(7), item(8)])
+    useArticleStore.getState().setSearchQuery('周刊')
+    await useArticleStore.getState().runSearch()
+    const s = useArticleStore.getState()
+    expect(SearchItems).toHaveBeenCalledWith('周刊', 2000, 0)
+    expect(s.searchActive).toBe(true)
+    expect(s.searchResults).toHaveLength(2)
+    expect(s.searching).toBe(false)
+  })
+
+  it('runSearch 空 query 等价清除，不发请求', async () => {
+    useArticleStore.getState().setSearchQuery('   ')
+    await useArticleStore.getState().runSearch()
+    expect(SearchItems).not.toHaveBeenCalled()
+    expect(useArticleStore.getState().searchActive).toBe(false)
+  })
+
+  it('clearSearch 退出搜索态并清空结果', async () => {
+    SearchItems.mockResolvedValue([item(7)])
+    useArticleStore.getState().setSearchQuery('go')
+    await useArticleStore.getState().runSearch()
+    useArticleStore.getState().clearSearch()
+    const s = useArticleStore.getState()
+    expect(s.searchActive).toBe(false)
+    expect(s.searchQuery).toBe('')
+    expect(s.searchResults).toEqual([])
+  })
+
+  it('runSearch 期间 query 变化则丢弃过期结果', async () => {
+    // 请求 resolve 前把 query 改掉，结果不应落地。
+    SearchItems.mockImplementation(async () => {
+      useArticleStore.setState({ searchQuery: '别的词' })
+      return [item(1)]
+    })
+    useArticleStore.getState().setSearchQuery('周刊')
+    await useArticleStore.getState().runSearch()
+    expect(useArticleStore.getState().searchResults).toEqual([])
+  })
+
+  it('选中搜索结果即便不在 items 中也能标记已读', () => {
+    useArticleStore.setState({
+      searchActive: true,
+      searchResults: [item(20, { isRead: false })],
+      items: [],
+    })
+    useArticleStore.getState().selectItem(20)
+    const s = useArticleStore.getState()
+    expect(s.selectedItemId).toBe(20)
+    expect(s.searchResults[0].isRead).toBe(true)
+    expect(MarkRead).toHaveBeenCalledWith(20)
   })
 })
