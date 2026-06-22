@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   AddFeedModal,
   ArticleList,
@@ -10,6 +10,7 @@ import {
   Toolbar,
 } from './Components'
 import { useAppHotkeys, useNotificationNavigation } from './Hooks'
+import { useSettingsStore } from './Stores'
 
 function App() {
   const [addOpen, setAddOpen] = useState(false)
@@ -25,6 +26,11 @@ function App() {
 
   useAppHotkeys({ onAddFeed: openAddFeed, onOpenSettings: openSettings })
   useNotificationNavigation()
+
+  // 应用启动时拉取全局设置（自动标记已读延迟等功能依赖）。
+  useEffect(() => {
+    void useSettingsStore.getState().load()
+  }, [])
 
   return (
     <>
