@@ -20,7 +20,7 @@ import FolderItem from './FolderItem'
 import FeedItem from './FeedItem'
 import UnreadBadge from './UnreadBadge'
 import RenameInput from './RenameInput'
-import { InboxIcon, PlusIcon, ImportIcon, ExportIcon } from './Icons'
+import { InboxIcon, PlusIcon, ImportIcon, ExportIcon, RefreshIcon } from './Icons'
 import { rowPaddingLeft, FEED_DRAG_TYPE } from './layout'
 import styles from './Sidebar.module.scss'
 
@@ -38,10 +38,12 @@ function Sidebar(props: SidebarProps): JSX.Element {
   const select = useSidebarStore((s) => s.select)
   const addCategory = useSidebarStore((s) => s.addCategory)
   const moveFeed = useSidebarStore((s) => s.moveFeed)
+  const refreshSelected = useSidebarStore((s) => s.refreshSelected)
 
   const [creatingFolder, setCreatingFolder] = useState(false)
   const [uncatDragOver, setUncatDragOver] = useState(false)
   const [importMsg, setImportMsg] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const platform = usePlatform()
 
@@ -150,9 +152,14 @@ function Sidebar(props: SidebarProps): JSX.Element {
       </div>
 
       <footer className={styles.footer}>
-        <span className={styles.lastUpdated}>
-          上次更新：{formatRelativeTime(lastUpdated)}
-        </span>
+        <div className={styles.footerStatus}>
+          <span className={styles.lastUpdated}>
+            上次更新：{formatRelativeTime(lastUpdated)}
+          </span>
+          <IconAction label="手动更新 (R)" onClick={handleRefresh} disabled={refreshing}>
+            <RefreshIcon size={15} className={refreshing ? styles.spinning : undefined} />
+          </IconAction>
+        </div>
         <div className={styles.footerActions}>
           <IconAction
             label={`导入 OPML ${shortcutHint(platform, ['Shift', 'I'])}`}
@@ -224,6 +231,16 @@ function Sidebar(props: SidebarProps): JSX.Element {
       console.error('OPML 导出失败：', toApiError(err))
     }
   }
+
+  async function handleRefresh(): Promise<void> {
+    if (refreshing) return
+    setRefreshing(true)
+    try {
+      await refreshSelected()
+    } finally {
+      setRefreshing(false)
+    }
+  }
 }
 
 /** 头部「＋」下拉菜单。 */
@@ -259,13 +276,20 @@ function IconAction(props: {
   label: string
   onClick: () => void
   children: React.ReactNode
+  disabled?: boolean
 }): JSX.Element {
-  const { label, onClick, children } = props
+  const { label, onClick, children, disabled } = props
   return (
     <Tooltip.Provider delayDuration={300}>
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
-          <button type="button" className={styles.footerButton} onClick={onClick} aria-label={label}>
+          <button
+            type="button"
+            className={styles.footerButton}
+            onClick={onClick}
+            disabled={disabled}
+            aria-label={label}
+          >
             {children}
           </button>
         </Tooltip.Trigger>

@@ -197,6 +197,13 @@
   border-top: 1px solid var(--border);
 }
 
+.footerStatus {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
 .lastUpdated {
   min-width: 0;
   font-size: 12px;
@@ -204,6 +211,17 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 刷新进行中：图标持续旋转 */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinning {
+  animation: spin 0.8s linear infinite;
 }
 
 .footerActions {
@@ -232,6 +250,11 @@
   &:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 1px;
+  }
+
+  &:disabled {
+    cursor: default;
+    color: var(--text-secondary);
   }
 }
 
