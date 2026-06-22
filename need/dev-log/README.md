@@ -23,7 +23,7 @@
 | 14 | [笔记功能](14-notes.md) | ✅ 已完成 |
 | 15 | [键盘快捷键系统](15-keyboard-shortcuts.md) | ✅ 已完成 |
 | 16 | [通知系统](16-notifications.md) | ✅ 已完成 |
-| 17 | [设置面板](17-settings.md) | ⬜ 待开发 |
+| 17 | [设置面板](17-settings.md) | ✅ 已完成 |
 | 18 | [国际化（i18n）](18-i18n.md) | ⬜ 待开发 |
 | 19 | [性能优化与离线支持](19-performance-offline.md) | ⬜ 待开发 |
 | 20 | [无障碍与最终打磨](20-accessibility-polish.md) | ⬜ 待开发 |

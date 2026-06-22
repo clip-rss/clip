@@ -3,6 +3,7 @@ package store
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -610,5 +611,73 @@ func TestFTSMigrationRebuildsIndex(t *testing.T) {
 	// 再次运行迁移应是 no-op（不报错、版本不变）。
 	if err := store.migrateFTSTokenizer(); err != nil {
 		t.Fatalf("re-run migrateFTSTokenizer: %v", err)
+	}
+}
+
+// TestStorePath 返回的路径应指向初始化时的数据库文件。
+func TestStorePath(t *testing.T) {
+	store := setupTestDB(t)
+	if filepath.Base(store.Path()) != "test.db" {
+		t.Errorf("Path() = %q, want .../test.db", store.Path())
+	}
+}
+
+// TestStageAndApplyRestore 暂存备份后，下次启动应换入新库，并清理暂存文件。
+func TestStageAndApplyRestore(t *testing.T) {
+	st := setupTestDB(t) // dbPathFunc 已指向该临时库
+	if err := st.CreateFeed(&Feed{URL: "https://old.example/feed", Title: "OLD", UpdateInterval: 30, MaxItems: 100, Status: "active"}); err != nil {
+		t.Fatalf("seed OLD: %v", err)
+	}
+	dbPath := st.Path()
+
+	// 构造一个含 NEW 源的备份库。
+	backupPath := filepath.Join(t.TempDir(), "backup.db")
+	bk, err := NewWithPath(backupPath)
+	if err != nil {
+		t.Fatalf("create backup store: %v", err)
+	}
+	if err := bk.CreateFeed(&Feed{URL: "https://new.example/feed", Title: "NEW", UpdateInterval: 30, MaxItems: 100, Status: "active"}); err != nil {
+		t.Fatalf("seed NEW: %v", err)
+	}
+	bk.Close()
+
+	// 暂存恢复并关闭当前库。
+	if err := st.StageRestore(backupPath); err != nil {
+		t.Fatalf("StageRestore: %v", err)
+	}
+	st.Close()
+
+	// 再次启动：applyPendingRestore 应换入备份库。
+	st2, err := New()
+	if err != nil {
+		t.Fatalf("reopen after restore: %v", err)
+	}
+	t.Cleanup(func() { st2.Close() })
+
+	feeds, err := st2.ListFeeds()
+	if err != nil {
+		t.Fatalf("ListFeeds: %v", err)
+	}
+	if len(feeds) != 1 || feeds[0].Title != "NEW" {
+		t.Errorf("after restore feeds = %+v, want one 'NEW'", feeds)
+	}
+	if _, err := os.Stat(dbPath + pendingRestoreSuffix); !os.IsNotExist(err) {
+		t.Errorf("pending file should be removed, stat err = %v", err)
+	}
+}
+
+// TestStageRestoreRejectsInvalid 非 Clip 数据库不应被暂存。
+func TestStageRestoreRejectsInvalid(t *testing.T) {
+	st := setupTestDB(t)
+
+	bogus := filepath.Join(t.TempDir(), "bogus.db")
+	if err := os.WriteFile(bogus, []byte("not a sqlite db"), 0644); err != nil {
+		t.Fatalf("write bogus: %v", err)
+	}
+	if err := st.StageRestore(bogus); err == nil {
+		t.Error("StageRestore should reject a non-clip database")
+	}
+	if _, err := os.Stat(st.Path() + pendingRestoreSuffix); !os.IsNotExist(err) {
+		t.Error("no pending file should be staged on invalid input")
 	}
 }

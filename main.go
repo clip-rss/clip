@@ -52,6 +52,9 @@ func main() {
 		log.Fatalf("failed to init store: %v", err)
 	}
 
+	// 读取设置以决定窗口启动行为（最小化等）。读取失败时退回默认值。
+	settings, _ := st.GetSettings()
+
 	// 通知服务（需同时注册为 application.Service 并注入调度器）。
 	notifSvc := notifications.New()
 	notifSender := wailsNotifSender{ns: notifSvc}
@@ -123,12 +126,19 @@ func main() {
 		_ = st.Close()
 	})
 
+	// 启动行为：用户开启「启动时最小化」时以最小化状态创建窗口（保留任务栏/Dock 图标）。
+	startState := application.WindowStateNormal
+	if settings.LaunchMinimized {
+		startState = application.WindowStateMinimised
+	}
+
 	mainWindow = app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title:     "Clip",
-		Width:     1200,
-		Height:    800,
-		MinWidth:  800,
-		MinHeight: 600,
+		Title:      "Clip",
+		Width:      1200,
+		Height:     800,
+		MinWidth:   800,
+		MinHeight:  600,
+		StartState: startState,
 		Mac: application.MacWindow{
 			Backdrop: application.MacBackdropTranslucent,
 			TitleBar: application.MacTitleBarHiddenInset,

@@ -7,11 +7,12 @@ import { useSidebarStore } from '../../Stores'
 import { usePlatform, HOTKEY_OPML_IMPORT, HOTKEY_OPML_EXPORT } from '../../Hooks'
 import {
   buildFeedTree,
+  exportOpmlToFile,
   formatRelativeTime,
+  importOpmlFromFile,
   latestUpdated,
   onFeedError,
   onItemsUpdated,
-  OPMLService,
   shortcutHint,
   toApiError,
 } from '../../Utils'
@@ -206,8 +207,7 @@ function Sidebar(props: SidebarProps): JSX.Element {
     e.target.value = '' // 允许再次选择同一文件
     if (!file) return
     try {
-      const content = await file.text()
-      const res = await OPMLService.ImportOPML(content)
+      const res = await importOpmlFromFile(file)
       await load()
       setImportMsg(
         `导入完成：新增 ${res.feeds} 个订阅源，跳过 ${res.skipped} 个重复，新建 ${res.categories} 个文件夹。`,
@@ -219,16 +219,7 @@ function Sidebar(props: SidebarProps): JSX.Element {
 
   async function handleExport(): Promise<void> {
     try {
-      const content = await OPMLService.ExportOPML()
-      const blob = new Blob([content], { type: 'text/xml;charset=utf-8' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'clip-feeds.opml'
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(url)
+      await exportOpmlToFile()
     } catch (err) {
       console.error('OPML 导出失败：', toApiError(err))
     }

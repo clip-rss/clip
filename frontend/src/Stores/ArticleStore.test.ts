@@ -14,11 +14,16 @@ vi.mock('../Utils', () => ({
   // SidebarStore.load 依赖（refreshSidebar 会触发）
   CategoryService: { ListCategories: vi.fn() },
   FeedService: { ListFeedsWithUnread: vi.fn() },
+  SettingsService: {
+    GetSettings: vi.fn(),
+    UpdateSettings: vi.fn(),
+  },
   toApiError: (e: unknown) => String(e),
 }))
 
 import { ItemService } from '../Utils'
 import { useArticleStore } from './ArticleStore'
+import { useSettingsStore } from './SettingsStore'
 
 const ListItems = ItemService.ListItems as Mock
 const MarkRead = ItemService.MarkRead as Mock
@@ -202,5 +207,74 @@ describe('ArticleStore', () => {
     expect(s.selectedItemId).toBe(20)
     expect(s.searchResults[0].isRead).toBe(true)
     expect(MarkRead).toHaveBeenCalledWith(20)
+  })
+
+  // ─── 自动标记已读延迟 ───
+
+  describe('autoMarkReadDelay', () => {
+    beforeEach(() => {
+      vi.useRealTimers()
+      vi.useFakeTimers()
+      // 默认为立即标记（delay = 0）
+      useSettingsStore.setState({
+        settings: {
+          theme: 'system', language: 'zh', defaultUpdateInterval: 30,
+          defaultMaxItems: 100, notificationMode: 'each',
+          autoMarkReadDelay: 0, launchMinimized: false,
+        },
+      })
+    })
+
+    it('delay=0 时点击即立即乐观标记已读', () => {
+      useArticleStore.setState({ items: [item(1, { isRead: false })] })
+      useArticleStore.getState().selectItem(1)
+      expect(useArticleStore.getState().items[0].isRead).toBe(true)
+      expect(MarkRead).toHaveBeenCalledWith(1)
+    })
+
+    it('delay=2000 时点击后 2s 才标记已读', () => {
+      useSettingsStore.setState({
+        settings: { ...useSettingsStore.getState().settings!, autoMarkReadDelay: 2000 },
+      })
+      useArticleStore.setState({ items: [item(1, { isRead: false })] })
+      useArticleStore.getState().selectItem(1)
+
+      // 定时器到期前不应标记
+      expect(useArticleStore.getState().items[0].isRead).toBe(false)
+      expect(MarkRead).not.toHaveBeenCalled()
+
+      vi.advanceTimersByTime(2000)
+      expect(useArticleStore.getState().items[0].isRead).toBe(true)
+      expect(MarkRead).toHaveBeenCalledWith(1)
+    })
+
+    it('delay>0 时切换文章则取消前一延迟，前一篇保持未读', () => {
+      useSettingsStore.setState({
+        settings: { ...useSettingsStore.getState().settings!, autoMarkReadDelay: 5000 },
+      })
+      useArticleStore.setState({ items: [item(1, { isRead: false }), item(2, { isRead: false })] })
+      useArticleStore.getState().selectItem(1)
+      vi.advanceTimersByTime(1000) // 才过 1s
+      useArticleStore.getState().selectItem(2) // 切换到第二篇
+
+      // 前一篇不应被标记（计时器已清除）
+      expect(useArticleStore.getState().items[0].isRead).toBe(false)
+
+      // 第二篇到点后标记
+      vi.advanceTimersByTime(5000)
+      expect(useArticleStore.getState().items[1].isRead).toBe(true)
+      expect(MarkRead).toHaveBeenCalledWith(2)
+      expect(MarkRead).not.toHaveBeenCalledWith(1)
+    })
+
+    it('delay<0 时点击不自动标记已读', () => {
+      useSettingsStore.setState({
+        settings: { ...useSettingsStore.getState().settings!, autoMarkReadDelay: -1 },
+      })
+      useArticleStore.setState({ items: [item(1, { isRead: false })] })
+      useArticleStore.getState().selectItem(1)
+      expect(useArticleStore.getState().items[0].isRead).toBe(false)
+      expect(MarkRead).not.toHaveBeenCalled()
+    })
   })
 })

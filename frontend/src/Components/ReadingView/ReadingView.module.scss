@@ -228,10 +228,10 @@
   line-height: 1.3;
   color: var(--text-primary);
   cursor: text;
-  user-select: auto;
-  -webkit-user-select: auto;
-  -moz-user-select: auto;
-  -ms-user-select: auto;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 }
 
 .meta {
@@ -269,10 +269,10 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   cursor: text;
-  user-select: auto;
-  -webkit-user-select: auto;
-  -moz-user-select: auto;
-  -ms-user-select: auto;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 
   p {
     margin: 0 0 1em;

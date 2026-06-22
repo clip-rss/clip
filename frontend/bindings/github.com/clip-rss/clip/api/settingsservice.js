@@ -16,6 +16,31 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 import * as store$0 from "../internal/store/models.js";
 
 /**
+ * BackupDatabase 弹出保存对话框，让用户选择位置后备份数据库。
+ * 用户取消时返回 (false, nil)；成功返回 (true, nil)。
+ * @returns {$CancellablePromise<boolean>}
+ */
+export function BackupDatabase() {
+    return $Call.ByID(2885027906);
+}
+
+/**
+ * ClearCache 清理缓存：删除已读且未收藏的文章并回收空间，返回删除条数。
+ * @returns {$CancellablePromise<number>}
+ */
+export function ClearCache() {
+    return $Call.ByID(3827582920);
+}
+
+/**
+ * DatabasePath 返回数据库文件路径，供设置面板「数据管理」展示。
+ * @returns {$CancellablePromise<string>}
+ */
+export function DatabasePath() {
+    return $Call.ByID(1471848455);
+}
+
+/**
  * GetSettings 读取全局设置（未持久化时返回默认值）。
  * @returns {$CancellablePromise<store$0.Settings>}
  */
@@ -23,6 +48,16 @@ export function GetSettings() {
     return $Call.ByID(1931376994).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType0($result);
     }));
+}
+
+/**
+ * RestoreDatabase 弹出打开对话框选择备份文件，校验后暂存为待恢复库，
+ * 实际换库在下次启动生效（前端据此提示用户重启）。
+ * 用户取消时返回 (false, nil)；暂存成功返回 (true, nil)。
+ * @returns {$CancellablePromise<boolean>}
+ */
+export function RestoreDatabase() {
+    return $Call.ByID(3634669908);
 }
 
 /**

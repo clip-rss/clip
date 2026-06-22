@@ -15,6 +15,9 @@ export {
   openURL,
 } from './Api'
 
+// OPML 订阅导入/导出
+export { importOpmlFromFile, exportOpmlToFile } from './Opml'
+
 // 树构建与时间格式化
 export { buildFeedTree, flattenCategories } from './FeedTree'
 export type { CategoryOption } from './FeedTree'

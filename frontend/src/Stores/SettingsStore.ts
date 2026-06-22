@@ -10,7 +10,9 @@ interface SettingsState {
   error: string | null
 
   load: () => Promise<void>
-  /** 更新通知模式（乐观写入，失败回滚）。 */
+  /** 通用更新：乐观合并写入，失败回滚。 */
+  update: (partial: Partial<Settings>) => Promise<void>
+  /** 更新通知模式（基于 update 的薄封装）。 */
   setNotificationMode: (mode: NotificationMode) => Promise<void>
 }
 
@@ -29,15 +31,21 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     }
   },
 
-  async setNotificationMode(mode) {
+  async update(partial) {
     const prev = get().settings
-    if (!prev || prev.notificationMode === mode) return
-    const next = { ...prev, notificationMode: mode }
-    set({ settings: next })
+    if (!prev) return
+    const next = { ...prev, ...partial } as Settings
+    set({ settings: next, error: null })
     try {
       await SettingsService.UpdateSettings(next)
     } catch (err) {
       set({ settings: prev, error: toApiError(err) })
     }
+  },
+
+  async setNotificationMode(mode) {
+    const prev = get().settings
+    if (!prev || prev.notificationMode === mode) return
+    await get().update({ notificationMode: mode })
   },
 }))

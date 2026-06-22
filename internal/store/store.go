@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -11,17 +12,27 @@ import (
 
 // Store 数据库存储层
 type Store struct {
-	db *sql.DB
+	db     *sql.DB
+	dbPath string // 数据库文件绝对路径
 }
+
+// pendingRestoreSuffix 暂存的待恢复数据库文件后缀。
+// 运行时数据库被占用无法直接覆盖，恢复操作先写入该暂存文件，
+// 下次启动时由 applyPendingRestore 换库。
+const pendingRestoreSuffix = ".pending"
 
 // dbPathFunc 可在测试中替换的数据库路径函数
 var dbPathFunc = getDBPath
 
 // New 创建新的 Store 实例，数据库路径由 dbPathFunc 解析（用户配置目录）。
+// 打开前先尝试应用上次会话暂存的数据库恢复（见 applyPendingRestore）。
 func New() (*Store, error) {
 	dbPath, err := dbPathFunc()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db path: %w", err)
+	}
+	if err := applyPendingRestore(dbPath); err != nil {
+		return nil, fmt.Errorf("failed to apply pending restore: %w", err)
 	}
 	return NewWithPath(dbPath)
 }
@@ -56,7 +67,7 @@ func NewWithPath(dbPath string) (*Store, error) {
 		}
 	}
 
-	store := &Store{db: db}
+	store := &Store{db: db, dbPath: dbPath}
 
 	// 执行数据库迁移
 	if err := store.migrate(); err != nil {
@@ -70,6 +81,81 @@ func NewWithPath(dbPath string) (*Store, error) {
 // Close 关闭数据库连接
 func (s *Store) Close() error {
 	return s.db.Close()
+}
+
+// Path 返回数据库文件的绝对路径，供设置面板展示与备份默认目录。
+func (s *Store) Path() string {
+	return s.dbPath
+}
+
+// StageRestore 校验 src 为合法的 Clip 数据库后，将其暂存为待恢复文件，
+// 实际换库发生在下次启动（见 applyPendingRestore）。
+func (s *Store) StageRestore(src string) error {
+	if err := validateClipDB(src); err != nil {
+		return fmt.Errorf("invalid backup file: %w", err)
+	}
+	if err := copyFile(src, s.dbPath+pendingRestoreSuffix); err != nil {
+		return fmt.Errorf("failed to stage restore: %w", err)
+	}
+	return nil
+}
+
+// validateClipDB 以只读方式打开 path，确认其为含 feeds 表的 SQLite 数据库。
+func validateClipDB(path string) error {
+	db, err := sql.Open("sqlite", "file:"+path+"?mode=ro")
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	var name string
+	err = db.QueryRow(
+		`SELECT name FROM sqlite_master WHERE type='table' AND name='feeds'`,
+	).Scan(&name)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("not a clip database (missing feeds table)")
+	}
+	return err
+}
+
+// applyPendingRestore 若存在暂存的待恢复数据库（dbPath+".pending"），
+// 在打开数据库前用它覆盖现有库，并清理 WAL/SHM 旁文件，最后删除暂存文件。
+// 没有暂存文件时为无操作。任一步失败均返回错误以避免半成品库。
+func applyPendingRestore(dbPath string) error {
+	pending := dbPath + pendingRestoreSuffix
+	if _, err := os.Stat(pending); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	if err := copyFile(pending, dbPath); err != nil {
+		return err
+	}
+	// WAL/SHM 旁文件属于旧库，必须移除，否则会与新库内容不一致。
+	_ = os.Remove(dbPath + "-wal")
+	_ = os.Remove(dbPath + "-shm")
+	return os.Remove(pending)
+}
+
+// copyFile 将 src 内容复制到 dst（覆盖写入）。
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(out, in); err != nil {
+		out.Close()
+		return err
+	}
+	return out.Close()
 }
 
 // getDBPath 获取数据库文件路径

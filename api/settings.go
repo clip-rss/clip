@@ -1,6 +1,11 @@
 package api
 
-import "github.com/clip-rss/clip/internal/store"
+import (
+	"errors"
+
+	"github.com/clip-rss/clip/internal/store"
+	"github.com/wailsapp/wails/v3/pkg/application"
+)
 
 // SettingsService 应用设置相关的绑定方法。
 type SettingsService struct {
@@ -20,4 +25,63 @@ func (s *SettingsService) GetSettings() (store.Settings, error) {
 // UpdateSettings 保存全局设置。
 func (s *SettingsService) UpdateSettings(settings store.Settings) error {
 	return s.store.UpdateSettings(settings)
+}
+
+// DatabasePath 返回数据库文件路径，供设置面板「数据管理」展示。
+func (s *SettingsService) DatabasePath() string {
+	return s.store.Path()
+}
+
+// ClearCache 清理缓存：删除已读且未收藏的文章并回收空间，返回删除条数。
+func (s *SettingsService) ClearCache() (int64, error) {
+	return s.store.PruneReadItems()
+}
+
+// BackupDatabase 弹出保存对话框，让用户选择位置后备份数据库。
+// 用户取消时返回 (false, nil)；成功返回 (true, nil)。
+func (s *SettingsService) BackupDatabase() (bool, error) {
+	app := application.Get()
+	if app == nil {
+		return false, errors.New("application not available")
+	}
+	dest, err := app.Dialog.SaveFile().
+		SetMessage("备份数据库").
+		SetFilename("clip-backup.db").
+		AddFilter("Clip 数据库", "*.db").
+		PromptForSingleSelection()
+	if err != nil {
+		return false, err
+	}
+	if dest == "" {
+		return false, nil // 用户取消
+	}
+	if err := s.store.BackupTo(dest); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// RestoreDatabase 弹出打开对话框选择备份文件，校验后暂存为待恢复库，
+// 实际换库在下次启动生效（前端据此提示用户重启）。
+// 用户取消时返回 (false, nil)；暂存成功返回 (true, nil)。
+func (s *SettingsService) RestoreDatabase() (bool, error) {
+	app := application.Get()
+	if app == nil {
+		return false, errors.New("application not available")
+	}
+	src, err := app.Dialog.OpenFile().
+		SetTitle("恢复数据库").
+		AddFilter("Clip 数据库", "*.db").
+		CanChooseFiles(true).
+		PromptForSingleSelection()
+	if err != nil {
+		return false, err
+	}
+	if src == "" {
+		return false, nil // 用户取消
+	}
+	if err := s.store.StageRestore(src); err != nil {
+		return false, err
+	}
+	return true, nil
 }

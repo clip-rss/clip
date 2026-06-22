@@ -630,6 +630,22 @@ export class Settings {
              */
             this["notificationMode"] = "";
         }
+        if (!("autoMarkReadDelay" in $$source)) {
+            /**
+             * 自动标记已读延迟（毫秒）：-1 关闭 / 0 立即 / >0 延迟
+             * @member
+             * @type {number}
+             */
+            this["autoMarkReadDelay"] = 0;
+        }
+        if (!("launchMinimized" in $$source)) {
+            /**
+             * 启动时最小化窗口
+             * @member
+             * @type {boolean}
+             */
+            this["launchMinimized"] = false;
+        }
 
         Object.assign(this, $$source);
     }

@@ -1,10 +1,14 @@
 import { create } from 'zustand'
 import { ItemService, toApiError } from '../Utils'
 import { useSidebarStore } from './SidebarStore'
+import { useSettingsStore } from './SettingsStore'
 import type { ArticleFilter, ArticleSort, Item, Selection } from '../Types'
 
 /** 单次拉取上限：客户端筛选/排序 + 虚拟滚动，足够覆盖常规留存量。 */
 const LOAD_LIMIT = 2000
+
+/** 自动标记已读的待定计时器（延迟模式下生效，切换文章时清除）。 */
+let autoMarkTimer: number | undefined
 
 interface ArticleState {
   items: Item[]
@@ -70,6 +74,14 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     set({ items: apply(get().items), searchResults: apply(get().searchResults) })
   }
 
+  /** 乐观标记已读并写入后端（选中文章自动标记复用）。 */
+  function markReadOptimistic(id: number): void {
+    patchItem(id, { isRead: true })
+    ItemService.MarkRead(id)
+      .then(refreshSidebar)
+      .catch((err) => set({ error: toApiError(err) }))
+  }
+
   // 封装 load：完成后消费 pendingSelectId，若有匹配则自动选中。
   async function fetchAndResolve(selection: Selection): Promise<void> {
     set({ loading: true, error: null })
@@ -116,14 +128,28 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     },
 
     selectItem(id) {
+      // 切换文章先取消上一篇仍未触发的延迟标记。
+      window.clearTimeout(autoMarkTimer)
       set({ selectedItemId: id })
       const { items, searchResults } = get()
       const item = items.find((it) => it.id === id) ?? searchResults.find((it) => it.id === id)
       if (!item || item.isRead) return
-      patchItem(id, { isRead: true }) // 点击即标记已读（乐观）
-      ItemService.MarkRead(id)
-        .then(refreshSidebar)
-        .catch((err) => set({ error: toApiError(err) }))
+
+      const delay = useSettingsStore.getState().settings?.autoMarkReadDelay ?? 0
+      if (delay < 0) return // 关闭自动标记已读
+      if (delay === 0) {
+        markReadOptimistic(id)
+        return
+      }
+      // 延迟标记：到点后若该文仍选中且未读才标记。
+      autoMarkTimer = window.setTimeout(() => {
+        const cur = get()
+        const target =
+          cur.items.find((it) => it.id === id) ?? cur.searchResults.find((it) => it.id === id)
+        if (cur.selectedItemId === id && target && !target.isRead) {
+          markReadOptimistic(id)
+        }
+      }, delay)
     },
 
     async toggleStar(id) {

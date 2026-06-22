@@ -23,6 +23,8 @@ type Settings struct {
 	DefaultUpdateInterval int    `json:"defaultUpdateInterval"` // 默认更新间隔（分钟）
 	DefaultMaxItems       int    `json:"defaultMaxItems"`       // 默认每源最大保留条目数
 	NotificationMode      string `json:"notificationMode"`      // each / summary / off
+	AutoMarkReadDelay     int    `json:"autoMarkReadDelay"`     // 自动标记已读延迟（毫秒）：-1 关闭 / 0 立即 / >0 延迟
+	LaunchMinimized       bool   `json:"launchMinimized"`       // 启动时最小化窗口
 }
 
 // DefaultSettings 返回出厂默认设置。
@@ -33,6 +35,8 @@ func DefaultSettings() Settings {
 		DefaultUpdateInterval: 30,
 		DefaultMaxItems:       100,
 		NotificationMode:      NotifyEach,
+		AutoMarkReadDelay:     0,
+		LaunchMinimized:       false,
 	}
 }
 
@@ -68,6 +72,33 @@ func (s *Store) UpdateSettings(settings Settings) error {
 	`
 	if _, err := s.db.Exec(query, settingsKey, string(b)); err != nil {
 		return fmt.Errorf("failed to update settings: %w", err)
+	}
+	return nil
+}
+
+// PruneReadItems 清理缓存：删除已读且未收藏的文章，随后 VACUUM 回收空间。
+// 返回被删除的文章数。未读与收藏的文章一律保留。
+func (s *Store) PruneReadItems() (int64, error) {
+	res, err := s.db.Exec(`DELETE FROM items WHERE is_read = 1 AND is_starred = 0`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to prune read items: %w", err)
+	}
+	removed, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to read prune count: %w", err)
+	}
+	// VACUUM 不能在事务中执行；删除后单独回收空间。
+	if _, err := s.db.Exec(`VACUUM`); err != nil {
+		return removed, fmt.Errorf("failed to vacuum: %w", err)
+	}
+	return removed, nil
+}
+
+// BackupTo 将当前数据库一致性备份到 dest 路径。
+// 使用 VACUUM INTO，生成一份合并了 WAL 的干净副本，可独立打开。
+func (s *Store) BackupTo(dest string) error {
+	if _, err := s.db.Exec(`VACUUM INTO ?`, dest); err != nil {
+		return fmt.Errorf("failed to backup database: %w", err)
 	}
 	return nil
 }

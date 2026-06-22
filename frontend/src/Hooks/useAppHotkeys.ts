@@ -9,6 +9,8 @@ export const HOTKEY_OPML_EXPORT = 'clip:opml-export'
 interface AppHotkeyActions {
   /** 打开「添加订阅」弹窗（App 持有弹窗状态）。 */
   onAddFeed: () => void
+  /** 打开设置面板（App 持有弹窗状态）。 */
+  onOpenSettings: () => void
 }
 
 /** 焦点是否落在交互元素上——此时应保留空格/回车的默认行为（如激活按钮）。 */
@@ -43,7 +45,7 @@ function emit(name: string): void {
  * `Esc`（关闭模态/退出专注）与专注模式下的 `J/K` 分别由 Radix 与 FocusMode 自行处理。
  */
 export function useAppHotkeys(actions: AppHotkeyActions): void {
-  const { onAddFeed } = actions
+  const { onAddFeed, onOpenSettings } = actions
 
   const bindings = useMemo<Hotkey[]>(() => {
     return [
@@ -52,6 +54,13 @@ export function useAppHotkeys(actions: AppHotkeyActions): void {
         handler: (e) => {
           e.preventDefault()
           onAddFeed()
+        },
+      },
+      {
+        combo: 'mod+,',
+        handler: (e) => {
+          e.preventDefault()
+          onOpenSettings()
         },
       },
       {
@@ -137,7 +146,7 @@ export function useAppHotkeys(actions: AppHotkeyActions): void {
         },
       },
     ]
-  }, [onAddFeed])
+  }, [onAddFeed, onOpenSettings])
 
   useHotkeys(bindings)
 }

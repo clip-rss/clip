@@ -1,6 +1,10 @@
 package store
 
-import "testing"
+import (
+	"path/filepath"
+	"testing"
+	"time"
+)
 
 func TestSettingsDefaultsWhenMissing(t *testing.T) {
 	st := setupTestDB(t)
@@ -24,6 +28,8 @@ func TestSettingsRoundTrip(t *testing.T) {
 		DefaultUpdateInterval: 15,
 		DefaultMaxItems:       50,
 		NotificationMode:      NotifyOff,
+		AutoMarkReadDelay:     2000,
+		LaunchMinimized:       true,
 	}
 	if err := st.UpdateSettings(want); err != nil {
 		t.Fatalf("UpdateSettings: %v", err)
@@ -69,5 +75,80 @@ func TestSettingsPartialMergeKeepsDefaults(t *testing.T) {
 	}
 	if got.DefaultUpdateInterval != 30 || got.Language != "zh" {
 		t.Errorf("missing fields should fall back to defaults, got %+v", got)
+	}
+}
+
+// makeItem 在指定源下插入一篇带读/星标态的文章。
+func makeItem(t *testing.T, st *Store, feedID int64, url string, read, starred bool) {
+	t.Helper()
+	it := &Item{
+		FeedID:      feedID,
+		Title:       url,
+		URL:         url,
+		PublishedAt: time.Now(),
+		IsRead:      read,
+		IsStarred:   starred,
+	}
+	if err := st.CreateItem(it); err != nil {
+		t.Fatalf("CreateItem(%s): %v", url, err)
+	}
+}
+
+// TestPruneReadItems 只删除「已读且未收藏」，保留未读与收藏。
+func TestPruneReadItems(t *testing.T) {
+	st := setupTestDB(t)
+	feed := &Feed{URL: "https://p.example/feed", Title: "P", UpdateInterval: 30, MaxItems: 100, Status: "active"}
+	if err := st.CreateFeed(feed); err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+
+	makeItem(t, st, feed.ID, "https://p.example/1", true, false)  // 删
+	makeItem(t, st, feed.ID, "https://p.example/2", true, false)  // 删
+	makeItem(t, st, feed.ID, "https://p.example/3", true, true)   // 保留：已读但收藏
+	makeItem(t, st, feed.ID, "https://p.example/4", false, false) // 保留：未读
+
+	removed, err := st.PruneReadItems()
+	if err != nil {
+		t.Fatalf("PruneReadItems: %v", err)
+	}
+	if removed != 2 {
+		t.Errorf("removed = %d, want 2", removed)
+	}
+
+	items, err := st.ListItemsByFeed(feed.ID, 100, 0)
+	if err != nil {
+		t.Fatalf("ListItemsByFeed: %v", err)
+	}
+	if len(items) != 2 {
+		t.Errorf("remaining = %d, want 2", len(items))
+	}
+}
+
+// TestBackupTo VACUUM INTO 生成的副本可独立打开且包含数据。
+func TestBackupTo(t *testing.T) {
+	st := setupTestDB(t)
+	feed := &Feed{URL: "https://b.example/feed", Title: "Backup Me", UpdateInterval: 30, MaxItems: 100, Status: "active"}
+	if err := st.CreateFeed(feed); err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+
+	dest := filepath.Join(t.TempDir(), "backup.db")
+	if err := st.BackupTo(dest); err != nil {
+		t.Fatalf("BackupTo: %v", err)
+	}
+
+	// 独立打开副本，断言数据在。
+	copyStore, err := NewWithPath(dest)
+	if err != nil {
+		t.Fatalf("open backup: %v", err)
+	}
+	defer copyStore.Close()
+
+	feeds, err := copyStore.ListFeeds()
+	if err != nil {
+		t.Fatalf("ListFeeds on backup: %v", err)
+	}
+	if len(feeds) != 1 || feeds[0].Title != "Backup Me" {
+		t.Errorf("backup feeds = %+v, want one 'Backup Me'", feeds)
 	}
 }
