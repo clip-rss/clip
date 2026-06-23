@@ -10,6 +10,8 @@ import {
   Toolbar,
 } from './Components'
 import { useAppHotkeys, useNotificationNavigation } from './Hooks'
+import './I18n'
+import i18next from 'i18next'
 import { useSettingsStore } from './Stores'
 
 function App() {
@@ -27,9 +29,12 @@ function App() {
   useAppHotkeys({ onAddFeed: openAddFeed, onOpenSettings: openSettings })
   useNotificationNavigation()
 
-  // 应用启动时拉取全局设置（自动标记已读延迟等功能依赖）。
   useEffect(() => {
-    void useSettingsStore.getState().load()
+    const store = useSettingsStore.getState()
+    store.load().then(() => {
+      const lang = useSettingsStore.getState().settings?.language
+      if (lang) i18next.changeLanguage(lang)
+    })
   }, [])
 
   return (

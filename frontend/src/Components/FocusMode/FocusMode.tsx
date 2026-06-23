@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
 import { useArticleStore, useLayoutStore, useReaderStore, useSidebarStore } from '../../Stores'
@@ -22,6 +23,7 @@ const FOCUS_MAX_WIDTH = '680px'
  * 自管挂载/过渡生命周期——`focusMode` 关闭后保留 300ms 以播放退出动画再卸载。
  */
 function FocusMode(): JSX.Element | null {
+  const { t } = useTranslation()
   const focusMode = useLayoutStore((s) => s.focusMode)
   const exitFocus = useLayoutStore((s) => s.exitFocus)
   const notePanelOpen = useLayoutStore((s) => s.notePanelOpen)
@@ -150,7 +152,7 @@ function FocusMode(): JSX.Element | null {
       onMouseMove={handleMouseMove}
       role="dialog"
       aria-modal="true"
-      aria-label="专注阅读"
+      aria-label={t('toolbar.focusMode')}
     >
       <FocusControlBar
         item={item}
@@ -178,7 +180,7 @@ function FocusMode(): JSX.Element | null {
             />
           </div>
         ) : (
-          <div className={styles.empty}>未选择文章</div>
+          <div className={styles.empty}>{t('focus.empty')}</div>
         )}
       </div>
 

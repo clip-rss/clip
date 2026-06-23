@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
+import '../I18n'
 import { formatRelativeTime, latestUpdated } from './Time'
 import type { FeedWithUnread } from '../Types'
 
@@ -9,19 +10,24 @@ function at(iso: string): Date {
 }
 
 describe('formatRelativeTime', () => {
-  it('空值返回「从未」', () => {
+  beforeAll(async () => {
+    const i18next = await import('i18next')
+    await i18next.default.changeLanguage('zh')
+  })
+
+  it('空值返回对应文案', () => {
     expect(formatRelativeTime(null, NOW)).toBe('从未')
     expect(formatRelativeTime(undefined, NOW)).toBe('从未')
     expect(formatRelativeTime('', NOW)).toBe('从未')
   })
 
-  it('非法时间返回「从未」', () => {
+  it('非法时间返回对应文案', () => {
     expect(formatRelativeTime('not-a-date', NOW)).toBe('从未')
   })
 
   it('未来或刚刚返回「刚刚」', () => {
-    expect(formatRelativeTime(at('2026-06-16T12:00:30Z'), NOW)).toBe('刚刚') // 未来
-    expect(formatRelativeTime(at('2026-06-16T11:59:30Z'), NOW)).toBe('刚刚') // 30 秒前
+    expect(formatRelativeTime(at('2026-06-16T12:00:30Z'), NOW)).toBe('刚刚')
+    expect(formatRelativeTime(at('2026-06-16T11:59:30Z'), NOW)).toBe('刚刚')
   })
 
   it('分钟 / 小时 / 天', () => {

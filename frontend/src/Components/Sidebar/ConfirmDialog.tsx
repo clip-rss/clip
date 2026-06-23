@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import * as Dialog from '@radix-ui/react-dialog'
 import clsx from 'clsx'
 import styles from './Sidebar.module.scss'
@@ -8,20 +9,19 @@ interface ConfirmDialogProps {
   description?: string
   confirmText?: string
   cancelText?: string
-  /** 危险操作（如删除）使用 --danger 配色。 */
   danger?: boolean
   onConfirm: () => void
   onOpenChange: (open: boolean) => void
 }
 
-/** 通用确认对话框，基于 Radix Dialog；删除等不可逆操作复用。 */
 function ConfirmDialog(props: ConfirmDialogProps): JSX.Element {
+  const { t } = useTranslation()
   const {
     open,
     title,
     description,
-    confirmText = '确认',
-    cancelText = '取消',
+    confirmText = t('confirm.confirm'),
+    cancelText = t('confirm.cancel'),
     danger = false,
     onConfirm,
     onOpenChange,

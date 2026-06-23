@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { formatRelativeTime, type ReaderContentStyle } from '../../Utils'
 import type { Item } from '../../Types'
 import ReaderContent from './ReaderContent'
@@ -12,6 +13,7 @@ interface ReaderArticleProps {
 
 /** 文章正文主体（标题 + 元信息 + 正文 + 结尾提示），供阅读视图与专注模式复用。 */
 function ReaderArticle(props: ReaderArticleProps): JSX.Element {
+  const { t } = useTranslation()
   const { item, sourceName, contentStyle, onImageClick } = props
 
   return (
@@ -28,7 +30,7 @@ function ReaderArticle(props: ReaderArticleProps): JSX.Element {
       </div>
       <div className={styles.divider} />
       <ReaderContent html={item.content} style={contentStyle} onImageClick={onImageClick} />
-      <div className={styles.endHint}>已是全部内容</div>
+      <div className={styles.endHint}>{t('reader.endOfContent')}</div>
     </div>
   )
 }

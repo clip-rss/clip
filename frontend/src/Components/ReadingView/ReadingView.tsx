@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
 import { useArticleStore, useSidebarStore, useReaderStore, useLayoutStore } from '../../Stores'
@@ -9,6 +10,7 @@ import NotePanel from './NotePanel'
 import styles from './ReadingView.module.scss'
 
 function ReadingView(): JSX.Element {
+  const { t } = useTranslation()
   const item = useArticleStore((s) => s.items.find((it) => it.id === s.selectedItemId) ?? null)
   const feeds = useSidebarStore((s) => s.feeds)
   const prefs = useReaderStore()
@@ -54,7 +56,7 @@ function ReadingView(): JSX.Element {
     return (
       <div className={styles.reader}>
         <div className={styles.empty}>
-          <p>选择一篇文章以阅读</p>
+          <p>{t('reader.empty')}</p>
         </div>
       </div>
     )

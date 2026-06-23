@@ -1,0 +1,173 @@
+{
+  "toolbar": {
+    "search": { "placeholder": "Search articles, notes…" },
+    "addFeed": "+ Subscribe",
+    "focusMode": "Focus Mode",
+    "settings": "Settings",
+    "clearSearch": "Clear search"
+  },
+  "sidebar": {
+    "title": "Feeds",
+    "allArticles": "All Articles",
+    "newFolder": "New Folder",
+    "lastUpdated": "Last updated: ",
+    "contextMenu": { "newFolder": "New Folder", "addFeed": "Add Feed" }
+  },
+  "article": {
+    "filter": { "all": "All", "unread": "Unread", "read": "Read", "starred": "Starred", "today": "Today" },
+    "sort": { "time": "Time", "source": "Source", "byTime": "Sort by time", "bySource": "Sort by source" },
+    "actions": { "markAllRead": "Mark All Read", "batchStar": "Batch Star" },
+    "searchResult": "{{count}} articles found",
+    "empty": {
+      "noArticles": "No articles", "noUnread": "No unread articles", "noRead": "No read articles",
+      "noStarred": "No starred articles", "noToday": "No articles today", "noMatch": "No articles matching \"{{query}}\""
+    }
+  },
+  "reader": {
+    "toolbar": {
+      "markUnread": "Mark as unread", "markRead": "Mark as read", "star": "Star", "unstar": "Unstar",
+      "note": "Add note", "viewNote": "View note", "closeNote": "Close note", "openInBrowser": "Open in browser"
+    },
+    "settings": { "title": "Reading Settings", "font": "Font", "fontSize": "Font Size", "lineHeight": "Line Height", "width": "Width", "background": "Background" },
+    "font": { "sans": "Sans Serif", "serif": "Serif", "mono": "Monospace" },
+    "size": { "small": "Small", "medium": "Medium", "large": "Large" },
+    "lineHeight": { "compact": "Compact", "moderate": "Moderate", "loose": "Loose" },
+    "width": { "narrow": "Narrow", "wide": "Wide", "full": "Full" },
+    "background": { "default": "Auto", "light": "Light", "sepia": "Sepia", "dark": "Dark" },
+    "backgroundDesc": "Independent reading background, separate from global theme",
+    "empty": "Select an article to read",
+    "endOfContent": "End of content"
+  },
+  "focus": { "exit": "Exit Focus", "empty": "No article selected" },
+  "settings": {
+    "title": "Settings",
+    "tabs": { "general": "General", "reading": "Reading", "theme": "Theme", "notification": "Notifications", "proxy": "Proxy", "shortcuts": "Shortcuts", "data": "Data" },
+    "general": {
+      "title": "General",
+      "updateInterval": "Default update interval",
+      "updateIntervalDesc": "Auto-refresh interval for new feeds; select \"Manual\" to disable",
+      "updateIntervalOptions": { "15m": "15 min", "30m": "30 min", "1h": "1 hour", "manual": "Manual" },
+      "maxItems": "Max items per feed",
+      "maxItemsDesc": "Maximum articles retained per feed",
+      "itemsUnit": "items",
+      "launchMinimized": "Launch minimized",
+      "launchMinimizedDesc": "Takes effect after restart",
+      "language": "Language",
+      "languageDesc": "Interface display language"
+    },
+    "reading": {
+      "autoMarkRead": "Auto mark as read",
+      "autoMarkReadDesc": "Delay before auto-marking an opened article as read",
+      "autoMark": { "immediate": "Immediate", "2s": "2 sec", "5s": "5 sec", "off": "Off" }
+    },
+    "theme": {
+      "title": "Theme",
+      "theme": "Appearance",
+      "themeDesc": "Sepia is a warm, eye-friendly palette",
+      "mode": { "system": "System", "light": "Light", "dark": "Dark" }
+    },
+    "notification": {
+      "title": "New article notifications",
+      "titleSection": "Notifications",
+      "modeDesc": "Each: one per article; Summary: one per refresh batch",
+      "each": "Each",
+      "summary": "Summary",
+      "off": "Off"
+    },
+    "proxy": {
+      "title": "Proxy",
+      "host": "Proxy host",
+      "hostDesc": "HTTP proxy IP or hostname",
+      "port": "Port",
+      "test": "Test connection",
+      "testBtn": "Test",
+      "testing": "Testing…",
+      "success": "Connected",
+      "failed": "Connection failed",
+      "error": "Invalid proxy address or port",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "saveError": "Save failed"
+    },
+    "shortcuts": {
+      "title": "Keyboard Shortcuts",
+      "groups": {
+        "general": "General",
+        "reading": "Reading",
+        "filter": "Filter"
+      },
+      "addFeed": "Add feed",
+      "openSettings": "Open settings",
+      "refreshSelected": "Refresh selected feed",
+      "forceRefresh": "Force refresh all feeds",
+      "focusSearch": "Focus search",
+      "nextArticle": "Next article (focus mode)",
+      "prevArticle": "Previous article (focus mode)",
+      "scrollDown": "Scroll down",
+      "scrollUp": "Scroll up",
+      "toggleFocus": "Toggle focus mode",
+      "exitFocus": "Exit focus / close modal",
+      "filterAll": "All articles",
+      "filterUnread": "Unread articles",
+      "filterStarred": "Starred articles"
+    },
+    "data": {
+      "title": "Data Management",
+      "dbPath": "Database location",
+      "dbPathDesc": "Application data storage path",
+      "loading": "Loading…",
+      "unavailable": "(unavailable)",
+      "clearCache": "Clear cache",
+      "clearCacheDesc": "Remove read, unstarred articles to free space",
+      "clearCacheBtn": "Clear",
+      "clearCacheConfirm": "Confirm clear",
+      "clearCacheResult": "Cleared {{count}} articles",
+      "clearCacheError": "Clear failed",
+      "opml": "OPML",
+      "opmlDesc": "Import or export feed list (articles not included)",
+      "import": "Import",
+      "export": "Export",
+      "importSuccess": "Import complete: {{feeds}} feeds added, {{skipped}} duplicates skipped, {{categories}} categories created.",
+      "importError": "OPML import failed",
+      "exportSuccess": "OPML exported.",
+      "exportError": "OPML export failed",
+      "backup": "Backup database",
+      "backupDesc": "Backup or restore full database (articles, notes, read status)",
+      "backupBtn": "Backup",
+      "backupSuccess": "Database backed up.",
+      "backupCancelled": "Backup cancelled.",
+      "backupError": "Backup failed",
+      "restore": "Restore database",
+      "restoreDesc": "Restore data from backup (will overwrite current data)",
+      "restoreBtn": "Restore",
+      "restoreSuccess": "Database restored. Please restart the app.",
+      "restoreCancelled": "Restore cancelled.",
+      "restoreError": "Restore failed"
+    }
+  },
+  "note": { "title": "Notes", "placeholder": "Write a note… (plain text, Markdown supported)", "saving": "Saving…", "saved": "Saved" },
+  "feed": {
+    "add": {
+      "title": "Add Feed", "url": "RSS / Atom feed URL", "label": "Display Name",
+      "folder": "Folder", "interval": "Update Interval", "maxItems": "Max Items",
+      "urlPlaceholder": "Enter RSS/Atom URL or website URL", "labelPlaceholder": "Leave blank to use feed title",
+      "searching": "Searching for feeds…", "searchOk": "Feed found",
+      "searchFailed": "No feed found", "adding": "Adding…", "added": "Added successfully"
+    },
+    "edit": {
+      "title": "Edit Feed", "url": "Feed URL", "label": "Title", "folder": "Folder",
+      "interval": "Update interval (minutes)", "maxItems": "Max items retained",
+      "save": "Save", "cancel": "Cancel", "delete": "Delete Feed",
+      "deleteConfirm": "Are you sure you want to delete this feed and all its articles? This cannot be undone."
+    }
+  },
+  "confirm": { "confirm": "Confirm", "cancel": "Cancel" },
+  "theme": { "light": "Light", "dark": "Dark", "sepia": "Sepia", "system": "System", "ariaLabel": "Current theme: {{label}}, click to toggle" },
+  "key": { "space": "Space", "shiftSpace": "Shift + Space" },
+  "time": {
+    "never": "Never", "justNow": "Just now",
+    "minutesAgo": "{{count}} min ago", "hoursAgo": "{{count}} hr ago",
+    "daysAgo": "{{count}} day ago", "daysAgo_plural": "{{count}} days ago"
+  }
+}

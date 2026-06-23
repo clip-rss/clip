@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import { ThemeToggle } from '../ThemeToggle'
 import { usePlatform, type Platform } from '../../Hooks'
@@ -6,17 +7,15 @@ import { modKey } from '../../Utils'
 import { useArticleStore, useLayoutStore } from '../../Stores'
 import styles from './Toolbar.module.scss'
 
-/** 搜索输入防抖间隔（毫秒）。 */
 const SEARCH_DEBOUNCE_MS = 300
 
 interface ToolbarProps {
-  /** 「添加订阅」入口；点击「＋ 订阅」按钮触发。 */
   onAddFeed?: () => void
-  /** 打开设置面板；点击齿轮按钮触发。 */
   onOpenSettings?: () => void
 }
 
 function Toolbar(props: ToolbarProps): JSX.Element {
+  const { t } = useTranslation()
   const { onAddFeed, onOpenSettings } = props
   const platform = usePlatform()
   const focusMode = useLayoutStore((s) => s.focusMode)
@@ -31,10 +30,8 @@ function Toolbar(props: ToolbarProps): JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<number | undefined>(undefined)
   const [searchFocused, setSearchFocused] = useState(false)
-  // 有焦点或已有查询内容时保持展开，避免活动搜索被收起截断。
   const searchExpanded = searchFocused || searchQuery !== ''
 
-  // 卸载时清掉未触发的防抖计时器。
   useEffect(() => () => window.clearTimeout(debounceRef.current), [])
 
   function handleSearchChange(value: string): void {
@@ -58,6 +55,12 @@ function Toolbar(props: ToolbarProps): JSX.Element {
     }
   }
 
+  const addTitle = `${t('toolbar.addFeed')} (${modKey(platform)}N)`
+  const focusShortcut = platform === 'mac' ? '⇧F' : '+Shift+F'
+  const focusTitle = `${t('toolbar.focusMode')} (${modKey(platform)}${focusShortcut})`
+  const settingsShortcut = platform === 'mac' ? '，' : ','
+  const settingsTitle = `${t('toolbar.settings')} (${modKey(platform)}${settingsShortcut})`
+
   return (
     <div
       className={styles.toolbar}
@@ -72,7 +75,7 @@ function Toolbar(props: ToolbarProps): JSX.Element {
             ref={inputRef}
             id="toolbar-search"
             type="text"
-            placeholder="搜索文章、笔记…"
+            placeholder={t('toolbar.search.placeholder')}
             className={styles.searchInput}
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
@@ -86,8 +89,8 @@ function Toolbar(props: ToolbarProps): JSX.Element {
               type="button"
               className={styles.searchClear}
               onClick={handleClear}
-              title="清除搜索"
-              aria-label="清除搜索"
+              title={t('toolbar.clearSearch')}
+              aria-label={t('toolbar.clearSearch')}
             >
               <ClearIcon />
             </button>
@@ -97,11 +100,11 @@ function Toolbar(props: ToolbarProps): JSX.Element {
       <div className={styles.right}>
         <button
           className={styles.addButton}
-          title={`添加订阅 (${modKey(platform)}N)`}
-          aria-label="添加订阅"
+          title={addTitle}
+          aria-label={t('toolbar.addFeed')}
           onClick={onAddFeed}
         >
-          ＋ 订阅
+          {t('toolbar.addFeed')}
         </button>
         <button
           className={clsx(
@@ -110,8 +113,8 @@ function Toolbar(props: ToolbarProps): JSX.Element {
           )}
           onClick={toggleFocus}
           disabled={!focusMode && !hasSelection}
-          title={`专注模式 (${modKey(platform)}${platform === 'mac' ? '⇧F' : '+Shift+F'})`}
-          aria-label="专注模式"
+          title={focusTitle}
+          aria-label={t('toolbar.focusMode')}
           aria-pressed={focusMode}
         >
           <LayoutIcon />
@@ -120,8 +123,8 @@ function Toolbar(props: ToolbarProps): JSX.Element {
         <button
           className={styles.iconButton}
           onClick={onOpenSettings}
-          title={`设置 (${modKey(platform)}${platform === 'mac' ? '，' : ','})`}
-          aria-label="设置"
+          title={settingsTitle}
+          aria-label={t('toolbar.settings')}
         >
           <SettingsIcon />
         </button>

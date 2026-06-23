@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import * as Dialog from '@radix-ui/react-dialog'
 import clsx from 'clsx'
 import { useSettingsStore } from '../../Stores'
@@ -20,25 +21,21 @@ interface SettingsModalProps {
 
 type SectionId = 'general' | 'reading' | 'theme' | 'notification' | 'proxy' | 'shortcuts' | 'data'
 
-const NAV: { id: SectionId; label: string }[] = [
-  { id: 'general', label: '通用' },
-  { id: 'reading', label: '阅读' },
-  { id: 'theme', label: '主题' },
-  { id: 'notification', label: '通知' },
-  { id: 'proxy', label: '代理' },
-  { id: 'shortcuts', label: '快捷键' },
-  { id: 'data', label: '数据管理' },
+const NAV_KEYS: { id: SectionId; labelKey: string }[] = [
+  { id: 'general', labelKey: 'settings.tabs.general' },
+  { id: 'reading', labelKey: 'settings.tabs.reading' },
+  { id: 'theme', labelKey: 'settings.tabs.theme' },
+  { id: 'notification', labelKey: 'settings.tabs.notification' },
+  { id: 'proxy', labelKey: 'settings.tabs.proxy' },
+  { id: 'shortcuts', labelKey: 'settings.tabs.shortcuts' },
+  { id: 'data', labelKey: 'settings.tabs.data' },
 ]
 
-/**
- * 应用设置面板：左侧分区导航 + 右侧内容。聚合后端设置（通用/通知/自动已读）、
- * localStorage 偏好（主题/阅读排版）与数据管理（清理缓存、OPML、数据库备份恢复）。
- */
 function SettingsModal(props: SettingsModalProps): JSX.Element {
+  const { t } = useTranslation()
   const { open, onOpenChange } = props
   const [active, setActive] = useState<SectionId>('general')
 
-  // 打开时兜底刷新后端设置（启动时通常已加载）。
   useEffect(() => {
     if (open) void useSettingsStore.getState().load()
   }, [open])
@@ -47,11 +44,11 @@ function SettingsModal(props: SettingsModalProps): JSX.Element {
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className={styles.overlay} />
-        <Dialog.Content className={styles.content} aria-describedby={undefined}>
+        <Dialog.Content className={styles.content} aria-describedby={undefined} onInteractOutside={(e) => e.preventDefault()}>
           <header className={styles.header}>
-            <Dialog.Title className={styles.title}>设置</Dialog.Title>
+            <Dialog.Title className={styles.title}>{t('settings.title')}</Dialog.Title>
             <Dialog.Close asChild>
-              <button type="button" className={styles.closeBtn} aria-label="关闭">
+              <button type="button" className={styles.closeBtn} aria-label={t('confirm.cancel')}>
                 <CloseIcon />
               </button>
             </Dialog.Close>
@@ -59,14 +56,14 @@ function SettingsModal(props: SettingsModalProps): JSX.Element {
 
           <div className={styles.main}>
             <nav className={styles.nav}>
-              {NAV.map((n) => (
+              {NAV_KEYS.map((n) => (
                 <button
                   key={n.id}
                   type="button"
                   className={clsx(styles.navItem, active === n.id && styles.navItemActive)}
                   onClick={() => setActive(n.id)}
                 >
-                  {n.label}
+                  {t(n.labelKey)}
                 </button>
               ))}
             </nav>

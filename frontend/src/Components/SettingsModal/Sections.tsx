@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n from 'i18next'
 import {
   useArticleStore,
   useReaderStore,
@@ -27,36 +29,37 @@ import styles from './SettingsModal.module.scss'
 
 /* ============================ 通用 ============================ */
 
-const UPDATE_INTERVAL_OPTIONS = [
-  { value: 15, label: '15 分钟' },
-  { value: 30, label: '30 分钟' },
-  { value: 60, label: '1 小时' },
-  { value: 0, label: '手动' },
-]
-
 const MAX_ITEMS_OPTIONS = [50, 100, 200, 500]
 
 export function GeneralSection(): JSX.Element {
+  const { t } = useTranslation()
   const settings = useSettingsStore((s) => s.settings)
   const update = useSettingsStore((s) => s.update)
 
+  const intervalOptions = [
+    { value: 15, label: t('settings.general.updateIntervalOptions.15m') },
+    { value: 30, label: t('settings.general.updateIntervalOptions.30m') },
+    { value: 60, label: t('settings.general.updateIntervalOptions.1h') },
+    { value: 0, label: t('settings.general.updateIntervalOptions.manual') },
+  ]
+
   return (
     <div>
-      <h3 className={styles.sectionTitle}>通用</h3>
+      <h3 className={styles.sectionTitle}>{t('settings.general.title')}</h3>
       <SettingRow
-        label="订阅源全局更新间隔"
-        description="新订阅源默认的自动刷新周期；选「手动」则不自动刷新"
+        label={t('settings.general.updateInterval')}
+        description={t('settings.general.updateIntervalDesc')}
       >
         <SegmentedControl
           value={settings?.defaultUpdateInterval ?? 30}
-          options={UPDATE_INTERVAL_OPTIONS}
+          options={intervalOptions}
           onChange={(v) => update({ defaultUpdateInterval: v })}
         />
       </SettingRow>
 
       <SettingRow
-        label="每源最大条目"
-        description="新订阅源默认保留的最大文章数"
+        label={t('settings.general.maxItems')}
+        description={t('settings.general.maxItemsDesc')}
       >
         <select
           className={styles.select}
@@ -65,27 +68,37 @@ export function GeneralSection(): JSX.Element {
         >
           {MAX_ITEMS_OPTIONS.map((n) => (
             <option key={n} value={n}>
-              {n} 篇
+              {n} {t('settings.general.itemsUnit')}
             </option>
           ))}
         </select>
       </SettingRow>
 
-      <SettingRow label="启动时最小化" description="重启应用后生效">
+      <SettingRow
+        label={t('settings.general.launchMinimized')}
+        description={t('settings.general.launchMinimizedDesc')}
+      >
         <Toggle
           checked={settings?.launchMinimized ?? false}
           onChange={(v) => update({ launchMinimized: v })}
-          label="启动时最小化"
+          label={t('settings.general.launchMinimized')}
         />
       </SettingRow>
 
-      <SettingRow label="语言" description="界面文案完整翻译将在后续版本提供">
+      <SettingRow
+        label={t('settings.general.language')}
+        description={t('settings.general.languageDesc')}
+      >
         <select
           className={styles.select}
           value={settings?.language ?? 'zh'}
-          onChange={(e) => update({ language: e.target.value })}
+          onChange={(e) => {
+            const lang = e.target.value
+            i18n.changeLanguage(lang)
+            update({ language: lang })
+          }}
         >
-          <option value="zh">中文</option>
+          <option value="zh">简体中文</option>
           <option value="en">English</option>
         </select>
       </SettingRow>
@@ -95,97 +108,67 @@ export function GeneralSection(): JSX.Element {
 
 /* ============================ 阅读 ============================ */
 
-const FONT_OPTIONS: { value: ReaderFontFamily; label: string }[] = [
-  { value: 'sans', label: '无衬线' },
-  { value: 'serif', label: '衬线' },
-  { value: 'mono', label: '等宽' },
-]
-
-const SIZE_OPTIONS: { value: ReaderFontSize; label: string }[] = [
-  { value: 14, label: '小' },
-  { value: 16, label: '中' },
-  { value: 18, label: '大' },
-]
-
-const LINE_OPTIONS: { value: ReaderLineHeight; label: string }[] = [
-  { value: 1.5, label: '紧凑' },
-  { value: 1.8, label: '适中' },
-  { value: 2.0, label: '宽松' },
-]
-
-const WIDTH_OPTIONS: { value: ReaderWidth; label: string }[] = [
-  { value: '640', label: '窄' },
-  { value: '800', label: '宽' },
-  { value: 'full', label: '全宽' },
-]
-
-const BG_OPTIONS: { value: ReaderBackground; label: string }[] = [
-  { value: 'default', label: '跟随' },
-  { value: 'light', label: '亮' },
-  { value: 'sepia', label: '护眼' },
-  { value: 'dark', label: '暗' },
-]
-
-const AUTO_MARK_OPTIONS = [
-  { value: 0, label: '立即' },
-  { value: 2000, label: '2 秒' },
-  { value: 5000, label: '5 秒' },
-  { value: -1, label: '关闭' },
-]
-
 export function ReadingSection(): JSX.Element {
+  const { t } = useTranslation()
   const reader = useReaderStore()
   const settings = useSettingsStore((s) => s.settings)
   const update = useSettingsStore((s) => s.update)
 
+  const fontOptions = [
+    { value: 'sans' as ReaderFontFamily, label: t('reader.font.sans') },
+    { value: 'serif' as ReaderFontFamily, label: t('reader.font.serif') },
+    { value: 'mono' as ReaderFontFamily, label: t('reader.font.mono') },
+  ]
+  const sizeOptions = [
+    { value: 14 as ReaderFontSize, label: t('reader.size.small') },
+    { value: 16 as ReaderFontSize, label: t('reader.size.medium') },
+    { value: 18 as ReaderFontSize, label: t('reader.size.large') },
+  ]
+  const lineOptions = [
+    { value: 1.5 as ReaderLineHeight, label: t('reader.lineHeight.compact') },
+    { value: 1.8 as ReaderLineHeight, label: t('reader.lineHeight.moderate') },
+    { value: 2.0 as ReaderLineHeight, label: t('reader.lineHeight.loose') },
+  ]
+  const widthOptions = [
+    { value: '640' as ReaderWidth, label: t('reader.width.narrow') },
+    { value: '800' as ReaderWidth, label: t('reader.width.wide') },
+    { value: 'full' as ReaderWidth, label: t('reader.width.full') },
+  ]
+  const bgOptions = [
+    { value: 'default' as ReaderBackground, label: t('reader.background.default') },
+    { value: 'light' as ReaderBackground, label: t('reader.background.light') },
+    { value: 'sepia' as ReaderBackground, label: t('reader.background.sepia') },
+    { value: 'dark' as ReaderBackground, label: t('reader.background.dark') },
+  ]
+  const autoMarkOptions = [
+    { value: 0, label: t('settings.reading.autoMark.immediate') },
+    { value: 2000, label: t('settings.reading.autoMark.2s') },
+    { value: 5000, label: t('settings.reading.autoMark.5s') },
+    { value: -1, label: t('settings.reading.autoMark.off') },
+  ]
+
   return (
     <div>
-      <h3 className={styles.sectionTitle}>阅读</h3>
-      <SettingRow label="字体">
-        <SegmentedControl
-          value={reader.fontFamily}
-          options={FONT_OPTIONS}
-          onChange={reader.setFontFamily}
-        />
+      <h3 className={styles.sectionTitle}>{t('settings.tabs.reading')}</h3>
+      <SettingRow label={t('reader.settings.font')}>
+        <SegmentedControl value={reader.fontFamily} options={fontOptions} onChange={reader.setFontFamily} />
       </SettingRow>
-      <SettingRow label="字号">
-        <SegmentedControl
-          value={reader.fontSize}
-          options={SIZE_OPTIONS}
-          onChange={reader.setFontSize}
-        />
+      <SettingRow label={t('reader.settings.fontSize')}>
+        <SegmentedControl value={reader.fontSize} options={sizeOptions} onChange={reader.setFontSize} />
       </SettingRow>
-      <SettingRow label="行高">
-        <SegmentedControl
-          value={reader.lineHeight}
-          options={LINE_OPTIONS}
-          onChange={reader.setLineHeight}
-        />
+      <SettingRow label={t('reader.settings.lineHeight')}>
+        <SegmentedControl value={reader.lineHeight} options={lineOptions} onChange={reader.setLineHeight} />
       </SettingRow>
-      <SettingRow label="阅读宽度">
-        <SegmentedControl
-          value={reader.width}
-          options={WIDTH_OPTIONS}
-          onChange={reader.setWidth}
-        />
+      <SettingRow label={t('reader.settings.width')}>
+        <SegmentedControl value={reader.width} options={widthOptions} onChange={reader.setWidth} />
       </SettingRow>
-      <SettingRow
-        label="阅读背景"
-        description="阅读区独立背景色，可与全局主题不同"
-      >
-        <SegmentedControl
-          value={reader.background}
-          options={BG_OPTIONS}
-          onChange={reader.setBackground}
-        />
+      <SettingRow label={t('reader.settings.background')} description={t('reader.backgroundDesc')}>
+        <SegmentedControl value={reader.background} options={bgOptions} onChange={reader.setBackground} />
       </SettingRow>
-      <SettingRow
-        label="自动标记已读"
-        description="打开文章后延迟多久标记为已读"
-      >
+      <SettingRow label={t('settings.reading.autoMarkRead')} description={t('settings.reading.autoMarkReadDesc')}>
         <SegmentedControl
           value={settings?.autoMarkReadDelay ?? 0}
-          options={AUTO_MARK_OPTIONS}
+          options={autoMarkOptions}
           onChange={(v) => update({ autoMarkReadDelay: v })}
         />
       </SettingRow>
@@ -195,26 +178,23 @@ export function ReadingSection(): JSX.Element {
 
 /* ============================ 主题 ============================ */
 
-const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
-  { value: 'light', label: '亮色' },
-  { value: 'dark', label: '暗色' },
-  { value: 'sepia', label: '护眼' },
-  { value: 'system', label: '跟随系统' },
-]
-
 export function ThemeSection(): JSX.Element {
+  const { t } = useTranslation()
   const preference = useThemeStore((s) => s.preference)
   const setPreference = useThemeStore((s) => s.setPreference)
 
+  const themeOptions: { value: ThemePreference; label: string }[] = [
+    { value: 'light', label: t('settings.theme.mode.light') },
+    { value: 'dark', label: t('settings.theme.mode.dark') },
+    { value: 'sepia', label: t('theme.sepia') },
+    { value: 'system', label: t('settings.theme.mode.system') },
+  ]
+
   return (
     <div>
-      <h3 className={styles.sectionTitle}>主题</h3>
-      <SettingRow label="外观" description="护眼为暖色（Sepia）配色">
-        <SegmentedControl
-          value={preference}
-          options={THEME_OPTIONS}
-          onChange={setPreference}
-        />
+      <h3 className={styles.sectionTitle}>{t('settings.theme.title')}</h3>
+      <SettingRow label={t('settings.theme.theme')} description={t('settings.theme.themeDesc')}>
+        <SegmentedControl value={preference} options={themeOptions} onChange={setPreference} />
       </SettingRow>
     </div>
   )
@@ -222,26 +202,24 @@ export function ThemeSection(): JSX.Element {
 
 /* ============================ 通知 ============================ */
 
-const NOTIF_OPTIONS = [
-  { value: 'each', label: '每篇' },
-  { value: 'summary', label: '摘要' },
-  { value: 'off', label: '关闭' },
-]
-
 export function NotificationSection(): JSX.Element {
+  const { t } = useTranslation()
   const settings = useSettingsStore((s) => s.settings)
   const setNotificationMode = useSettingsStore((s) => s.setNotificationMode)
 
+  const notifOptions = [
+    { value: 'each', label: t('settings.notification.each') },
+    { value: 'summary', label: t('settings.notification.summary') },
+    { value: 'off', label: t('settings.notification.off') },
+  ]
+
   return (
     <div>
-      <h3 className={styles.sectionTitle}>通知</h3>
-      <SettingRow
-        label="新文章通知"
-        description="每篇：每条新文章一条；摘要：每次刷新一条汇总"
-      >
+      <h3 className={styles.sectionTitle}>{t('settings.notification.titleSection')}</h3>
+      <SettingRow label={t('settings.notification.title')} description={t('settings.notification.modeDesc')}>
         <SegmentedControl
           value={settings?.notificationMode ?? 'each'}
-          options={NOTIF_OPTIONS}
+          options={notifOptions}
           onChange={(v) => setNotificationMode(v as 'each' | 'summary' | 'off')}
         />
       </SettingRow>
@@ -252,6 +230,7 @@ export function NotificationSection(): JSX.Element {
 /* ============================ 数据管理 ============================ */
 
 export function DataSection(): JSX.Element {
+  const { t } = useTranslation()
   const [dbPath, setDbPath] = useState('')
   const [confirmClear, setConfirmClear] = useState(false)
   const [feedback, setFeedback] = useState('')
@@ -262,8 +241,8 @@ export function DataSection(): JSX.Element {
   useEffect(() => {
     SettingsService.DatabasePath()
       .then(setDbPath)
-      .catch(() => setDbPath('（无法获取路径）'))
-  }, [])
+      .catch(() => setDbPath(t('settings.data.unavailable')))
+  }, [t])
 
   function notify(msg: string, error = false): void {
     setFeedback(msg)
@@ -277,17 +256,15 @@ export function DataSection(): JSX.Element {
       const removed = await SettingsService.ClearCache()
       await useArticleStore.getState().reload()
       await useSidebarStore.getState().load()
-      notify(`已清理 ${removed} 篇已读且未收藏的文章。`)
+      notify(t('settings.data.clearCacheResult', { count: removed }))
     } catch (err) {
-      notify(`清理失败：${toApiError(err)}`, true)
+      notify(`${t('settings.data.clearCacheError')}：${toApiError(err)}`, true)
     } finally {
       setBusy(false)
     }
   }
 
-  async function handleImportFile(
-    e: React.ChangeEvent<HTMLInputElement>,
-  ): Promise<void> {
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
@@ -295,11 +272,9 @@ export function DataSection(): JSX.Element {
     try {
       const res = await importOpmlFromFile(file)
       await useSidebarStore.getState().load()
-      notify(
-        `导入完成：新增 ${res.feeds} 个订阅源，跳过 ${res.skipped} 个重复，新建 ${res.categories} 个文件夹。`,
-      )
+      notify(t('settings.data.importSuccess', { feeds: res.feeds, skipped: res.skipped, categories: res.categories }))
     } catch (err) {
-      notify(`OPML 导入失败：${toApiError(err)}`, true)
+      notify(`${t('settings.data.importError')}：${toApiError(err)}`, true)
     } finally {
       setBusy(false)
     }
@@ -308,9 +283,9 @@ export function DataSection(): JSX.Element {
   async function handleExportOpml(): Promise<void> {
     try {
       await exportOpmlToFile()
-      notify('已导出 OPML 订阅文件。')
+      notify(t('settings.data.exportSuccess'))
     } catch (err) {
-      notify(`OPML 导出失败：${toApiError(err)}`, true)
+      notify(`${t('settings.data.exportError')}：${toApiError(err)}`, true)
     }
   }
 
@@ -318,9 +293,9 @@ export function DataSection(): JSX.Element {
     setBusy(true)
     try {
       const ok = await SettingsService.BackupDatabase()
-      notify(ok ? '数据库已备份。' : '已取消备份。')
+      notify(ok ? t('settings.data.backupSuccess') : t('settings.data.backupCancelled'))
     } catch (err) {
-      notify(`备份失败：${toApiError(err)}`, true)
+      notify(`${t('settings.data.backupError')}：${toApiError(err)}`, true)
     } finally {
       setBusy(false)
     }
@@ -330,9 +305,9 @@ export function DataSection(): JSX.Element {
     setBusy(true)
     try {
       const ok = await SettingsService.RestoreDatabase()
-      notify(ok ? '已导入备份，请重启应用以生效。' : '已取消恢复。')
+      notify(ok ? t('settings.data.restoreSuccess') : t('settings.data.restoreCancelled'))
     } catch (err) {
-      notify(`恢复失败：${toApiError(err)}`, true)
+      notify(`${t('settings.data.restoreError')}：${toApiError(err)}`, true)
     } finally {
       setBusy(false)
     }
@@ -340,107 +315,54 @@ export function DataSection(): JSX.Element {
 
   return (
     <div>
-      <h3 className={styles.sectionTitle}>数据管理</h3>
+      <h3 className={styles.sectionTitle}>{t('settings.data.title')}</h3>
 
-      <SettingRow label="数据库位置" description="应用数据存储路径">
-        <div className={styles.pathBox}>{dbPath || '加载中…'}</div>
+      <SettingRow label={t('settings.data.dbPath')} description={t('settings.data.dbPathDesc')}>
+        <div className={styles.pathBox}>{dbPath || t('settings.data.loading')}</div>
       </SettingRow>
 
-      <SettingRow
-        label="清理缓存"
-        description="删除已读且未收藏的文章并回收空间，保留未读与收藏"
-      >
+      <SettingRow label={t('settings.data.clearCache')} description={t('settings.data.clearCacheDesc')}>
         {confirmClear ? (
           <div className={styles.btnGroup}>
-            <button
-              type="button"
-              className={`${styles.btn} ${styles.btnDanger}`}
-              onClick={handleClearCache}
-              disabled={busy}
-            >
-              确认清理
+            <button type="button" className={`${styles.btn} ${styles.btnDanger}`} onClick={handleClearCache} disabled={busy}>
+              {t('settings.data.clearCacheConfirm')}
             </button>
-            <button
-              type="button"
-              className={styles.btn}
-              onClick={() => setConfirmClear(false)}
-            >
-              取消
+            <button type="button" className={styles.btn} onClick={() => setConfirmClear(false)}>
+              {t('confirm.cancel')}
             </button>
           </div>
         ) : (
-          <button
-            type="button"
-            className={styles.btn}
-            onClick={() => setConfirmClear(true)}
-            disabled={busy}
-          >
-            清理…
+          <button type="button" className={styles.btn} onClick={() => setConfirmClear(true)} disabled={busy}>
+            {t('settings.data.clearCacheBtn')}…
           </button>
         )}
       </SettingRow>
 
-      <SettingRow
-        label="OPML 订阅"
-        description="导入或导出订阅源列表（不含文章）"
-      >
+      <SettingRow label={t('settings.data.opml')} description={t('settings.data.opmlDesc')}>
         <div className={styles.btnGroup}>
-          <button
-            type="button"
-            className={styles.btn}
-            onClick={() => importRef.current?.click()}
-            disabled={busy}
-          >
-            导入
+          <button type="button" className={styles.btn} onClick={() => importRef.current?.click()} disabled={busy}>
+            {t('settings.data.import')}
           </button>
-          <button
-            type="button"
-            className={styles.btn}
-            onClick={handleExportOpml}
-            disabled={busy}
-          >
-            导出
+          <button type="button" className={styles.btn} onClick={handleExportOpml} disabled={busy}>
+            {t('settings.data.export')}
           </button>
         </div>
-        <input
-          ref={importRef}
-          type="file"
-          accept=".opml,.xml,text/xml,application/xml"
-          style={{ display: 'none' }}
-          onChange={handleImportFile}
-        />
+        <input ref={importRef} type="file" accept=".opml,.xml,text/xml,application/xml" style={{ display: 'none' }} onChange={handleImportFile} />
       </SettingRow>
 
-      <SettingRow
-        label="数据库备份"
-        description="备份或恢复完整数据库（含文章、笔记、已读状态）"
-      >
+      <SettingRow label={t('settings.data.backup')} description={t('settings.data.backupDesc')}>
         <div className={styles.btnGroup}>
-          <button
-            type="button"
-            className={styles.btn}
-            onClick={handleBackup}
-            disabled={busy}
-          >
-            备份…
+          <button type="button" className={styles.btn} onClick={handleBackup} disabled={busy}>
+            {t('settings.data.backupBtn')}…
           </button>
-          <button
-            type="button"
-            className={styles.btn}
-            onClick={handleRestore}
-            disabled={busy}
-          >
-            恢复…
+          <button type="button" className={styles.btn} onClick={handleRestore} disabled={busy}>
+            {t('settings.data.restoreBtn')}…
           </button>
         </div>
       </SettingRow>
 
       {feedback ? (
-        <p
-          className={`${styles.feedback} ${isError ? styles.feedbackError : ''}`}
-        >
-          {feedback}
-        </p>
+        <p className={`${styles.feedback} ${isError ? styles.feedbackError : ''}`}>{feedback}</p>
       ) : null}
     </div>
   )
@@ -449,6 +371,7 @@ export function DataSection(): JSX.Element {
 /* ============================ 代理 ============================ */
 
 export function ProxySection(): JSX.Element {
+  const { t } = useTranslation()
   const settings = useSettingsStore((s) => s.settings)
   const stored = useSettingsStore((s) => s.update)
   const [host, setHost] = useState(settings?.proxyHost ?? '')
@@ -457,7 +380,6 @@ export function ProxySection(): JSX.Element {
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null)
 
-  // 切换设置页签时同步外部值
   useEffect(() => {
     setHost(settings?.proxyHost ?? '')
     setPort(settings?.proxyPort?.toString() ?? '')
@@ -466,16 +388,16 @@ export function ProxySection(): JSX.Element {
   async function handleTest(): Promise<void> {
     const portNum = parseInt(port, 10)
     if (!host || !portNum) {
-      setStatus({ ok: false, msg: '请输入代理地址与端口' })
+      setStatus({ ok: false, msg: t('settings.proxy.error') })
       return
     }
     setTesting(true)
     setStatus(null)
     try {
       await SettingsService.TestProxy(host, portNum)
-      setStatus({ ok: true, msg: '代理连接成功' })
+      setStatus({ ok: true, msg: t('settings.proxy.success') })
     } catch (err) {
-      setStatus({ ok: false, msg: `连接失败：${toApiError(err)}` })
+      setStatus({ ok: false, msg: `${t('settings.proxy.failed')}：${toApiError(err)}` })
     } finally {
       setTesting(false)
     }
@@ -487,9 +409,9 @@ export function ProxySection(): JSX.Element {
     setStatus(null)
     try {
       await stored({ proxyHost: host, proxyPort: portNum })
-      setStatus({ ok: true, msg: '已保存' })
+      setStatus({ ok: true, msg: t('settings.proxy.saved') })
     } catch (err) {
-      setStatus({ ok: false, msg: `保存失败：${toApiError(err)}` })
+      setStatus({ ok: false, msg: `${t('settings.proxy.saveError')}：${toApiError(err)}` })
     } finally {
       setSaving(false)
     }
@@ -497,49 +419,25 @@ export function ProxySection(): JSX.Element {
 
   return (
     <div>
-      <h3 className={styles.sectionTitle}>代理</h3>
-      <SettingRow label="代理地址" description="HTTP 代理的 IP 或主机名">
-        <input
-          className={styles.input}
-          type="text"
-          value={host}
-          onChange={(e) => setHost(e.target.value)}
-          placeholder="127.0.0.1"
-        />
+      <h3 className={styles.sectionTitle}>{t('settings.proxy.title')}</h3>
+      <SettingRow label={t('settings.proxy.host')} description={t('settings.proxy.hostDesc')}>
+        <input className={styles.input} type="text" value={host} onChange={(e) => setHost(e.target.value)} placeholder="127.0.0.1" />
       </SettingRow>
-      <SettingRow label="端口">
-        <input
-          className={styles.input}
-          type="number"
-          value={port}
-          onChange={(e) => setPort(e.target.value)}
-          placeholder="8080"
-        />
+      <SettingRow label={t('settings.proxy.port')}>
+        <input className={styles.input} type="number" value={port} onChange={(e) => setPort(e.target.value)} placeholder="8080" />
       </SettingRow>
 
       <div className={styles.btnRow}>
-        <button
-          type="button"
-          className={styles.btn}
-          onClick={handleTest}
-          disabled={testing}
-        >
-          {testing ? '测试中…' : '测试'}
+        <button type="button" className={styles.btn} onClick={handleTest} disabled={testing}>
+          {testing ? t('settings.proxy.testing') : t('settings.proxy.testBtn')}
         </button>
-        <button
-          type="button"
-          className={`${styles.btn} ${styles.btnPrimary}`}
-          onClick={handleSave}
-          disabled={saving}
-        >
-          {saving ? '保存中…' : '保存'}
+        <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSave} disabled={saving}>
+          {saving ? t('settings.proxy.saving') : t('settings.proxy.save')}
         </button>
       </div>
 
       {status ? (
-        <p className={`${styles.feedback} ${status.ok ? '' : styles.feedbackError}`}>
-          {status.msg}
-        </p>
+        <p className={`${styles.feedback} ${status.ok ? '' : styles.feedbackError}`}>{status.msg}</p>
       ) : null}
     </div>
   )
@@ -549,65 +447,18 @@ export function ProxySection(): JSX.Element {
 
 interface ShortcutDef {
   combo: string
-  description: string
+  descKey: string
 }
 
-const SHORTCUT_GROUPS: { title: string; items: ShortcutDef[] }[] = [
-  {
-    title: '通用',
-    items: [
-      { combo: 'mod+n', description: '添加订阅' },
-      { combo: 'mod+,', description: '打开设置' },
-      { combo: 'r', description: '手动更新选中的订阅源' },
-      { combo: 'shift+r', description: '强制刷新全部订阅源' },
-      { combo: '/', description: '聚焦搜索框' },
-    ],
-  },
-  {
-    title: '阅读',
-    items: [
-      { combo: 'j / ↓', description: '下一篇文章（专注模式）' },
-      { combo: 'k / ↑', description: '上一篇文章（专注模式）' },
-      { combo: 'space', description: '向下翻页' },
-      { combo: 'shift+space', description: '向上翻页' },
-      { combo: 'mod+shift+f', description: '切换专注模式' },
-      { combo: 'Esc', description: '退出专注模式 / 关闭弹窗' },
-    ],
-  },
-  {
-    title: '筛选',
-    items: [
-      { combo: 'mod+1', description: '全部文章' },
-      { combo: 'mod+2', description: '未读文章' },
-      { combo: 'mod+3', description: '收藏文章' },
-    ],
-  },
-]
-
-/** 平台符号映射：Mac 用简洁符号，Windows 用完整单词。 */
 const MAC_KEY: Record<string, string> = {
-  mod: '⌘',
-  shift: '⇧',
-  alt: '⌥',
-  ctrl: '⌃',
-  space: '␣',
-  'shift+space': '⇧␣',
+  mod: '⌘', shift: '⇧', alt: '⌥', ctrl: '⌃', space: '␣', 'shift+space': '⇧␣',
 }
 const WIN_KEY: Record<string, string> = {
-  mod: 'Ctrl',
-  shift: 'Shift',
-  alt: 'Alt',
-  ctrl: 'Ctrl',
-  space: '空格',
-  'shift+space': 'Shift + 空格',
+  mod: 'Ctrl', shift: 'Shift', alt: 'Alt', ctrl: 'Ctrl', space: 'space', 'shift+space': 'shiftSpace',
 }
 
-/** 将 combo 字符串转为平台相关的可读按键组合。对 j/k 等特殊形式直接透传。 */
 function formatCombo(combo: string, platform: Platform | null): string {
-  // 特殊组合（含箭头等）直接返回
-  if (combo.includes('/') || combo.includes('↑') || combo.includes('↓')) {
-    return combo
-  }
+  if (combo.includes('/') || combo.includes('↑') || combo.includes('↓')) return combo
   if (combo === 'Esc') return 'Esc'
 
   const isMac = platform === 'mac'
@@ -616,25 +467,64 @@ function formatCombo(combo: string, platform: Platform | null): string {
     .map((p) => {
       const key = p.toLowerCase()
       if (isMac && MAC_KEY[key]) return MAC_KEY[key]
-      if (!isMac && WIN_KEY[key]) return WIN_KEY[key]
+      if (!isMac && WIN_KEY[key]) {
+        const winKey = WIN_KEY[key]
+        // 可翻译的键名（space / shiftSpace）
+        if (winKey === 'space') return i18n.t('key.space')
+        if (winKey === 'shiftSpace') return i18n.t('key.shiftSpace')
+        return winKey
+      }
       return p.length === 1 ? p.toUpperCase() : p
     })
     .join(isMac ? ' ' : ' + ')
 }
 
 export function ShortcutSection(): JSX.Element {
+  const { t } = useTranslation()
   const platform = usePlatform()
+
+  const groups: { titleKey: string; items: ShortcutDef[] }[] = [
+    {
+      titleKey: 'settings.shortcuts.groups.general',
+      items: [
+        { combo: 'mod+n', descKey: 'settings.shortcuts.addFeed' },
+        { combo: 'mod+,', descKey: 'settings.shortcuts.openSettings' },
+        { combo: 'r', descKey: 'settings.shortcuts.refreshSelected' },
+        { combo: 'shift+r', descKey: 'settings.shortcuts.forceRefresh' },
+        { combo: '/', descKey: 'settings.shortcuts.focusSearch' },
+      ],
+    },
+    {
+      titleKey: 'settings.shortcuts.groups.reading',
+      items: [
+        { combo: 'j / ↓', descKey: 'settings.shortcuts.nextArticle' },
+        { combo: 'k / ↑', descKey: 'settings.shortcuts.prevArticle' },
+        { combo: 'space', descKey: 'settings.shortcuts.scrollDown' },
+        { combo: 'shift+space', descKey: 'settings.shortcuts.scrollUp' },
+        { combo: 'mod+shift+f', descKey: 'settings.shortcuts.toggleFocus' },
+        { combo: 'Esc', descKey: 'settings.shortcuts.exitFocus' },
+      ],
+    },
+    {
+      titleKey: 'settings.shortcuts.groups.filter',
+      items: [
+        { combo: 'mod+1', descKey: 'settings.shortcuts.filterAll' },
+        { combo: 'mod+2', descKey: 'settings.shortcuts.filterUnread' },
+        { combo: 'mod+3', descKey: 'settings.shortcuts.filterStarred' },
+      ],
+    },
+  ]
 
   return (
     <div>
-      <h3 className={styles.sectionTitle}>快捷键说明</h3>
-      {SHORTCUT_GROUPS.map((group) => (
-        <div key={group.title} className={styles.shortcutGroup}>
-          <h4 className={styles.shortcutGroupTitle}>{group.title}</h4>
+      <h3 className={styles.sectionTitle}>{t('settings.shortcuts.title')}</h3>
+      {groups.map((group) => (
+        <div key={group.titleKey} className={styles.shortcutGroup}>
+          <h4 className={styles.shortcutGroupTitle}>{t(group.titleKey)}</h4>
           {group.items.map((item) => (
             <div key={item.combo} className={styles.shortcutRow}>
               <kbd className={styles.kbd}>{formatCombo(item.combo, platform)}</kbd>
-              <span className={styles.shortcutDesc}>{item.description}</span>
+              <span className={styles.shortcutDesc}>{t(item.descKey)}</span>
             </div>
           ))}
         </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { useReaderStore } from '../../Stores'
 import type {
@@ -9,37 +10,6 @@ import type {
 } from '../../Types'
 import { MoreIcon, CheckIcon } from './Icons'
 import styles from './ReadingView.module.scss'
-
-const FONT_OPTIONS: { value: ReaderFontFamily; label: string }[] = [
-  { value: 'sans', label: '无衬线' },
-  { value: 'serif', label: '衬线' },
-  { value: 'mono', label: '等宽' },
-]
-
-const SIZE_OPTIONS: { value: ReaderFontSize; label: string }[] = [
-  { value: 14, label: '小' },
-  { value: 16, label: '中' },
-  { value: 18, label: '大' },
-]
-
-const LINE_OPTIONS: { value: ReaderLineHeight; label: string }[] = [
-  { value: 1.5, label: '紧凑' },
-  { value: 1.8, label: '适中' },
-  { value: 2.0, label: '宽松' },
-]
-
-const WIDTH_OPTIONS: { value: ReaderWidth; label: string }[] = [
-  { value: '640', label: '窄' },
-  { value: '800', label: '宽' },
-  { value: 'full', label: '全宽' },
-]
-
-const BG_OPTIONS: { value: ReaderBackground; label: string }[] = [
-  { value: 'default', label: '跟随主题' },
-  { value: 'light', label: '亮色' },
-  { value: 'sepia', label: '护眼' },
-  { value: 'dark', label: '暗色' },
-]
 
 function RadioRow(props: { value: string; label: string }): JSX.Element {
   return (
@@ -55,67 +25,95 @@ function RadioRow(props: { value: string; label: string }): JSX.Element {
 }
 
 function ReaderSettingsMenu(): JSX.Element {
+  const { t } = useTranslation()
   const s = useReaderStore()
+
+  const fontOptions = [
+    { value: 'sans' as ReaderFontFamily, label: t('reader.font.sans') },
+    { value: 'serif' as ReaderFontFamily, label: t('reader.font.serif') },
+    { value: 'mono' as ReaderFontFamily, label: t('reader.font.mono') },
+  ]
+  const sizeOptions = [
+    { value: 14 as ReaderFontSize, label: t('reader.size.small') },
+    { value: 16 as ReaderFontSize, label: t('reader.size.medium') },
+    { value: 18 as ReaderFontSize, label: t('reader.size.large') },
+  ]
+  const lineOptions = [
+    { value: 1.5 as ReaderLineHeight, label: t('reader.lineHeight.compact') },
+    { value: 1.8 as ReaderLineHeight, label: t('reader.lineHeight.moderate') },
+    { value: 2.0 as ReaderLineHeight, label: t('reader.lineHeight.loose') },
+  ]
+  const widthOptions = [
+    { value: '640' as ReaderWidth, label: t('reader.width.narrow') },
+    { value: '800' as ReaderWidth, label: t('reader.width.wide') },
+    { value: 'full' as ReaderWidth, label: t('reader.width.full') },
+  ]
+  const bgOptions = [
+    { value: 'default' as ReaderBackground, label: t('reader.background.default') },
+    { value: 'light' as ReaderBackground, label: t('reader.background.light') },
+    { value: 'sepia' as ReaderBackground, label: t('reader.background.sepia') },
+    { value: 'dark' as ReaderBackground, label: t('reader.background.dark') },
+  ]
 
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button type="button" className={styles.toolbarBtn} title="阅读设置" aria-label="阅读设置">
+        <button type="button" className={styles.toolbarBtn} title={t('reader.settings.title')} aria-label={t('reader.settings.title')}>
           <MoreIcon size={18} />
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content className={styles.menuContent} align="end" sideOffset={6}>
-          <DropdownMenu.Label className={styles.menuLabel}>字体</DropdownMenu.Label>
+          <DropdownMenu.Label className={styles.menuLabel}>{t('reader.settings.font')}</DropdownMenu.Label>
           <DropdownMenu.RadioGroup
             value={s.fontFamily}
             onValueChange={(v) => s.setFontFamily(v as ReaderFontFamily)}
           >
-            {FONT_OPTIONS.map((o) => (
+            {fontOptions.map((o) => (
               <RadioRow key={o.value} value={o.value} label={o.label} />
             ))}
           </DropdownMenu.RadioGroup>
 
           <DropdownMenu.Separator className={styles.menuSeparator} />
-          <DropdownMenu.Label className={styles.menuLabel}>字号</DropdownMenu.Label>
+          <DropdownMenu.Label className={styles.menuLabel}>{t('reader.settings.fontSize')}</DropdownMenu.Label>
           <DropdownMenu.RadioGroup
             value={String(s.fontSize)}
             onValueChange={(v) => s.setFontSize(Number(v) as ReaderFontSize)}
           >
-            {SIZE_OPTIONS.map((o) => (
+            {sizeOptions.map((o) => (
               <RadioRow key={o.value} value={String(o.value)} label={o.label} />
             ))}
           </DropdownMenu.RadioGroup>
 
           <DropdownMenu.Separator className={styles.menuSeparator} />
-          <DropdownMenu.Label className={styles.menuLabel}>行高</DropdownMenu.Label>
+          <DropdownMenu.Label className={styles.menuLabel}>{t('reader.settings.lineHeight')}</DropdownMenu.Label>
           <DropdownMenu.RadioGroup
             value={String(s.lineHeight)}
             onValueChange={(v) => s.setLineHeight(Number(v) as ReaderLineHeight)}
           >
-            {LINE_OPTIONS.map((o) => (
+            {lineOptions.map((o) => (
               <RadioRow key={o.value} value={String(o.value)} label={o.label} />
             ))}
           </DropdownMenu.RadioGroup>
 
           <DropdownMenu.Separator className={styles.menuSeparator} />
-          <DropdownMenu.Label className={styles.menuLabel}>宽度</DropdownMenu.Label>
+          <DropdownMenu.Label className={styles.menuLabel}>{t('reader.settings.width')}</DropdownMenu.Label>
           <DropdownMenu.RadioGroup
             value={s.width}
             onValueChange={(v) => s.setWidth(v as ReaderWidth)}
           >
-            {WIDTH_OPTIONS.map((o) => (
+            {widthOptions.map((o) => (
               <RadioRow key={o.value} value={o.value} label={o.label} />
             ))}
           </DropdownMenu.RadioGroup>
 
           <DropdownMenu.Separator className={styles.menuSeparator} />
-          <DropdownMenu.Label className={styles.menuLabel}>阅读背景</DropdownMenu.Label>
+          <DropdownMenu.Label className={styles.menuLabel}>{t('reader.settings.background')}</DropdownMenu.Label>
           <DropdownMenu.RadioGroup
             value={s.background}
             onValueChange={(v) => s.setBackground(v as ReaderBackground)}
           >
-            {BG_OPTIONS.map((o) => (
+            {bgOptions.map((o) => (
               <RadioRow key={o.value} value={o.value} label={o.label} />
             ))}
           </DropdownMenu.RadioGroup>

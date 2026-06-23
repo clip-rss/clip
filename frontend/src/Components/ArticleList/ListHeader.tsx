@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import clsx from 'clsx'
 import type { ArticleFilter, ArticleSort } from '../../Types'
@@ -11,28 +12,12 @@ interface ListHeaderProps {
   onSortChange: (sort: ArticleSort) => void
   onMarkAllRead: () => void
   onBatchStar: () => void
-  /** 搜索模式：头部替换为结果数提示，隐藏筛选/排序/批量。 */
   searchActive?: boolean
   resultCount?: number
 }
 
-const FILTER_OPTIONS: { value: ArticleFilter; label: string }[] = [
-  { value: 'all', label: '全部' },
-  { value: 'unread', label: '未读' },
-  { value: 'read', label: '已读' },
-  { value: 'starred', label: '星标' },
-  { value: 'today', label: '今日' },
-]
-
-const FILTER_LABEL: Record<ArticleFilter, string> = {
-  all: '全部',
-  unread: '未读',
-  read: '已读',
-  starred: '星标',
-  today: '今日',
-}
-
 function ListHeader(props: ListHeaderProps): JSX.Element {
+  const { t } = useTranslation()
   const {
     filter,
     sort,
@@ -44,11 +29,29 @@ function ListHeader(props: ListHeaderProps): JSX.Element {
     resultCount = 0,
   } = props
 
-  // 搜索模式：头部仅显示结果数，不展示筛选/排序/批量操作。
+  const filterOptions: { value: ArticleFilter; label: string }[] = [
+    { value: 'all', label: t('article.filter.all') },
+    { value: 'unread', label: t('article.filter.unread') },
+    { value: 'read', label: t('article.filter.read') },
+    { value: 'starred', label: t('article.filter.starred') },
+    { value: 'today', label: t('article.filter.today') },
+  ]
+
+  const filterLabel: Record<ArticleFilter, string> = {
+    all: t('article.filter.all'),
+    unread: t('article.filter.unread'),
+    read: t('article.filter.read'),
+    starred: t('article.filter.starred'),
+    today: t('article.filter.today'),
+  }
+
+  const sortLabel = sort === 'time' ? t('article.sort.time') : t('article.sort.source')
+  const sortTitle = sort === 'time' ? t('article.sort.byTime') : t('article.sort.bySource')
+
   if (searchActive) {
     return (
       <div className={styles.header}>
-        <span className={styles.resultCount}>找到 {resultCount} 篇文章</span>
+        <span className={styles.resultCount}>{t('article.searchResult', { count: resultCount })}</span>
       </div>
     )
   }
@@ -58,13 +61,13 @@ function ListHeader(props: ListHeaderProps): JSX.Element {
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
           <button type="button" className={styles.filterButton}>
-            {FILTER_LABEL[filter]}
+            {filterLabel[filter]}
             <ChevronDownIcon size={14} />
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
           <DropdownMenu.Content className={styles.menuContent} align="start" sideOffset={4}>
-            {FILTER_OPTIONS.map((opt) => (
+            {filterOptions.map((opt) => (
               <DropdownMenu.Item
                 key={opt.value}
                 className={styles.menuItem}
@@ -85,11 +88,11 @@ function ListHeader(props: ListHeaderProps): JSX.Element {
           type="button"
           className={styles.iconButton}
           onClick={() => onSortChange(sort === 'time' ? 'source' : 'time')}
-          title={sort === 'time' ? '按时间排序（点击切换为来源）' : '按来源排序（点击切换为时间）'}
+          title={sortTitle}
           aria-label="切换排序"
         >
           <SortIcon size={16} />
-          <span className={styles.sortLabel}>{sort === 'time' ? '时间' : '来源'}</span>
+          <span className={styles.sortLabel}>{sortLabel}</span>
         </button>
 
         <DropdownMenu.Root>
@@ -101,10 +104,10 @@ function ListHeader(props: ListHeaderProps): JSX.Element {
           <DropdownMenu.Portal>
             <DropdownMenu.Content className={styles.menuContent} align="end" sideOffset={4}>
               <DropdownMenu.Item className={clsx(styles.menuItem, styles.menuItemPlain)} onSelect={onMarkAllRead}>
-                全部标记为已读
+                {t('article.actions.markAllRead')}
               </DropdownMenu.Item>
               <DropdownMenu.Item className={clsx(styles.menuItem, styles.menuItemPlain)} onSelect={onBatchStar}>
-                批量星标
+                {t('article.actions.batchStar')}
               </DropdownMenu.Item>
             </DropdownMenu.Content>
           </DropdownMenu.Portal>

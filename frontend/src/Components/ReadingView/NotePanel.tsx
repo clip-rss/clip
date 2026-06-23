@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useArticleStore } from '../../Stores'
 import type { Item } from '../../Types'
@@ -20,6 +21,7 @@ type SaveStatus = 'idle' | 'saving' | 'saved'
  * 草稿为本地态，切换文章或关闭/卸载时立即冲刷未保存的改动，避免丢失。
  */
 function NotePanel(props: NotePanelProps): JSX.Element {
+  const { t } = useTranslation()
   const { item, onClose } = props
   const saveNote = useArticleStore((s) => s.saveNote)
 
@@ -75,17 +77,17 @@ function NotePanel(props: NotePanelProps): JSX.Element {
   return (
     <div className={styles.notePanel}>
       <div className={styles.noteHeader}>
-        <span className={styles.noteTitle}>笔记</span>
-        <span className={styles.noteHint}>支持 Markdown 语法</span>
+        <span className={styles.noteTitle}>{t('note.title')}</span>
+        <span className={styles.noteHint}>{t('note.placeholder')}</span>
         <span className={styles.noteStatus}>
-          {status === 'saving' ? '保存中…' : status === 'saved' ? '已保存' : ''}
+          {status === 'saving' ? t('note.saving') : status === 'saved' ? t('note.saved') : ''}
         </span>
         <button
           type="button"
           className={styles.noteClose}
           onClick={handleClose}
-          title="关闭笔记"
-          aria-label="关闭笔记"
+          title={t('reader.toolbar.closeNote')}
+          aria-label={t('reader.toolbar.closeNote')}
         >
           <CloseIcon size={16} />
         </button>
@@ -94,7 +96,7 @@ function NotePanel(props: NotePanelProps): JSX.Element {
         className={styles.noteEditor}
         value={draft}
         onChange={(e) => handleChange(e.target.value)}
-        placeholder="写点笔记…（纯文本，支持 Markdown）"
+        placeholder={t('note.placeholder')}
         spellCheck={false}
         autoFocus
       />

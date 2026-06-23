@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import * as Dialog from '@radix-ui/react-dialog'
 import clsx from 'clsx'
 import { useSidebarStore } from '../../Stores'
@@ -13,11 +14,8 @@ interface AddFeedModalProps {
 
 type Status = 'idle' | 'detecting' | 'detected' | 'error' | 'submitting'
 
-/**
- * 添加订阅弹窗：两阶段交互——先检测订阅地址（支持网页自动发现），
- * 检测成功后填写名称、选择归属文件夹并确认添加。
- */
 function AddFeedModal(props: AddFeedModalProps): JSX.Element {
+  const { t } = useTranslation()
   const { open, onOpenChange } = props
   const categories = useSidebarStore((s) => s.categories)
   const reload = useSidebarStore((s) => s.load)
@@ -117,10 +115,10 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
           <header className={styles.header}>
             <div className={styles.headerLeft}>
               <RssIcon />
-              <Dialog.Title className={styles.title}>添加订阅</Dialog.Title>
+              <Dialog.Title className={styles.title}>{t('feed.add.title')}</Dialog.Title>
             </div>
             <Dialog.Close asChild>
-              <button type="button" className={styles.closeBtn} aria-label="关闭">
+              <button type="button" className={styles.closeBtn} aria-label={t('confirm.cancel')}>
                 <CloseIcon />
               </button>
             </Dialog.Close>
@@ -128,14 +126,14 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
 
           <div className={styles.body}>
             <label className={styles.label} htmlFor="add-feed-url">
-              RSS / Atom 订阅地址
+              {t('feed.add.url')}
             </label>
             <div className={styles.urlRow}>
               <input
                 id="add-feed-url"
                 type="text"
                 className={styles.urlInput}
-                placeholder="请输入"
+                placeholder={t('feed.add.urlPlaceholder')}
                 value={url}
                 onChange={(e) => handleUrlChange(e.target.value)}
                 onKeyDown={handleUrlKeyDown}
@@ -148,7 +146,7 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
                 onClick={detect}
                 disabled={!url.trim() || status === 'detecting'}
               >
-                {status === 'detecting' ? '检测中…' : '检测'}
+                {status === 'detecting' ? t('feed.add.searching') : t('settings.proxy.testBtn')}
               </button>
             </div>
 
@@ -156,8 +154,8 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
               <div className={clsx(styles.resultBar, styles.resultOk)}>
                 <CheckIcon />
                 <span>
-                  检测成功，找到订阅源：{preview!.title}
-                  {preview!.itemCount > 0 ? `（${preview!.itemCount} 篇文章）` : ''}
+                  {t('feed.add.searchOk')}：{preview!.title}
+                  {preview!.itemCount > 0 ? ` (${preview!.itemCount} ${t('settings.general.itemsUnit')})` : ''}
                 </span>
               </div>
             ) : null}
@@ -165,14 +163,14 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
             {status === 'error' ? (
               <div className={clsx(styles.resultBar, styles.resultError)}>
                 <CrossIcon />
-                <span>{errorMsg || '无法解析该地址，请检查 URL'}</span>
+                <span>{errorMsg || t('feed.add.searchFailed')}</span>
               </div>
             ) : null}
 
             {detected && preview!.alreadyAdded ? (
               <div className={clsx(styles.resultBar, styles.resultError)}>
                 <CrossIcon />
-                <span>该订阅源已存在，无需重复添加</span>
+                <span>{t('feed.add.added')}</span>
               </div>
             ) : null}
 
@@ -180,7 +178,7 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
               <>
                 <div className={styles.fieldGroup}>
                   <label className={styles.label} htmlFor="add-feed-name">
-                    订阅源名称（可修改）
+                    {t('feed.add.label')}
                   </label>
                   <input
                     id="add-feed-name"
@@ -194,7 +192,7 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
 
                 <div className={styles.fieldGroup}>
                   <label className={styles.label} htmlFor="add-feed-folder">
-                    归属文件夹
+                    {t('feed.add.folder')}
                   </label>
                   <select
                     id="add-feed-folder"
@@ -202,7 +200,7 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
                     value={categoryId}
                     onChange={(e) => setCategoryId(Number(e.target.value))}
                   >
-                    <option value={0}>未分类</option>
+                    <option value={0}>{t('sidebar.allArticles')}</option>
                     {options.map((c) => (
                       <option key={c.id} value={c.id}>
                         {'　'.repeat(c.depth)}
@@ -220,7 +218,7 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
           <footer className={styles.footer}>
             <Dialog.Close asChild>
               <button type="button" className={styles.cancelBtn}>
-                取消
+                {t('confirm.cancel')}
               </button>
             </Dialog.Close>
             <button
@@ -229,7 +227,7 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
               onClick={submit}
               disabled={!canAdd}
             >
-              {status === 'submitting' ? '添加中…' : '添加订阅'}
+              {status === 'submitting' ? t('feed.add.adding') : t('feed.add.title')}
             </button>
           </footer>
         </Dialog.Content>

@@ -1,19 +1,21 @@
+import { useTranslation } from 'react-i18next'
 import { useThemeStore } from '../../Stores'
 import type { ThemePreference } from '../../Types'
 import styles from './ThemeToggle.module.scss'
 
 const CYCLE_ORDER: ThemePreference[] = ['light', 'dark', 'sepia', 'system']
 
-const LABELS: Record<ThemePreference, string> = {
-  light: '亮色',
-  dark: '暗色',
-  sepia: '护眼',
-  system: '跟随系统',
-}
-
 function ThemeToggle(): JSX.Element {
+  const { t } = useTranslation()
   const preference = useThemeStore((s) => s.preference)
   const setPreference = useThemeStore((s) => s.setPreference)
+
+  const labels: Record<ThemePreference, string> = {
+    light: t('theme.light'),
+    dark: t('theme.dark'),
+    sepia: t('theme.sepia'),
+    system: t('theme.system'),
+  }
 
   function handleClick(): void {
     const currentIndex = CYCLE_ORDER.indexOf(preference)
@@ -25,8 +27,8 @@ function ThemeToggle(): JSX.Element {
     <button
       className={styles.toggle}
       onClick={handleClick}
-      title={LABELS[preference]}
-      aria-label={`当前主题：${LABELS[preference]}，点击切换`}
+      title={labels[preference]}
+      aria-label={t('theme.ariaLabel', { label: labels[preference] })}
     >
       <ThemeIcon preference={preference} />
     </button>
@@ -62,7 +64,6 @@ function ThemeIcon(props: { preference: ThemePreference }): JSX.Element {
     )
   }
 
-  // light (default)
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="5" />

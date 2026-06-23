@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useMemo, useState } from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Tooltip from '@radix-ui/react-tooltip'
@@ -24,6 +25,7 @@ interface SidebarProps {
 }
 
 function Sidebar(props: SidebarProps): JSX.Element {
+  const { t } = useTranslation()
   const { onAddFeed } = props
   const categories = useSidebarStore((s) => s.categories)
   const feeds = useSidebarStore((s) => s.feeds)
@@ -79,7 +81,7 @@ function Sidebar(props: SidebarProps): JSX.Element {
   return (
     <div className={styles.sidebar}>
       <header className={styles.header}>
-        <span className={styles.headerTitle}>源</span>
+        <span className={styles.headerTitle}>{t('sidebar.title')}</span>
         <AddMenu
           onNewFolder={() => setCreatingFolder(true)}
           onAddFeed={onAddFeed}
@@ -96,7 +98,7 @@ function Sidebar(props: SidebarProps): JSX.Element {
         >
           <span className={styles.chevronSlot} />
           <InboxIcon size={16} className={styles.feedIcon} />
-          <span className={styles.rowName}>全部文章</span>
+          <span className={styles.rowName}>{t('sidebar.allArticles')}</span>
           <UnreadBadge count={tree.totalUnread} />
         </div>
 
@@ -104,7 +106,7 @@ function Sidebar(props: SidebarProps): JSX.Element {
           <div className={clsx(styles.row, styles.folderRow)} style={{ paddingLeft: rowPaddingLeft(0) }}>
             <span className={styles.chevronSlot} />
             <RenameInput
-              initialValue="新建文件夹"
+              initialValue={t('sidebar.newFolder')}
               onSubmit={(v) => {
                 setCreatingFolder(false)
                 addCategory(v)
@@ -133,7 +135,7 @@ function Sidebar(props: SidebarProps): JSX.Element {
       <footer className={styles.footer}>
         <div className={styles.footerStatus}>
           <span className={styles.lastUpdated}>
-            上次更新：{formatRelativeTime(lastUpdated)}
+            {t('sidebar.lastUpdated')}{formatRelativeTime(lastUpdated)}
           </span>
           <IconAction label="手动更新 (R)" onClick={handleRefresh} disabled={refreshing}>
             <RefreshIcon size={15} className={refreshing ? styles.spinning : undefined} />
@@ -156,25 +158,26 @@ function Sidebar(props: SidebarProps): JSX.Element {
 
 /** 头部「＋」下拉菜单。 */
 function AddMenu(props: { onNewFolder: () => void; onAddFeed?: () => void }): JSX.Element {
+  const { t } = useTranslation()
   const { onNewFolder, onAddFeed } = props
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button type="button" className={styles.headerAdd} title="新建" aria-label="新建文件夹或订阅">
+        <button type="button" className={styles.headerAdd} title={t('sidebar.title')} aria-label={t('sidebar.title')}>
           <PlusIcon size={18} />
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content className={styles.menuContent} align="end" sideOffset={4}>
           <DropdownMenu.Item className={styles.menuItem} onSelect={onNewFolder}>
-            新建文件夹
+            {t('sidebar.contextMenu.newFolder')}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className={styles.menuItem}
             disabled={!onAddFeed}
             onSelect={() => onAddFeed?.()}
           >
-            添加订阅
+            {t('sidebar.contextMenu.addFeed')}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

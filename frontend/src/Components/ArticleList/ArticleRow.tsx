@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import { formatRelativeTime, highlightText, openURL } from '../../Utils'
 import type { Item } from '../../Types'
@@ -10,11 +11,9 @@ interface ArticleRowProps {
   selected: boolean
   onSelect: (id: number) => void
   onToggleStar: (id: number) => void
-  /** 搜索关键词；存在时高亮标题/摘要的匹配片段。 */
   query?: string
 }
 
-/** 去除摘要中的 HTML 标签并解码实体，仅取纯文本用于列表展示。 */
 function htmlToText(html: string): string {
   if (!html) return ''
   const doc = new DOMParser().parseFromString(html, 'text/html')
@@ -22,6 +21,7 @@ function htmlToText(html: string): string {
 }
 
 function ArticleRow(props: ArticleRowProps): JSX.Element {
+  const { t } = useTranslation()
   const { item, sourceName, selected, onSelect, onToggleStar, query } = props
   const summary = htmlToText(item.summary)
   const q = query?.trim()
@@ -63,8 +63,8 @@ function ArticleRow(props: ArticleRowProps): JSX.Element {
           type="button"
           className={clsx(styles.actionBtn, item.isStarred && styles.starred)}
           onClick={handleStar}
-          title={item.isStarred ? '取消星标' : '星标'}
-          aria-label={item.isStarred ? '取消星标' : '星标'}
+          title={item.isStarred ? t('reader.toolbar.unstar') : t('reader.toolbar.star')}
+          aria-label={item.isStarred ? t('reader.toolbar.unstar') : t('reader.toolbar.star')}
         >
           <StarIcon size={16} filled={item.isStarred} />
         </button>
@@ -72,8 +72,8 @@ function ArticleRow(props: ArticleRowProps): JSX.Element {
           type="button"
           className={styles.actionBtn}
           onClick={handleOpen}
-          title="在浏览器打开"
-          aria-label="在浏览器打开"
+          title={t('reader.toolbar.openInBrowser')}
+          aria-label={t('reader.toolbar.openInBrowser')}
         >
           <ExternalLinkIcon size={16} />
         </button>

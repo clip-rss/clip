@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useSidebarStore } from '../../Stores'
 import { FeedService, flattenCategories, toApiError } from '../../Utils'
@@ -11,8 +12,8 @@ interface EditFeedModalProps {
   onOpenChange: (open: boolean) => void
 }
 
-/** 编辑订阅源弹窗：修改标题、归属文件夹、更新间隔与保留文章上限。 */
 function EditFeedModal(props: EditFeedModalProps): JSX.Element {
+  const { t } = useTranslation()
   const { feed, open, onOpenChange } = props
   const categories = useSidebarStore((s) => s.categories)
   const reload = useSidebarStore((s) => s.load)
@@ -69,9 +70,9 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
           onInteractOutside={(e) => e.preventDefault()}
         >
           <header className={styles.header}>
-            <Dialog.Title className={styles.title}>编辑订阅源</Dialog.Title>
+            <Dialog.Title className={styles.title}>{t('feed.edit.title')}</Dialog.Title>
             <Dialog.Close asChild>
-              <button type="button" className={styles.closeBtn} aria-label="关闭">
+              <button type="button" className={styles.closeBtn} aria-label={t('confirm.cancel')}>
                 <CloseIcon />
               </button>
             </Dialog.Close>
@@ -80,7 +81,7 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
           <div className={styles.body}>
             <div className={styles.fieldGroup}>
               <label className={styles.label} htmlFor="edit-feed-title">
-                标题
+                {t('feed.edit.label')}
               </label>
               <input
                 id="edit-feed-title"
@@ -94,7 +95,7 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
 
             <div className={styles.fieldGroup}>
               <label className={styles.label} htmlFor="edit-feed-folder">
-                归属文件夹
+                {t('feed.edit.folder')}
               </label>
               <select
                 id="edit-feed-folder"
@@ -102,7 +103,7 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
                 value={categoryId}
                 onChange={(e) => setCategoryId(Number(e.target.value))}
               >
-                <option value={0}>未分类</option>
+                <option value={0}>{t('sidebar.allArticles')}</option>
                 {options.map((c) => (
                   <option key={c.id} value={c.id}>
                     {'　'.repeat(c.depth)}
@@ -115,7 +116,7 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
             <div className={styles.fieldRow}>
               <div className={styles.fieldGroup}>
                 <label className={styles.label} htmlFor="edit-feed-interval">
-                  更新间隔（分钟）
+                  {t('feed.edit.interval')}
                 </label>
                 <input
                   id="edit-feed-interval"
@@ -128,7 +129,7 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
               </div>
               <div className={styles.fieldGroup}>
                 <label className={styles.label} htmlFor="edit-feed-max">
-                  保留文章上限
+                  {t('feed.edit.maxItems')}
                 </label>
                 <input
                   id="edit-feed-max"
@@ -147,7 +148,7 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
           <footer className={styles.footer}>
             <Dialog.Close asChild>
               <button type="button" className={styles.cancelBtn}>
-                取消
+                {t('feed.edit.cancel')}
               </button>
             </Dialog.Close>
             <button
@@ -156,7 +157,7 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
               onClick={save}
               disabled={!title.trim() || saving}
             >
-              {saving ? '保存中…' : '保存'}
+              {saving ? `${t('note.saving')}` : t('feed.edit.save')}
             </button>
           </footer>
         </Dialog.Content>

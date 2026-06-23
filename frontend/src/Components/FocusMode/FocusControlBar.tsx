@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import { useArticleStore, useLayoutStore } from '../../Stores'
 import { openURL } from '../../Utils'
@@ -22,8 +23,8 @@ interface FocusControlBarProps {
   onBarLeave: () => void
 }
 
-/** 专注模式顶部浮动控制条：退出 / 标题 / 操作。 */
 function FocusControlBar(props: FocusControlBarProps): JSX.Element {
+  const { t } = useTranslation()
   const { item, visible, platform, onExit, onBarEnter, onBarLeave } = props
   const markRead = useArticleStore((s) => s.markRead)
   const markUnread = useArticleStore((s) => s.markUnread)
@@ -38,9 +39,9 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
       onMouseLeave={onBarLeave}
     >
       <div className={clsx(styles.barLeft, platform === 'mac' && styles.barLeftMac)}>
-        <button type="button" className={styles.exitBtn} onClick={onExit} aria-label="退出专注">
+        <button type="button" className={styles.exitBtn} onClick={onExit} aria-label={t('focus.exit')}>
           <BackIcon size={18} />
-          <span>退出专注</span>
+          <span>{t('focus.exit')}</span>
         </button>
       </div>
 
@@ -55,8 +56,8 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
               type="button"
               className={clsx(styles.barBtn, item.isStarred && styles.starred)}
               onClick={() => toggleStar(item.id)}
-              title={item.isStarred ? '取消星标' : '星标'}
-              aria-label={item.isStarred ? '取消星标' : '星标'}
+              title={item.isStarred ? t('reader.toolbar.unstar') : t('reader.toolbar.star')}
+              aria-label={item.isStarred ? t('reader.toolbar.unstar') : t('reader.toolbar.star')}
             >
               <StarIcon size={18} filled={item.isStarred} />
             </button>
@@ -64,8 +65,8 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
               type="button"
               className={styles.barBtn}
               onClick={() => (item.isRead ? markUnread(item.id) : markRead(item.id))}
-              title={item.isRead ? '标记为未读' : '标记为已读'}
-              aria-label={item.isRead ? '标记为未读' : '标记为已读'}
+              title={item.isRead ? t('reader.toolbar.markUnread') : t('reader.toolbar.markRead')}
+              aria-label={item.isRead ? t('reader.toolbar.markUnread') : t('reader.toolbar.markRead')}
             >
               {item.isRead ? <ReadIcon size={18} /> : <UnreadIcon size={18} />}
             </button>
@@ -73,8 +74,8 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
               type="button"
               className={styles.barBtn}
               onClick={() => openURL(item.url)}
-              title="在浏览器打开"
-              aria-label="在浏览器打开"
+              title={t('reader.toolbar.openInBrowser')}
+              aria-label={t('reader.toolbar.openInBrowser')}
             >
               <ExternalLinkIcon size={18} />
             </button>
@@ -86,8 +87,8 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
                 item.note.trim() !== '' && styles.hasNote,
               )}
               onClick={toggleNotePanel}
-              title={notePanelOpen ? '关闭笔记' : '笔记'}
-              aria-label="笔记"
+              title={notePanelOpen ? t('reader.toolbar.closeNote') : t('note.title')}
+              aria-label={t('note.title')}
               aria-pressed={notePanelOpen}
             >
               <NoteIcon size={18} />

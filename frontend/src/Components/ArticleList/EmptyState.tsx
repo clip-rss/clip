@@ -1,26 +1,28 @@
+import { useTranslation } from 'react-i18next'
 import type { ArticleFilter } from '../../Types'
 import styles from './ArticleList.module.scss'
 
 interface EmptyStateProps {
   filter: ArticleFilter
-  /** 搜索模式：展示「未找到匹配…」文案。 */
   searchQuery?: string
 }
 
-const EMPTY_TEXT: Record<ArticleFilter, string> = {
-  all: '暂无文章',
-  unread: '暂无未读文章',
-  read: '暂无已读文章',
-  starred: '暂无星标文章',
-  today: '今日暂无文章',
-}
-
 function EmptyState(props: EmptyStateProps): JSX.Element {
+  const { t } = useTranslation()
   const { filter, searchQuery } = props
+
+  const emptyText: Record<ArticleFilter, string> = {
+    all: t('article.empty.noArticles'),
+    unread: t('article.empty.noUnread'),
+    read: t('article.empty.noRead'),
+    starred: t('article.empty.noStarred'),
+    today: t('article.empty.noToday'),
+  }
+
   const text =
     searchQuery !== undefined
-      ? `未找到匹配「${searchQuery}」的文章`
-      : EMPTY_TEXT[filter]
+      ? t('article.empty.noMatch', { query: searchQuery })
+      : emptyText[filter]
 
   return (
     <div className={styles.empty}>
