@@ -221,6 +221,7 @@ describe('ArticleStore', () => {
           theme: 'system', language: 'zh', defaultUpdateInterval: 30,
           defaultMaxItems: 100, notificationMode: 'each',
           autoMarkReadDelay: 0, launchMinimized: false,
+          proxyHost: '', proxyPort: 0,
         },
       })
     })

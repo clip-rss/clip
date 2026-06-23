@@ -142,6 +142,9 @@ func (f *Fetcher) Discover(ctx context.Context, pageURL string) ([]DiscoveredFee
 	return DiscoverFeeds(res.Body, pageURL), nil
 }
 
+// Client 返回底层 HTTP 客户端，供外部配置代理等。
+func (f *Fetcher) Client() *Client { return f.client }
+
 // SeedConditional 预置某 Feed 的条件 GET 头（例如从持久化层恢复）。
 func (f *Fetcher) SeedConditional(feedURL string, cond ConditionalHeaders) {
 	f.setCond(feedURL, cond)

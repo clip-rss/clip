@@ -61,7 +61,17 @@ export function RestoreDatabase() {
 }
 
 /**
- * UpdateSettings 保存全局设置并同步调度器配置。
+ * TestProxy 测试代理连通性：用指定代理请求一个测试 URL，成功返回 nil。
+ * @param {string} host
+ * @param {number} port
+ * @returns {$CancellablePromise<void>}
+ */
+export function TestProxy(host, port) {
+    return $Call.ByID(3780555523, host, port);
+}
+
+/**
+ * UpdateSettings 保存全局设置并同步调度器与代理配置。
  * @param {store$0.Settings} settings
  * @returns {$CancellablePromise<void>}
  */

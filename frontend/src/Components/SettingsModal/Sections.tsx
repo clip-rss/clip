@@ -446,6 +446,105 @@ export function DataSection(): JSX.Element {
   )
 }
 
+/* ============================ 代理 ============================ */
+
+export function ProxySection(): JSX.Element {
+  const settings = useSettingsStore((s) => s.settings)
+  const stored = useSettingsStore((s) => s.update)
+  const [host, setHost] = useState(settings?.proxyHost ?? '')
+  const [port, setPort] = useState(settings?.proxyPort?.toString() ?? '')
+  const [testing, setTesting] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null)
+
+  // 切换设置页签时同步外部值
+  useEffect(() => {
+    setHost(settings?.proxyHost ?? '')
+    setPort(settings?.proxyPort?.toString() ?? '')
+  }, [settings?.proxyHost, settings?.proxyPort])
+
+  async function handleTest(): Promise<void> {
+    const portNum = parseInt(port, 10)
+    if (!host || !portNum) {
+      setStatus({ ok: false, msg: '请输入代理地址与端口' })
+      return
+    }
+    setTesting(true)
+    setStatus(null)
+    try {
+      await SettingsService.TestProxy(host, portNum)
+      setStatus({ ok: true, msg: '代理连接成功' })
+    } catch (err) {
+      setStatus({ ok: false, msg: `连接失败：${toApiError(err)}` })
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  async function handleSave(): Promise<void> {
+    const portNum = parseInt(port, 10) || 0
+    setSaving(true)
+    setStatus(null)
+    try {
+      await stored({ proxyHost: host, proxyPort: portNum })
+      setStatus({ ok: true, msg: '已保存' })
+    } catch (err) {
+      setStatus({ ok: false, msg: `保存失败：${toApiError(err)}` })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div>
+      <h3 className={styles.sectionTitle}>代理</h3>
+      <SettingRow label="代理地址" description="HTTP 代理的 IP 或主机名">
+        <input
+          className={styles.input}
+          type="text"
+          value={host}
+          onChange={(e) => setHost(e.target.value)}
+          placeholder="127.0.0.1"
+        />
+      </SettingRow>
+      <SettingRow label="端口">
+        <input
+          className={styles.input}
+          type="number"
+          value={port}
+          onChange={(e) => setPort(e.target.value)}
+          placeholder="8080"
+        />
+      </SettingRow>
+
+      <div className={styles.btnRow}>
+        <button
+          type="button"
+          className={styles.btn}
+          onClick={handleTest}
+          disabled={testing}
+        >
+          {testing ? '测试中…' : '测试'}
+        </button>
+        <button
+          type="button"
+          className={`${styles.btn} ${styles.btnPrimary}`}
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving ? '保存中…' : '保存'}
+        </button>
+      </div>
+
+      {status ? (
+        <p className={`${styles.feedback} ${status.ok ? '' : styles.feedbackError}`}>
+          {status.msg}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
 /* ============================ 快捷键 ============================ */
 
 interface ShortcutDef {

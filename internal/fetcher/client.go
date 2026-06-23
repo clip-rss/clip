@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -40,6 +41,28 @@ func WithTimeout(d time.Duration) ClientOption {
 // WithMaxRetry 设置失败重试次数（针对网络错误与 5xx）。
 func WithMaxRetry(n int) ClientOption {
 	return func(c *Client) { c.maxRetry = n }
+}
+
+// WithProxy 设置 HTTP 代理地址。
+func WithProxy(host string, port int) ClientOption {
+	return func(c *Client) { applyProxy(c.http, host, port) }
+}
+
+// SetProxy 运行时更新 HTTP 代理。host 为空时清除代理。
+func (c *Client) SetProxy(host string, port int) {
+	applyProxy(c.http, host, port)
+}
+
+func applyProxy(client *http.Client, host string, port int) {
+	if host == "" || port <= 0 {
+		client.Transport = nil
+		return
+	}
+	proxyURL, err := url.Parse(fmt.Sprintf("http://%s:%d", host, port))
+	if err != nil {
+		return
+	}
+	client.Transport = &http.Transport{Proxy: http.ProxyURL(proxyURL)}
 }
 
 // WithHTTPClient 注入自定义 *http.Client（主要用于测试）。

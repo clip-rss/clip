@@ -63,6 +63,9 @@ func main() {
 
 	// 抓取与调度层。
 	ft := fetcher.New()
+	if settings.ProxyHost != "" && settings.ProxyPort > 0 {
+		ft.Client().SetProxy(settings.ProxyHost, settings.ProxyPort)
+	}
 	sch := scheduler.New(st, ft,
 		scheduler.WithEmitter(wailsEmitter{}),
 		scheduler.WithNotifier(notifier),
@@ -86,7 +89,7 @@ func main() {
 			application.NewService(api.NewFeedService(st, ft, sch)),
 			application.NewService(api.NewItemService(st)),
 			application.NewService(api.NewCategoryService(st)),
-			application.NewService(api.NewSettingsService(st, sch)),
+			application.NewService(api.NewSettingsService(st, sch, ft.Client())),
 			application.NewService(api.NewOPMLService(st)),
 			application.NewService(notifSvc),
 		},

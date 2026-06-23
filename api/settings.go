@@ -2,8 +2,12 @@ package api
 
 import (
 	"errors"
+	"fmt"
+	"net/http"
+	"net/url"
 	"time"
 
+	"github.com/clip-rss/clip/internal/fetcher"
 	"github.com/clip-rss/clip/internal/scheduler"
 	"github.com/clip-rss/clip/internal/store"
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -11,13 +15,14 @@ import (
 
 // SettingsService 应用设置相关的绑定方法。
 type SettingsService struct {
-	store *store.Store
-	sched *scheduler.Scheduler
+	store      *store.Store
+	sched      *scheduler.Scheduler
+	httpClient *fetcher.Client
 }
 
 // NewSettingsService 创建 SettingsService。
-func NewSettingsService(st *store.Store, sch *scheduler.Scheduler) *SettingsService {
-	return &SettingsService{store: st, sched: sch}
+func NewSettingsService(st *store.Store, sch *scheduler.Scheduler, client *fetcher.Client) *SettingsService {
+	return &SettingsService{store: st, sched: sch, httpClient: client}
 }
 
 // GetSettings 读取全局设置（未持久化时返回默认值）。
@@ -25,13 +30,42 @@ func (s *SettingsService) GetSettings() (store.Settings, error) {
 	return s.store.GetSettings()
 }
 
-// UpdateSettings 保存全局设置并同步调度器配置。
+// UpdateSettings 保存全局设置并同步调度器与代理配置。
 func (s *SettingsService) UpdateSettings(settings store.Settings) error {
 	if err := s.store.UpdateSettings(settings); err != nil {
 		return err
 	}
 	if s.sched != nil && settings.DefaultUpdateInterval > 0 {
 		s.sched.SetDefaultInterval(time.Duration(settings.DefaultUpdateInterval) * time.Minute)
+	}
+	if s.httpClient != nil {
+		s.httpClient.SetProxy(settings.ProxyHost, settings.ProxyPort)
+	}
+	return nil
+}
+
+// TestProxy 测试代理连通性：用指定代理请求一个测试 URL，成功返回 nil。
+func (s *SettingsService) TestProxy(host string, port int) error {
+	if host == "" || port <= 0 {
+		return errors.New("代理地址或端口无效")
+	}
+	proxyURL := fmt.Sprintf("http://%s:%d", host, port)
+	u, err := url.Parse(proxyURL)
+	if err != nil {
+		return fmt.Errorf("代理地址格式错误: %w", err)
+	}
+	transport := &http.Transport{Proxy: http.ProxyURL(u)}
+	client := &http.Client{Transport: transport, Timeout: 10 * time.Second}
+
+	// 使用一个可靠的测试地址检测连通性
+	req, _ := http.NewRequest(http.MethodGet, "https://www.google.com", nil)
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("代理连接失败: %w", err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("代理返回异常状态: %s", resp.Status)
 	}
 	return nil
 }

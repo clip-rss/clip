@@ -6,6 +6,7 @@ import {
   DataSection,
   GeneralSection,
   NotificationSection,
+  ProxySection,
   ReadingSection,
   ShortcutSection,
   ThemeSection,
@@ -17,13 +18,14 @@ interface SettingsModalProps {
   onOpenChange: (open: boolean) => void
 }
 
-type SectionId = 'general' | 'reading' | 'theme' | 'notification' | 'data' | 'shortcuts'
+type SectionId = 'general' | 'reading' | 'theme' | 'notification' | 'proxy' | 'shortcuts' | 'data'
 
 const NAV: { id: SectionId; label: string }[] = [
   { id: 'general', label: '通用' },
   { id: 'reading', label: '阅读' },
   { id: 'theme', label: '主题' },
   { id: 'notification', label: '通知' },
+  { id: 'proxy', label: '代理' },
   { id: 'shortcuts', label: '快捷键' },
   { id: 'data', label: '数据管理' },
 ]
@@ -74,6 +76,7 @@ function SettingsModal(props: SettingsModalProps): JSX.Element {
               {active === 'reading' ? <ReadingSection /> : null}
               {active === 'theme' ? <ThemeSection /> : null}
               {active === 'notification' ? <NotificationSection /> : null}
+              {active === 'proxy' ? <ProxySection /> : null}
               {active === 'shortcuts' ? <ShortcutSection /> : null}
               {active === 'data' ? <DataSection /> : null}
             </div>

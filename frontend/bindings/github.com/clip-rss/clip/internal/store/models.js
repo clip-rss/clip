@@ -646,6 +646,22 @@ export class Settings {
              */
             this["launchMinimized"] = false;
         }
+        if (!("proxyHost" in $$source)) {
+            /**
+             * HTTP 代理 IP / 主机名
+             * @member
+             * @type {string}
+             */
+            this["proxyHost"] = "";
+        }
+        if (!("proxyPort" in $$source)) {
+            /**
+             * HTTP 代理端口
+             * @member
+             * @type {number}
+             */
+            this["proxyPort"] = 0;
+        }
 
         Object.assign(this, $$source);
     }

@@ -23,6 +23,8 @@ const defaults: Settings = {
   notificationMode: 'each',
   autoMarkReadDelay: 0,
   launchMinimized: false,
+  proxyHost: '',
+  proxyPort: 0,
 }
 
 beforeEach(() => {

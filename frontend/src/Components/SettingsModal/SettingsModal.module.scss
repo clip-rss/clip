@@ -316,6 +316,50 @@
   color: var(--danger);
 }
 
+/* ===== 文本 / 数字输入 ===== */
+.input {
+  height: 34px;
+  width: 160px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+
+  &:focus {
+    border-color: var(--accent);
+  }
+
+  /* 隐藏数字输入框的箭头 */
+  &[type='number'] {
+    appearance: textfield;
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      appearance: none;
+      margin: 0;
+    }
+  }
+}
+
+/* ===== 按钮行 ===== */
+.btnRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.btnPrimary {
+  background-color: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+
+  &:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--accent) 85%, black);
+  }
+}
+
 /* ===== 快捷键说明 ===== */
 .shortcutGroup {
   margin-bottom: 20px;
