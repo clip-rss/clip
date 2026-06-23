@@ -2,7 +2,9 @@ package api
 
 import (
 	"errors"
+	"time"
 
+	"github.com/clip-rss/clip/internal/scheduler"
 	"github.com/clip-rss/clip/internal/store"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -10,11 +12,12 @@ import (
 // SettingsService 应用设置相关的绑定方法。
 type SettingsService struct {
 	store *store.Store
+	sched *scheduler.Scheduler
 }
 
 // NewSettingsService 创建 SettingsService。
-func NewSettingsService(st *store.Store) *SettingsService {
-	return &SettingsService{store: st}
+func NewSettingsService(st *store.Store, sch *scheduler.Scheduler) *SettingsService {
+	return &SettingsService{store: st, sched: sch}
 }
 
 // GetSettings 读取全局设置（未持久化时返回默认值）。
@@ -22,9 +25,15 @@ func (s *SettingsService) GetSettings() (store.Settings, error) {
 	return s.store.GetSettings()
 }
 
-// UpdateSettings 保存全局设置。
+// UpdateSettings 保存全局设置并同步调度器配置。
 func (s *SettingsService) UpdateSettings(settings store.Settings) error {
-	return s.store.UpdateSettings(settings)
+	if err := s.store.UpdateSettings(settings); err != nil {
+		return err
+	}
+	if s.sched != nil && settings.DefaultUpdateInterval > 0 {
+		s.sched.SetDefaultInterval(time.Duration(settings.DefaultUpdateInterval) * time.Minute)
+	}
+	return nil
 }
 
 // DatabasePath 返回数据库文件路径，供设置面板「数据管理」展示。

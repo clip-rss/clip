@@ -1,26 +1,20 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Tooltip from '@radix-ui/react-tooltip'
-import * as Dialog from '@radix-ui/react-dialog'
 import clsx from 'clsx'
 import { useSidebarStore } from '../../Stores'
-import { usePlatform, HOTKEY_OPML_IMPORT, HOTKEY_OPML_EXPORT } from '../../Hooks'
 import {
   buildFeedTree,
-  exportOpmlToFile,
   formatRelativeTime,
-  importOpmlFromFile,
   latestUpdated,
   onFeedError,
   onItemsUpdated,
-  shortcutHint,
-  toApiError,
 } from '../../Utils'
 import FolderItem from './FolderItem'
 import FeedItem from './FeedItem'
 import UnreadBadge from './UnreadBadge'
 import RenameInput from './RenameInput'
-import { InboxIcon, PlusIcon, ImportIcon, ExportIcon, RefreshIcon } from './Icons'
+import { InboxIcon, PlusIcon, RefreshIcon } from './Icons'
 import { rowPaddingLeft, FEED_DRAG_TYPE } from './layout'
 import styles from './Sidebar.module.scss'
 
@@ -42,10 +36,7 @@ function Sidebar(props: SidebarProps): JSX.Element {
 
   const [creatingFolder, setCreatingFolder] = useState(false)
   const [uncatDragOver, setUncatDragOver] = useState(false)
-  const [importMsg, setImportMsg] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const platform = usePlatform()
 
   // 初次加载 + 订阅后端事件，新文章/抓取错误时刷新未读与结构
   useEffect(() => {
@@ -57,18 +48,6 @@ function Sidebar(props: SidebarProps): JSX.Element {
       offError()
     }
   }, [load])
-
-  // OPML 导入/导出快捷键经全局事件触发，复用本组件既有 UI 流程。
-  useEffect(() => {
-    const onImport = (): void => fileInputRef.current?.click()
-    const onExport = (): void => void handleExport()
-    window.addEventListener(HOTKEY_OPML_IMPORT, onImport)
-    window.addEventListener(HOTKEY_OPML_EXPORT, onExport)
-    return () => {
-      window.removeEventListener(HOTKEY_OPML_IMPORT, onImport)
-      window.removeEventListener(HOTKEY_OPML_EXPORT, onExport)
-    }
-  }, [])
 
   // 每分钟刷新一次「上次更新」相对时间文案
   const [, setTick] = useState(0)
@@ -160,77 +139,9 @@ function Sidebar(props: SidebarProps): JSX.Element {
             <RefreshIcon size={15} className={refreshing ? styles.spinning : undefined} />
           </IconAction>
         </div>
-        <div className={styles.footerActions}>
-          <IconAction
-            label={`导入 OPML ${shortcutHint(platform, ['Shift', 'I'])}`}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <ImportIcon size={16} />
-          </IconAction>
-          <IconAction
-            label={`导出 OPML ${shortcutHint(platform, ['Shift', 'E'])}`}
-            onClick={handleExport}
-          >
-            <ExportIcon size={16} />
-          </IconAction>
-        </div>
       </footer>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".opml,.xml,text/xml,application/xml"
-        className={styles.hiddenInput}
-        onChange={handleImportFile}
-      />
-
-      <Dialog.Root open={importMsg !== null} onOpenChange={(o) => !o && setImportMsg(null)}>
-        <Dialog.Portal>
-          <Dialog.Overlay className={styles.dialogOverlay} />
-          <Dialog.Content
-            className={styles.dialogContent}
-            aria-describedby={undefined}
-            onInteractOutside={(e) => e.preventDefault()}
-          >
-            <Dialog.Title className={styles.dialogTitle}>导入 OPML</Dialog.Title>
-            <p className={styles.dialogDesc}>{importMsg}</p>
-            <div className={styles.dialogFooter}>
-              <button
-                type="button"
-                className={styles.dialogConfirm}
-                onClick={() => setImportMsg(null)}
-              >
-                知道了
-              </button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
     </div>
   )
-
-  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
-    const file = e.target.files?.[0]
-    e.target.value = '' // 允许再次选择同一文件
-    if (!file) return
-    try {
-      const res = await importOpmlFromFile(file)
-      await load()
-      setImportMsg(
-        `导入完成：新增 ${res.feeds} 个订阅源，跳过 ${res.skipped} 个重复，新建 ${res.categories} 个文件夹。`,
-      )
-    } catch (err) {
-      setImportMsg(`OPML 导入失败：${toApiError(err)}`)
-    }
-  }
-
-  async function handleExport(): Promise<void> {
-    try {
-      await exportOpmlToFile()
-    } catch (err) {
-      console.error('OPML 导出失败：', toApiError(err))
-    }
-  }
 
   async function handleRefresh(): Promise<void> {
     if (refreshing) return

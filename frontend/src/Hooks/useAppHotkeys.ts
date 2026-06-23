@@ -2,10 +2,6 @@ import { useMemo } from 'react'
 import { useArticleStore, useLayoutStore, useSidebarStore } from '../Stores'
 import { type Hotkey, useHotkeys } from './useHotkeys'
 
-/** OPML 导入/导出由 Sidebar 持有 UI 流程，快捷键经自定义事件触发。 */
-export const HOTKEY_OPML_IMPORT = 'clip:opml-import'
-export const HOTKEY_OPML_EXPORT = 'clip:opml-export'
-
 interface AppHotkeyActions {
   /** 打开「添加订阅」弹窗（App 持有弹窗状态）。 */
   onAddFeed: () => void
@@ -34,14 +30,10 @@ function pageReader(dir: 1 | -1): void {
   el.scrollBy({ top: dir * step, behavior: 'smooth' })
 }
 
-function emit(name: string): void {
-  window.dispatchEvent(new CustomEvent(name))
-}
-
 /**
  * 注册应用全部全局快捷键。在 App 顶层挂载一次。
  *
- * 覆盖：添加订阅、OPML 导入/导出、刷新、阅读区翻页、筛选切换、聚焦搜索、专注模式。
+ * 覆盖：添加订阅、刷新、阅读区翻页、筛选切换、聚焦搜索、专注模式。
  * `Esc`（关闭模态/退出专注）与专注模式下的 `J/K` 分别由 Radix 与 FocusMode 自行处理。
  */
 export function useAppHotkeys(actions: AppHotkeyActions): void {
@@ -61,20 +53,6 @@ export function useAppHotkeys(actions: AppHotkeyActions): void {
         handler: (e) => {
           e.preventDefault()
           onOpenSettings()
-        },
-      },
-      {
-        combo: 'mod+shift+i',
-        handler: (e) => {
-          e.preventDefault()
-          emit(HOTKEY_OPML_IMPORT)
-        },
-      },
-      {
-        combo: 'mod+shift+e',
-        handler: (e) => {
-          e.preventDefault()
-          emit(HOTKEY_OPML_EXPORT)
         },
       },
       {

@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"sync"
 	"time"
 
@@ -83,9 +84,7 @@ func (c Config) withDefaults() Config {
 	if c.PollInterval <= 0 {
 		c.PollInterval = defaultPollInterval
 	}
-	if c.DefaultInterval <= 0 {
-		c.DefaultInterval = defaultInterval
-	}
+	// DefaultInterval 允许为 0（表示全局手动模式），不在此处覆盖。
 	if c.Concurrency <= 0 {
 		c.Concurrency = defaultConcurrency
 	}
@@ -200,23 +199,53 @@ func (s *Scheduler) Stop() {
 	s.wg.Wait()
 }
 
-// loop 周期性触发到期源更新。
+// SetDefaultInterval 运行时更新全局默认更新间隔，影响 UpdateInterval <= 0 的订阅源。
+func (s *Scheduler) SetDefaultInterval(d time.Duration) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if d > 0 {
+		s.cfg.DefaultInterval = d
+	}
+}
+
+// tickSafe 调用 Tick 并捕获 panic，防止单次异常导致调度器静默退出。
+func (s *Scheduler) tickSafe(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("scheduler: panic recovered in Tick: %v", r)
+		}
+	}()
+	s.Tick(ctx)
+}
+
+// loop 周期性触发到期源更新。启动时先全量刷新一次所有活跃订阅源。
 func (s *Scheduler) loop(ctx context.Context) {
 	defer s.wg.Done()
 
 	ticker := time.NewTicker(s.cfg.PollInterval)
 	defer ticker.Stop()
 
-	// 启动后立即执行一次。
-	s.Tick(ctx)
+	// 启动后立即全量刷新所有活跃订阅源（条件 GET，304 无开销）。
+	s.startupRefresh(ctx)
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			s.Tick(ctx)
+			s.tickSafe(ctx)
 		}
 	}
+}
+
+// startupRefresh 应用启动时的全量刷新，与常规 Tick 不同：
+// 忽略更新间隔与退避，对所有非暂停订阅源执行条件 GET。
+func (s *Scheduler) startupRefresh(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("scheduler: panic recovered in startupRefresh: %v", r)
+		}
+	}()
+	_, _ = s.refreshAll(ctx, false)
 }
 
 // Tick 扫描并刷新所有到期（且未处于退避期）的订阅源。
@@ -236,15 +265,18 @@ func (s *Scheduler) Tick(ctx context.Context) []RefreshResult {
 }
 
 // isDue 在 store 的间隔判定之上叠加退避判定。
-//   - update_interval <= 0 视为“手动”，不自动刷新；
+//   - update_interval <= 0 时回退到全局默认间隔；
 //   - 连续失败时，需等待退避窗口结束才再次尝试。
 func (s *Scheduler) isDue(f store.Feed) bool {
-	if f.UpdateInterval <= 0 {
-		return false
+	interval := time.Duration(f.UpdateInterval) * time.Minute
+	if interval <= 0 {
+		interval = s.cfg.DefaultInterval
+		if interval <= 0 {
+			return false
+		}
 	}
 	if f.ErrorCount > 0 && f.LastUpdated != nil {
-		base := time.Duration(f.UpdateInterval) * time.Minute
-		next := f.LastUpdated.Add(fetcher.Backoff(f.ErrorCount, base))
+		next := f.LastUpdated.Add(fetcher.Backoff(f.ErrorCount, interval))
 		if s.now().Before(next) {
 			return false
 		}

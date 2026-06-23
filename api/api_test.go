@@ -412,7 +412,7 @@ func TestCategoryServiceCRUDAndMove(t *testing.T) {
 
 func TestSettingsService(t *testing.T) {
 	st := newTestStore(t)
-	svc := NewSettingsService(st)
+	svc := NewSettingsService(st, nil)
 
 	got, err := svc.GetSettings()
 	if err != nil {

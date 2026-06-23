@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/clip-rss/clip/api"
 	"github.com/clip-rss/clip/internal/fetcher"
@@ -65,6 +66,9 @@ func main() {
 	sch := scheduler.New(st, ft,
 		scheduler.WithEmitter(wailsEmitter{}),
 		scheduler.WithNotifier(notifier),
+		scheduler.WithConfig(scheduler.Config{
+			DefaultInterval: time.Duration(settings.DefaultUpdateInterval) * time.Minute,
+		}),
 	)
 
 	// 绑定服务（暴露给前端）。
@@ -82,7 +86,7 @@ func main() {
 			application.NewService(api.NewFeedService(st, ft, sch)),
 			application.NewService(api.NewItemService(st)),
 			application.NewService(api.NewCategoryService(st)),
-			application.NewService(api.NewSettingsService(st)),
+			application.NewService(api.NewSettingsService(st, sch)),
 			application.NewService(api.NewOPMLService(st)),
 			application.NewService(notifSvc),
 		},

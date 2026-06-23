@@ -61,7 +61,7 @@ export function RestoreDatabase() {
 }
 
 /**
- * UpdateSettings 保存全局设置。
+ * UpdateSettings 保存全局设置并同步调度器配置。
  * @param {store$0.Settings} settings
  * @returns {$CancellablePromise<void>}
  */

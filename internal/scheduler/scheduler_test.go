@@ -28,8 +28,9 @@ type fakeStore struct {
 	resets        map[int64]int
 	lastUpdated   map[int64]time.Time
 	cleanups      map[int64]int
-	statusUpdates map[int64]string
-	listCalls     int32
+	statusUpdates  map[int64]string
+	listCalls      int32
+	listFeedsCalls int32
 }
 
 func newFakeStore() *fakeStore {
@@ -58,6 +59,7 @@ func (f *fakeStore) GetFeedsForUpdate() ([]store.Feed, error) {
 }
 
 func (f *fakeStore) ListFeeds() ([]store.Feed, error) {
+	atomic.AddInt32(&f.listFeedsCalls, 1)
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	out := make([]store.Feed, 0, len(f.feeds))
@@ -332,7 +334,7 @@ func TestRefreshErrorRecordsFailure(t *testing.T) {
 	}
 }
 
-func TestTickFiltersManualAndBackoff(t *testing.T) {
+func TestTickFiltersBackoffAndFallsBackToDefault(t *testing.T) {
 	fixed := time.Date(2026, 6, 14, 12, 0, 0, 0, time.UTC)
 	recent := fixed.Add(-1 * time.Minute)
 	old := fixed.Add(-200 * time.Hour)
@@ -340,7 +342,7 @@ func TestTickFiltersManualAndBackoff(t *testing.T) {
 	st := newFakeStore()
 	st.forUpdate = []store.Feed{
 		{ID: 1, URL: "u1", UpdateInterval: 30, ErrorCount: 0},                       // 到期
-		{ID: 2, URL: "u2", UpdateInterval: 0},                                       // 手动 -> 跳过
+		{ID: 2, URL: "u2", UpdateInterval: 0},                                       // 回退到 DefaultInterval(30m) -> 到期
 		{ID: 3, URL: "u3", UpdateInterval: 30, ErrorCount: 5, LastUpdated: &recent}, // 退避中 -> 跳过
 		{ID: 4, URL: "u4", UpdateInterval: 30, ErrorCount: 2, LastUpdated: &old},    // 退避已过 -> 到期
 	}
@@ -350,23 +352,50 @@ func TestTickFiltersManualAndBackoff(t *testing.T) {
 
 	ft := newFakeFetcher()
 	ft.feeds["u1"] = &fetcher.ParsedFeed{}
+	ft.feeds["u2"] = &fetcher.ParsedFeed{}
 	ft.feeds["u4"] = &fetcher.ParsedFeed{}
 
-	s := New(st, ft, withClock(func() time.Time { return fixed }))
+	s := New(st, ft,
+		withClock(func() time.Time { return fixed }),
+		WithConfig(Config{DefaultInterval: 30 * time.Minute}),
+	)
 	results := s.Tick(context.Background())
 
-	if len(results) != 2 {
-		t.Fatalf("due feeds = %d, want 2 (%+v)", len(results), results)
+	if len(results) != 3 {
+		t.Fatalf("due feeds = %d, want 3 (%+v)", len(results), results)
 	}
 	got := map[int64]bool{}
 	for _, r := range results {
 		got[r.FeedID] = true
 	}
-	if !got[1] || !got[4] {
-		t.Errorf("expected feeds 1 and 4 to be refreshed, got %+v", got)
+	if !got[1] || !got[2] || !got[4] {
+		t.Errorf("expected feeds 1, 2, 4 to be refreshed, got %+v", got)
 	}
-	if got[2] || got[3] {
-		t.Errorf("manual/backoff feeds should be skipped, got %+v", got)
+	if got[3] {
+		t.Errorf("backoff feed 3 should be skipped, got %+v", got)
+	}
+}
+
+func TestTickManualWhenDefaultIsZero(t *testing.T) {
+	fixed := time.Date(2026, 6, 14, 12, 0, 0, 0, time.UTC)
+
+	st := newFakeStore()
+	st.forUpdate = []store.Feed{
+		{ID: 1, URL: "u1", UpdateInterval: 0}, // DefaultInterval=0 -> 手动，跳过
+	}
+	st.addFeed(st.forUpdate[0])
+
+	ft := newFakeFetcher()
+	ft.feeds["u1"] = &fetcher.ParsedFeed{}
+
+	s := New(st, ft,
+		withClock(func() time.Time { return fixed }),
+		WithConfig(Config{DefaultInterval: 0}),
+	)
+	results := s.Tick(context.Background())
+
+	if len(results) != 0 {
+		t.Fatalf("due feeds = %d, want 0 (manual) (%+v)", len(results), results)
 	}
 }
 
@@ -453,20 +482,20 @@ func TestConcurrencyLimit(t *testing.T) {
 	}
 }
 
-func TestStartStopRunsTick(t *testing.T) {
-	st := newFakeStore() // forUpdate empty -> ticks do no fetching
+func TestStartStopRunsStartupRefresh(t *testing.T) {
+	st := newFakeStore() // no feeds → startup refresh does no fetching but calls ListFeeds
 	s := New(st, newFakeFetcher(), WithConfig(Config{PollInterval: time.Hour}))
 
 	s.Start(context.Background())
-	// 启动会立即触发一次 Tick；等待其执行。
+	// 启动会立即触发全量刷新（ListFeeds）；等待其执行。
 	deadline := time.Now().Add(time.Second)
-	for time.Now().Before(deadline) && atomic.LoadInt32(&st.listCalls) == 0 {
+	for time.Now().Before(deadline) && atomic.LoadInt32(&st.listFeedsCalls) == 0 {
 		time.Sleep(5 * time.Millisecond)
 	}
 	s.Stop()
 
-	if atomic.LoadInt32(&st.listCalls) == 0 {
-		t.Error("expected at least one tick (GetFeedsForUpdate call)")
+	if atomic.LoadInt32(&st.listFeedsCalls) == 0 {
+		t.Error("expected at least one startup refresh (ListFeeds call)")
 	}
 	// 重复 Stop 不应 panic。
 	s.Stop()

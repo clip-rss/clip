@@ -20,6 +20,8 @@ import type {
   ReaderWidth,
   ThemePreference,
 } from '../../Types'
+import { usePlatform } from '../../Hooks'
+import type { Platform } from '../../Hooks'
 import { SegmentedControl, SettingRow, Toggle } from './Controls'
 import styles from './SettingsModal.module.scss'
 
@@ -42,7 +44,7 @@ export function GeneralSection(): JSX.Element {
     <div>
       <h3 className={styles.sectionTitle}>通用</h3>
       <SettingRow
-        label="全局更新间隔"
+        label="订阅源全局更新间隔"
         description="新订阅源默认的自动刷新周期；选「手动」则不自动刷新"
       >
         <SegmentedControl
@@ -440,6 +442,104 @@ export function DataSection(): JSX.Element {
           {feedback}
         </p>
       ) : null}
+    </div>
+  )
+}
+
+/* ============================ 快捷键 ============================ */
+
+interface ShortcutDef {
+  combo: string
+  description: string
+}
+
+const SHORTCUT_GROUPS: { title: string; items: ShortcutDef[] }[] = [
+  {
+    title: '通用',
+    items: [
+      { combo: 'mod+n', description: '添加订阅' },
+      { combo: 'mod+,', description: '打开设置' },
+      { combo: 'r', description: '手动更新选中的订阅源' },
+      { combo: 'shift+r', description: '强制刷新全部订阅源' },
+      { combo: '/', description: '聚焦搜索框' },
+    ],
+  },
+  {
+    title: '阅读',
+    items: [
+      { combo: 'j / ↓', description: '下一篇文章（专注模式）' },
+      { combo: 'k / ↑', description: '上一篇文章（专注模式）' },
+      { combo: 'space', description: '向下翻页' },
+      { combo: 'shift+space', description: '向上翻页' },
+      { combo: 'mod+shift+f', description: '切换专注模式' },
+      { combo: 'Esc', description: '退出专注模式 / 关闭弹窗' },
+    ],
+  },
+  {
+    title: '筛选',
+    items: [
+      { combo: 'mod+1', description: '全部文章' },
+      { combo: 'mod+2', description: '未读文章' },
+      { combo: 'mod+3', description: '收藏文章' },
+    ],
+  },
+]
+
+/** 平台符号映射：Mac 用简洁符号，Windows 用完整单词。 */
+const MAC_KEY: Record<string, string> = {
+  mod: '⌘',
+  shift: '⇧',
+  alt: '⌥',
+  ctrl: '⌃',
+  space: '␣',
+  'shift+space': '⇧␣',
+}
+const WIN_KEY: Record<string, string> = {
+  mod: 'Ctrl',
+  shift: 'Shift',
+  alt: 'Alt',
+  ctrl: 'Ctrl',
+  space: '空格',
+  'shift+space': 'Shift + 空格',
+}
+
+/** 将 combo 字符串转为平台相关的可读按键组合。对 j/k 等特殊形式直接透传。 */
+function formatCombo(combo: string, platform: Platform | null): string {
+  // 特殊组合（含箭头等）直接返回
+  if (combo.includes('/') || combo.includes('↑') || combo.includes('↓')) {
+    return combo
+  }
+  if (combo === 'Esc') return 'Esc'
+
+  const isMac = platform === 'mac'
+  const parts = combo.split('+')
+  return parts
+    .map((p) => {
+      const key = p.toLowerCase()
+      if (isMac && MAC_KEY[key]) return MAC_KEY[key]
+      if (!isMac && WIN_KEY[key]) return WIN_KEY[key]
+      return p.length === 1 ? p.toUpperCase() : p
+    })
+    .join(isMac ? ' ' : ' + ')
+}
+
+export function ShortcutSection(): JSX.Element {
+  const platform = usePlatform()
+
+  return (
+    <div>
+      <h3 className={styles.sectionTitle}>快捷键说明</h3>
+      {SHORTCUT_GROUPS.map((group) => (
+        <div key={group.title} className={styles.shortcutGroup}>
+          <h4 className={styles.shortcutGroupTitle}>{group.title}</h4>
+          {group.items.map((item) => (
+            <div key={item.combo} className={styles.shortcutRow}>
+              <kbd className={styles.kbd}>{formatCombo(item.combo, platform)}</kbd>
+              <span className={styles.shortcutDesc}>{item.description}</span>
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   )
 }
