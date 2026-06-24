@@ -41,7 +41,7 @@
   "focus": { "exit": "退出专注", "empty": "未选择文章" },
   "settings": {
     "title": "设置",
-    "tabs": { "general": "通用", "reading": "阅读", "theme": "主题", "notification": "通知", "proxy": "代理", "shortcuts": "快捷键", "data": "数据管理" },
+    "tabs": { "general": "通用", "reading": "阅读", "theme": "主题", "notification": "通知", "proxy": "代理", "shortcuts": "快捷键", "data": "数据管理", "about": "关于" },
     "general": {
       "title": "通用",
       "updateInterval": "订阅源全局更新间隔",
@@ -144,6 +144,9 @@
       "restoreSuccess": "已导入备份，请重启应用以生效。",
       "restoreCancelled": "已取消恢复。",
       "restoreError": "恢复失败"
+    },
+    "about": {
+      "appName": "Clip"
     }
   },
   "note": { "title": "笔记", "placeholder": "写点笔记…（纯文本，支持 Markdown）", "saving": "保存中…", "saved": "已保存" },

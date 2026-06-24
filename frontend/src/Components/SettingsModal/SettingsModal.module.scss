@@ -317,6 +317,20 @@
 }
 
 /* ===== 文本 / 数字输入 ===== */
+.aboutSection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 32px 0;
+}
+
+.aboutAppName {
+  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 700;
+}
+
 .input {
   height: 34px;
   width: 160px;

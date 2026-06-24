@@ -41,7 +41,7 @@
   "focus": { "exit": "Exit Focus", "empty": "No article selected" },
   "settings": {
     "title": "Settings",
-    "tabs": { "general": "General", "reading": "Reading", "theme": "Theme", "notification": "Notifications", "proxy": "Proxy", "shortcuts": "Shortcuts", "data": "Data" },
+    "tabs": { "general": "General", "reading": "Reading", "theme": "Theme", "notification": "Notifications", "proxy": "Proxy", "shortcuts": "Shortcuts", "data": "Data", "about": "About" },
     "general": {
       "title": "General",
       "updateInterval": "Default update interval",
@@ -144,6 +144,9 @@
       "restoreSuccess": "Database restored. Please restart the app.",
       "restoreCancelled": "Restore cancelled.",
       "restoreError": "Restore failed"
+    },
+    "about": {
+      "appName": "Clip"
     }
   },
   "note": { "title": "Notes", "placeholder": "Write a note… (plain text, Markdown supported)", "saving": "Saving…", "saved": "Saved" },

@@ -4,6 +4,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import clsx from 'clsx'
 import { useSettingsStore } from '../../Stores'
 import {
+  AboutSection,
   DataSection,
   GeneralSection,
   NotificationSection,
@@ -27,6 +28,7 @@ type SectionId =
   | 'proxy'
   | 'shortcuts'
   | 'data'
+  | 'about'
 
 const NAV_KEYS: { id: SectionId; labelKey: string }[] = [
   { id: 'general', labelKey: 'settings.tabs.general' },
@@ -36,6 +38,7 @@ const NAV_KEYS: { id: SectionId; labelKey: string }[] = [
   { id: 'proxy', labelKey: 'settings.tabs.proxy' },
   { id: 'shortcuts', labelKey: 'settings.tabs.shortcuts' },
   { id: 'data', labelKey: 'settings.tabs.data' },
+  { id: 'about', labelKey: 'settings.tabs.about' },
 ]
 
 function SettingsModal(props: SettingsModalProps): JSX.Element {
@@ -96,6 +99,7 @@ function SettingsModal(props: SettingsModalProps): JSX.Element {
               {active === 'proxy' ? <ProxySection /> : null}
               {active === 'shortcuts' ? <ShortcutSection /> : null}
               {active === 'data' ? <DataSection /> : null}
+              {active === 'about' ? <AboutSection /> : null}
             </div>
           </div>
         </Dialog.Content>

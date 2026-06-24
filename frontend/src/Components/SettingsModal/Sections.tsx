@@ -485,6 +485,16 @@ export function DataSection(): JSX.Element {
 
 /* ============================ 代理 ============================ */
 
+export function AboutSection(): JSX.Element {
+  const { t } = useTranslation()
+
+  return (
+    <div className={styles.aboutSection}>
+      <div className={styles.aboutAppName}>{t('settings.about.appName')}</div>
+    </div>
+  )
+}
+
 export function ProxySection(): JSX.Element {
   const { t } = useTranslation()
   const settings = useSettingsStore((s) => s.settings)
