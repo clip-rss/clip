@@ -41,7 +41,9 @@ function NotePanel(props: NotePanelProps): JSX.Element {
     const pending = pendingRef.current
     if (!pending) return
     pendingRef.current = null
-    void saveRef.current(pending.id, pending.text).then(() => setStatus('saved'))
+    void saveRef
+      .current(pending.id, pending.text)
+      .then(() => setStatus('saved'))
   }, [])
 
   // 仅在切换文章（item.id 变化）时：冲刷上一篇待保存草稿，再载入当前文章笔记。
@@ -65,7 +67,9 @@ function NotePanel(props: NotePanelProps): JSX.Element {
       const pending = pendingRef.current
       if (!pending) return
       pendingRef.current = null
-      void saveRef.current(pending.id, pending.text).then(() => setStatus('saved'))
+      void saveRef
+        .current(pending.id, pending.text)
+        .then(() => setStatus('saved'))
     }, SAVE_DEBOUNCE_MS)
   }
 
@@ -80,7 +84,11 @@ function NotePanel(props: NotePanelProps): JSX.Element {
         <span className={styles.noteTitle}>{t('note.title')}</span>
         <span className={styles.noteHint}>{t('note.placeholder')}</span>
         <span className={styles.noteStatus}>
-          {status === 'saving' ? t('note.saving') : status === 'saved' ? t('note.saved') : ''}
+          {status === 'saving'
+            ? t('note.saving')
+            : status === 'saved'
+              ? t('note.saved')
+              : ''}
         </span>
         <button
           type="button"

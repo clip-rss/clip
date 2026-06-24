@@ -19,7 +19,9 @@ describe('sanitizeHtml', () => {
   })
 
   it('保留安全标签与链接', () => {
-    const out = sanitizeHtml('<p>a<strong>b</strong><a href="https://x.com">l</a></p>')
+    const out = sanitizeHtml(
+      '<p>a<strong>b</strong><a href="https://x.com">l</a></p>',
+    )
     expect(out).toContain('<strong>b</strong>')
     expect(out).toContain('href="https://x.com"')
   })

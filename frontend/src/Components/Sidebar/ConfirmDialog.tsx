@@ -42,7 +42,9 @@ function ConfirmDialog(props: ConfirmDialogProps): JSX.Element {
         >
           <Dialog.Title className={styles.dialogTitle}>{title}</Dialog.Title>
           {description ? (
-            <Dialog.Description className={styles.dialogDesc}>{description}</Dialog.Description>
+            <Dialog.Description className={styles.dialogDesc}>
+              {description}
+            </Dialog.Description>
           ) : null}
           <div className={styles.dialogFooter}>
             <Dialog.Close asChild>
@@ -52,7 +54,10 @@ function ConfirmDialog(props: ConfirmDialogProps): JSX.Element {
             </Dialog.Close>
             <button
               type="button"
-              className={clsx(styles.dialogConfirm, danger && styles.dialogConfirmDanger)}
+              className={clsx(
+                styles.dialogConfirm,
+                danger && styles.dialogConfirmDanger,
+              )}
               onClick={handleConfirm}
             >
               {confirmText}

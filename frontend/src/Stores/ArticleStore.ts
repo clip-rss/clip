@@ -71,7 +71,10 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
   function patchItem(id: number, patch: Partial<Item>): void {
     const apply = (list: Item[]): Item[] =>
       list.map((it) => (it.id === id ? ({ ...it, ...patch } as Item) : it))
-    set({ items: apply(get().items), searchResults: apply(get().searchResults) })
+    set({
+      items: apply(get().items),
+      searchResults: apply(get().searchResults),
+    })
   }
 
   /** 乐观标记已读并写入后端（选中文章自动标记复用）。 */
@@ -86,11 +89,22 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
   async function fetchAndResolve(selection: Selection): Promise<void> {
     set({ loading: true, error: null })
     try {
-      const items = await ItemService.ListItems(scopeFeedId(selection), LOAD_LIMIT, 0)
+      const items = await ItemService.ListItems(
+        scopeFeedId(selection),
+        LOAD_LIMIT,
+        0,
+      )
       const pending = get().pendingSelectId
       const selectedId =
-        pending !== null && (items ?? []).some((it) => it.id === pending) ? pending : null
-      set({ items: items ?? [], loading: false, selectedItemId: selectedId, pendingSelectId: null })
+        pending !== null && (items ?? []).some((it) => it.id === pending)
+          ? pending
+          : null
+      set({
+        items: items ?? [],
+        loading: false,
+        selectedItemId: selectedId,
+        pendingSelectId: null,
+      })
     } catch (err) {
       set({ error: toApiError(err), loading: false })
     }
@@ -111,7 +125,11 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     pendingSelectId: null,
 
     async load(selection) {
-      set({ currentSelection: selection, selectedItemId: null, pendingSelectId: null })
+      set({
+        currentSelection: selection,
+        selectedItemId: null,
+        pendingSelectId: null,
+      })
       await fetchAndResolve(selection)
     },
 
@@ -132,7 +150,9 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
       window.clearTimeout(autoMarkTimer)
       set({ selectedItemId: id })
       const { items, searchResults } = get()
-      const item = items.find((it) => it.id === id) ?? searchResults.find((it) => it.id === id)
+      const item =
+        items.find((it) => it.id === id) ??
+        searchResults.find((it) => it.id === id)
       if (!item || item.isRead) return
 
       const delay = useSettingsStore.getState().settings?.autoMarkReadDelay ?? 0
@@ -145,7 +165,8 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
       autoMarkTimer = window.setTimeout(() => {
         const cur = get()
         const target =
-          cur.items.find((it) => it.id === id) ?? cur.searchResults.find((it) => it.id === id)
+          cur.items.find((it) => it.id === id) ??
+          cur.searchResults.find((it) => it.id === id)
         if (cur.selectedItemId === id && target && !target.isRead) {
           markReadOptimistic(id)
         }
@@ -191,7 +212,9 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
       if (ids.length === 0) return
       const idSet = new Set(ids)
       set({
-        items: get().items.map((it) => (idSet.has(it.id) ? ({ ...it, isRead: true } as Item) : it)),
+        items: get().items.map((it) =>
+          idSet.has(it.id) ? ({ ...it, isRead: true } as Item) : it,
+        ),
       })
       try {
         await ItemService.BatchMarkRead(ids)
@@ -245,7 +268,12 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
         get().clearSearch()
         return
       }
-      set({ searching: true, searchActive: true, selectedItemId: null, error: null })
+      set({
+        searching: true,
+        searchActive: true,
+        selectedItemId: null,
+        error: null,
+      })
       try {
         const results = await ItemService.SearchItems(trimmed, LOAD_LIMIT, 0)
         // 防竞态：输入在请求期间变化（含被清除）则丢弃本次结果。
@@ -257,7 +285,12 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     },
 
     clearSearch() {
-      set({ searchQuery: '', searchResults: [], searching: false, searchActive: false })
+      set({
+        searchQuery: '',
+        searchResults: [],
+        searching: false,
+        searchActive: false,
+      })
     },
 
     scheduleSelect(id) {

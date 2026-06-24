@@ -18,7 +18,10 @@ function ReaderArticle(props: ReaderArticleProps): JSX.Element {
 
   return (
     <div className={styles.article} style={{ maxWidth: contentStyle.maxWidth }}>
-      <h1 className={styles.title} style={{ fontFamily: contentStyle.fontFamily }}>
+      <h1
+        className={styles.title}
+        style={{ fontFamily: contentStyle.fontFamily }}
+      >
         {item.title}
       </h1>
       <div className={styles.meta}>
@@ -29,7 +32,11 @@ function ReaderArticle(props: ReaderArticleProps): JSX.Element {
         {sourceName ? <span>{sourceName}</span> : null}
       </div>
       <div className={styles.divider} />
-      <ReaderContent html={item.content} style={contentStyle} onImageClick={onImageClick} />
+      <ReaderContent
+        html={item.content}
+        style={contentStyle}
+        onImageClick={onImageClick}
+      />
       <div className={styles.endHint}>{t('reader.endOfContent')}</div>
     </div>
   )

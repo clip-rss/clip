@@ -115,10 +115,16 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
           <header className={styles.header}>
             <div className={styles.headerLeft}>
               <RssIcon />
-              <Dialog.Title className={styles.title}>{t('feed.add.title')}</Dialog.Title>
+              <Dialog.Title className={styles.title}>
+                {t('feed.add.title')}
+              </Dialog.Title>
             </div>
             <Dialog.Close asChild>
-              <button type="button" className={styles.closeBtn} aria-label={t('confirm.cancel')}>
+              <button
+                type="button"
+                className={styles.closeBtn}
+                aria-label={t('confirm.cancel')}
+              >
                 <CloseIcon />
               </button>
             </Dialog.Close>
@@ -146,7 +152,9 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
                 onClick={detect}
                 disabled={!url.trim() || status === 'detecting'}
               >
-                {status === 'detecting' ? t('feed.add.searching') : t('settings.proxy.testBtn')}
+                {status === 'detecting'
+                  ? t('feed.add.searching')
+                  : t('settings.proxy.testBtn')}
               </button>
             </div>
 
@@ -155,7 +163,9 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
                 <CheckIcon />
                 <span>
                   {t('feed.add.searchOk')}：{preview!.title}
-                  {preview!.itemCount > 0 ? ` (${preview!.itemCount} ${t('settings.general.itemsUnit')})` : ''}
+                  {preview!.itemCount > 0
+                    ? ` (${preview!.itemCount} ${t('settings.general.itemsUnit')})`
+                    : ''}
                 </span>
               </div>
             ) : null}
@@ -210,7 +220,9 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
                   </select>
                 </div>
 
-                {errorMsg ? <p className={styles.inlineError}>{errorMsg}</p> : null}
+                {errorMsg ? (
+                  <p className={styles.inlineError}>{errorMsg}</p>
+                ) : null}
               </>
             ) : null}
           </div>
@@ -227,7 +239,9 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
               onClick={submit}
               disabled={!canAdd}
             >
-              {status === 'submitting' ? t('feed.add.adding') : t('feed.add.title')}
+              {status === 'submitting'
+                ? t('feed.add.adding')
+                : t('feed.add.title')}
             </button>
           </footer>
         </Dialog.Content>
@@ -259,7 +273,16 @@ function RssIcon(): JSX.Element {
 
 function CloseIcon(): JSX.Element {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
       <path d="M18 6 6 18M6 6l12 12" />
     </svg>
   )
@@ -267,7 +290,17 @@ function CloseIcon(): JSX.Element {
 
 function CheckIcon(): JSX.Element {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M20 6 9 17l-5-5" />
     </svg>
   )
@@ -275,7 +308,16 @@ function CheckIcon(): JSX.Element {
 
 function CrossIcon(): JSX.Element {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="9" />
       <path d="m15 9-6 6M9 9l6 6" />
     </svg>

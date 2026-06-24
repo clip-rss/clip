@@ -80,7 +80,17 @@ export function MoreIcon(props: IconProps): JSX.Element {
 export function CheckIcon(props: IconProps): JSX.Element {
   const size = props.size ?? 14
   return (
-    <svg width={size} height={size} className={props.className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width={size}
+      height={size}
+      className={props.className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M20 6 9 17l-5-5" />
     </svg>
   )

@@ -78,7 +78,11 @@ function FolderItem(props: FolderItemProps): JSX.Element {
           >
             <button
               type="button"
-              className={clsx(styles.chevronSlot, styles.chevronButton, expanded && styles.expanded)}
+              className={clsx(
+                styles.chevronSlot,
+                styles.chevronButton,
+                expanded && styles.expanded,
+              )}
               onClick={handleChevronClick}
               aria-label={expanded ? '折叠' : '展开'}
               tabIndex={-1}
@@ -103,7 +107,10 @@ function FolderItem(props: FolderItemProps): JSX.Element {
         </ContextMenu.Trigger>
         <ContextMenu.Portal>
           <ContextMenu.Content className={styles.menuContent}>
-            <ContextMenu.Item className={styles.menuItem} onSelect={() => setEditing(true)}>
+            <ContextMenu.Item
+              className={styles.menuItem}
+              onSelect={() => setEditing(true)}
+            >
               重命名
             </ContextMenu.Item>
             <ContextMenu.Separator className={styles.menuSeparator} />
@@ -120,7 +127,11 @@ function FolderItem(props: FolderItemProps): JSX.Element {
       {expanded ? (
         <div role="group">
           {children.map((child) => (
-            <FolderItem key={`c-${child.category.id}`} node={child} depth={depth + 1} />
+            <FolderItem
+              key={`c-${child.category.id}`}
+              node={child}
+              depth={depth + 1}
+            />
           ))}
           {feeds.map((feed) => (
             <FeedItem key={`f-${feed.id}`} feed={feed} depth={depth + 1} />

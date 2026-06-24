@@ -49,7 +49,10 @@ function ReaderSettingsMenu(): JSX.Element {
     { value: 'full' as ReaderWidth, label: t('reader.width.full') },
   ]
   const bgOptions = [
-    { value: 'default' as ReaderBackground, label: t('reader.background.default') },
+    {
+      value: 'default' as ReaderBackground,
+      label: t('reader.background.default'),
+    },
     { value: 'light' as ReaderBackground, label: t('reader.background.light') },
     { value: 'sepia' as ReaderBackground, label: t('reader.background.sepia') },
     { value: 'dark' as ReaderBackground, label: t('reader.background.dark') },
@@ -58,13 +61,24 @@ function ReaderSettingsMenu(): JSX.Element {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button type="button" className={styles.toolbarBtn} title={t('reader.settings.title')} aria-label={t('reader.settings.title')}>
+        <button
+          type="button"
+          className={styles.toolbarBtn}
+          title={t('reader.settings.title')}
+          aria-label={t('reader.settings.title')}
+        >
           <MoreIcon size={18} />
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className={styles.menuContent} align="end" sideOffset={6}>
-          <DropdownMenu.Label className={styles.menuLabel}>{t('reader.settings.font')}</DropdownMenu.Label>
+        <DropdownMenu.Content
+          className={styles.menuContent}
+          align="end"
+          sideOffset={6}
+        >
+          <DropdownMenu.Label className={styles.menuLabel}>
+            {t('reader.settings.font')}
+          </DropdownMenu.Label>
           <DropdownMenu.RadioGroup
             value={s.fontFamily}
             onValueChange={(v) => s.setFontFamily(v as ReaderFontFamily)}
@@ -75,7 +89,9 @@ function ReaderSettingsMenu(): JSX.Element {
           </DropdownMenu.RadioGroup>
 
           <DropdownMenu.Separator className={styles.menuSeparator} />
-          <DropdownMenu.Label className={styles.menuLabel}>{t('reader.settings.fontSize')}</DropdownMenu.Label>
+          <DropdownMenu.Label className={styles.menuLabel}>
+            {t('reader.settings.fontSize')}
+          </DropdownMenu.Label>
           <DropdownMenu.RadioGroup
             value={String(s.fontSize)}
             onValueChange={(v) => s.setFontSize(Number(v) as ReaderFontSize)}
@@ -86,10 +102,14 @@ function ReaderSettingsMenu(): JSX.Element {
           </DropdownMenu.RadioGroup>
 
           <DropdownMenu.Separator className={styles.menuSeparator} />
-          <DropdownMenu.Label className={styles.menuLabel}>{t('reader.settings.lineHeight')}</DropdownMenu.Label>
+          <DropdownMenu.Label className={styles.menuLabel}>
+            {t('reader.settings.lineHeight')}
+          </DropdownMenu.Label>
           <DropdownMenu.RadioGroup
             value={String(s.lineHeight)}
-            onValueChange={(v) => s.setLineHeight(Number(v) as ReaderLineHeight)}
+            onValueChange={(v) =>
+              s.setLineHeight(Number(v) as ReaderLineHeight)
+            }
           >
             {lineOptions.map((o) => (
               <RadioRow key={o.value} value={String(o.value)} label={o.label} />
@@ -97,7 +117,9 @@ function ReaderSettingsMenu(): JSX.Element {
           </DropdownMenu.RadioGroup>
 
           <DropdownMenu.Separator className={styles.menuSeparator} />
-          <DropdownMenu.Label className={styles.menuLabel}>{t('reader.settings.width')}</DropdownMenu.Label>
+          <DropdownMenu.Label className={styles.menuLabel}>
+            {t('reader.settings.width')}
+          </DropdownMenu.Label>
           <DropdownMenu.RadioGroup
             value={s.width}
             onValueChange={(v) => s.setWidth(v as ReaderWidth)}
@@ -108,7 +130,9 @@ function ReaderSettingsMenu(): JSX.Element {
           </DropdownMenu.RadioGroup>
 
           <DropdownMenu.Separator className={styles.menuSeparator} />
-          <DropdownMenu.Label className={styles.menuLabel}>{t('reader.settings.background')}</DropdownMenu.Label>
+          <DropdownMenu.Label className={styles.menuLabel}>
+            {t('reader.settings.background')}
+          </DropdownMenu.Label>
           <DropdownMenu.RadioGroup
             value={s.background}
             onValueChange={(v) => s.setBackground(v as ReaderBackground)}

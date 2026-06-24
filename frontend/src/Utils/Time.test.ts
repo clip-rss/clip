@@ -37,7 +37,9 @@ describe('formatRelativeTime', () => {
   })
 
   it('超过 30 天显示具体日期', () => {
-    expect(formatRelativeTime(at('2026-01-01T08:00:00Z'), NOW)).toBe('2026-01-01')
+    expect(formatRelativeTime(at('2026-01-01T08:00:00Z'), NOW)).toBe(
+      '2026-01-01',
+    )
   })
 })
 

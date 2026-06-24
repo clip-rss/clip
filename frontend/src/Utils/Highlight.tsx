@@ -13,7 +13,11 @@ function escapeRegExp(s: string): string {
  * @param query 搜索输入原文
  * @param markClass <mark> 的 className
  */
-export function highlightText(text: string, query: string, markClass: string): ReactNode {
+export function highlightText(
+  text: string,
+  query: string,
+  markClass: string,
+): ReactNode {
   const tokens = query.trim().split(/\s+/).filter(Boolean)
   if (text === '' || tokens.length === 0) return text
 

@@ -45,10 +45,14 @@ export const useLayoutStore = create<LayoutState>()(
         set({ listWidth: clamp(width, LIST_MIN, LIST_MAX) })
       },
       resizeSidebar(delta: number) {
-        set((s) => ({ sidebarWidth: clamp(s.sidebarWidth + delta, SIDEBAR_MIN, SIDEBAR_MAX) }))
+        set((s) => ({
+          sidebarWidth: clamp(s.sidebarWidth + delta, SIDEBAR_MIN, SIDEBAR_MAX),
+        }))
       },
       resizeList(delta: number) {
-        set((s) => ({ listWidth: clamp(s.listWidth + delta, LIST_MIN, LIST_MAX) }))
+        set((s) => ({
+          listWidth: clamp(s.listWidth + delta, LIST_MIN, LIST_MAX),
+        }))
       },
       enterFocus() {
         set({ focusMode: true })
@@ -69,7 +73,10 @@ export const useLayoutStore = create<LayoutState>()(
     {
       name: 'clip-layout',
       // 仅持久化栏宽；focusMode 为会话态，不应跨启动恢复。
-      partialize: (s) => ({ sidebarWidth: s.sidebarWidth, listWidth: s.listWidth }),
+      partialize: (s) => ({
+        sidebarWidth: s.sidebarWidth,
+        listWidth: s.listWidth,
+      }),
     },
   ),
 )

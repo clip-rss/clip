@@ -46,13 +46,20 @@ function ArticleRow(props: ArticleRowProps): JSX.Element {
       aria-selected={selected}
       title={item.title}
     >
-      <span className={clsx(styles.dot, item.isRead && styles.dotRead)} aria-hidden="true" />
+      <span
+        className={clsx(styles.dot, item.isRead && styles.dotRead)}
+        aria-hidden="true"
+      />
 
       <div className={styles.body}>
-        <div className={clsx(styles.title, !item.isRead && styles.titleUnread)}>{titleNode}</div>
+        <div className={clsx(styles.title, !item.isRead && styles.titleUnread)}>
+          {titleNode}
+        </div>
         {summary ? <div className={styles.summary}>{summaryNode}</div> : null}
         <div className={styles.meta}>
-          {sourceName ? <span className={styles.source}>{sourceName}</span> : null}
+          {sourceName ? (
+            <span className={styles.source}>{sourceName}</span>
+          ) : null}
           {sourceName ? <span className={styles.metaDot}>·</span> : null}
           <span>{formatRelativeTime(item.publishedAt)}</span>
         </div>
@@ -63,8 +70,16 @@ function ArticleRow(props: ArticleRowProps): JSX.Element {
           type="button"
           className={clsx(styles.actionBtn, item.isStarred && styles.starred)}
           onClick={handleStar}
-          title={item.isStarred ? t('reader.toolbar.unstar') : t('reader.toolbar.star')}
-          aria-label={item.isStarred ? t('reader.toolbar.unstar') : t('reader.toolbar.star')}
+          title={
+            item.isStarred
+              ? t('reader.toolbar.unstar')
+              : t('reader.toolbar.star')
+          }
+          aria-label={
+            item.isStarred
+              ? t('reader.toolbar.unstar')
+              : t('reader.toolbar.star')
+          }
         >
           <StarIcon size={16} filled={item.isStarred} />
         </button>

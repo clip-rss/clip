@@ -13,7 +13,13 @@ interface AppHotkeyActions {
 function isInteractive(el: Element | null): boolean {
   if (!el) return false
   const tag = el.tagName
-  if (tag === 'BUTTON' || tag === 'A' || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+  if (
+    tag === 'BUTTON' ||
+    tag === 'A' ||
+    tag === 'INPUT' ||
+    tag === 'TEXTAREA' ||
+    tag === 'SELECT'
+  ) {
     return true
   }
   if (el.getAttribute('role') === 'button') return true
@@ -23,7 +29,9 @@ function isInteractive(el: Element | null): boolean {
 /** 翻动当前可见阅读区（dir=1 向下，dir=-1 向上）。专注模式优先其覆盖层。 */
 function pageReader(dir: 1 | -1): void {
   const inFocus = useLayoutStore.getState().focusMode
-  const selector = inFocus ? '[data-reader-scroll="focus"]' : '[data-reader-scroll="main"]'
+  const selector = inFocus
+    ? '[data-reader-scroll="focus"]'
+    : '[data-reader-scroll="main"]'
   const el = document.querySelector(selector) as HTMLElement | null
   if (!el) return
   const step = Math.max(el.clientHeight - 60, 100)
@@ -103,7 +111,9 @@ export function useAppHotkeys(actions: AppHotkeyActions): void {
         combo: '/',
         handler: (e) => {
           e.preventDefault()
-          const input = document.getElementById('toolbar-search') as HTMLInputElement | null
+          const input = document.getElementById(
+            'toolbar-search',
+          ) as HTMLInputElement | null
           input?.focus()
         },
       },

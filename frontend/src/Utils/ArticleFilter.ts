@@ -56,9 +56,22 @@ export interface FilterSortOptions {
 }
 
 /** 按筛选维度过滤、按排序维度排序，返回新数组。 */
-export function filterAndSortItems(items: Item[], opts: FilterSortOptions): Item[] {
-  const { filter, sort, allowedFeedIds = null, feedTitleOf, now = new Date() } = opts
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+export function filterAndSortItems(
+  items: Item[],
+  opts: FilterSortOptions,
+): Item[] {
+  const {
+    filter,
+    sort,
+    allowedFeedIds = null,
+    feedTitleOf,
+    now = new Date(),
+  } = opts
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime()
 
   const filtered = items.filter((it) => {
     if (allowedFeedIds && !allowedFeedIds.has(it.feedId)) return false

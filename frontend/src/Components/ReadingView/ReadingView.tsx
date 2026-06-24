@@ -1,7 +1,12 @@
 import { useTranslation } from 'react-i18next'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
-import { useArticleStore, useSidebarStore, useReaderStore, useLayoutStore } from '../../Stores'
+import {
+  useArticleStore,
+  useSidebarStore,
+  useReaderStore,
+  useLayoutStore,
+} from '../../Stores'
 import { readerBackgroundClass, readerContentStyle } from '../../Utils'
 import ReaderToolbar from './ReaderToolbar'
 import ReaderArticle from './ReaderArticle'
@@ -11,7 +16,9 @@ import styles from './ReadingView.module.scss'
 
 function ReadingView(): JSX.Element {
   const { t } = useTranslation()
-  const item = useArticleStore((s) => s.items.find((it) => it.id === s.selectedItemId) ?? null)
+  const item = useArticleStore(
+    (s) => s.items.find((it) => it.id === s.selectedItemId) ?? null,
+  )
   const feeds = useSidebarStore((s) => s.feeds)
   const prefs = useReaderStore()
   const notePanelOpen = useLayoutStore((s) => s.notePanelOpen)
@@ -48,7 +55,13 @@ function ReadingView(): JSX.Element {
         width: prefs.width,
         background: prefs.background,
       }),
-    [prefs.fontFamily, prefs.fontSize, prefs.lineHeight, prefs.width, prefs.background],
+    [
+      prefs.fontFamily,
+      prefs.fontSize,
+      prefs.lineHeight,
+      prefs.width,
+      prefs.background,
+    ],
   )
   const bgClass = readerBackgroundClass(prefs.background)
 
@@ -80,7 +93,9 @@ function ReadingView(): JSX.Element {
           onImageClick={setLightboxSrc}
         />
       </div>
-      {notePanelOpen ? <NotePanel item={item} onClose={closeNotePanel} /> : null}
+      {notePanelOpen ? (
+        <NotePanel item={item} onClose={closeNotePanel} />
+      ) : null}
       <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </div>
   )

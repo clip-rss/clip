@@ -37,7 +37,10 @@ function Toolbar(props: ToolbarProps): JSX.Element {
   function handleSearchChange(value: string): void {
     setSearchQuery(value)
     window.clearTimeout(debounceRef.current)
-    debounceRef.current = window.setTimeout(() => runSearch(), SEARCH_DEBOUNCE_MS)
+    debounceRef.current = window.setTimeout(
+      () => runSearch(),
+      SEARCH_DEBOUNCE_MS,
+    )
   }
 
   function handleClear(): void {
@@ -69,7 +72,12 @@ function Toolbar(props: ToolbarProps): JSX.Element {
       <div className={styles.left}>
         <WindowControls platform={platform} />
         <span className={styles.title}>Clip</span>
-        <div className={clsx(styles.search, searchExpanded && styles.searchExpanded)}>
+        <div
+          className={clsx(
+            styles.search,
+            searchExpanded && styles.searchExpanded,
+          )}
+        >
           <SearchIcon />
           <input
             ref={inputRef}
@@ -133,7 +141,9 @@ function Toolbar(props: ToolbarProps): JSX.Element {
   )
 }
 
-function WindowControls(props: { platform: Platform | null }): JSX.Element | null {
+function WindowControls(props: {
+  platform: Platform | null
+}): JSX.Element | null {
   const { platform } = props
 
   // 平台未解析前不渲染，避免在 Windows 下闪现多余占位

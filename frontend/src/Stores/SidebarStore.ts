@@ -1,10 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import {
-  CategoryService,
-  FeedService,
-  toApiError,
-} from '../Utils'
+import { CategoryService, FeedService, toApiError } from '../Utils'
 import type { Category, FeedWithUnread, Selection } from '../Types'
 
 interface SidebarState {
@@ -56,7 +52,11 @@ export const useSidebarStore = create<SidebarState>()(
             CategoryService.ListCategories(),
             FeedService.ListFeedsWithUnread(),
           ])
-          set({ categories: categories ?? [], feeds: feeds ?? [], loading: false })
+          set({
+            categories: categories ?? [],
+            feeds: feeds ?? [],
+            loading: false,
+          })
         } catch (err) {
           set({ error: toApiError(err), loading: false })
         }
@@ -165,7 +165,8 @@ export const useSidebarStore = create<SidebarState>()(
       async refreshSelected() {
         const { selection } = get()
         try {
-          if (selection.kind === 'feed') await FeedService.RefreshFeed(selection.id)
+          if (selection.kind === 'feed')
+            await FeedService.RefreshFeed(selection.id)
           else await FeedService.RefreshAll()
           // 新文章经后端 items:updated 事件驱动列表刷新；此处刷新源元信息（上次更新等）。
           await get().load()

@@ -135,7 +135,10 @@ export function ReadingSection(): JSX.Element {
     { value: 'full' as ReaderWidth, label: t('reader.width.full') },
   ]
   const bgOptions = [
-    { value: 'default' as ReaderBackground, label: t('reader.background.default') },
+    {
+      value: 'default' as ReaderBackground,
+      label: t('reader.background.default'),
+    },
     { value: 'light' as ReaderBackground, label: t('reader.background.light') },
     { value: 'sepia' as ReaderBackground, label: t('reader.background.sepia') },
     { value: 'dark' as ReaderBackground, label: t('reader.background.dark') },
@@ -151,21 +154,47 @@ export function ReadingSection(): JSX.Element {
     <div>
       <h3 className={styles.sectionTitle}>{t('settings.tabs.reading')}</h3>
       <SettingRow label={t('reader.settings.font')}>
-        <SegmentedControl value={reader.fontFamily} options={fontOptions} onChange={reader.setFontFamily} />
+        <SegmentedControl
+          value={reader.fontFamily}
+          options={fontOptions}
+          onChange={reader.setFontFamily}
+        />
       </SettingRow>
       <SettingRow label={t('reader.settings.fontSize')}>
-        <SegmentedControl value={reader.fontSize} options={sizeOptions} onChange={reader.setFontSize} />
+        <SegmentedControl
+          value={reader.fontSize}
+          options={sizeOptions}
+          onChange={reader.setFontSize}
+        />
       </SettingRow>
       <SettingRow label={t('reader.settings.lineHeight')}>
-        <SegmentedControl value={reader.lineHeight} options={lineOptions} onChange={reader.setLineHeight} />
+        <SegmentedControl
+          value={reader.lineHeight}
+          options={lineOptions}
+          onChange={reader.setLineHeight}
+        />
       </SettingRow>
       <SettingRow label={t('reader.settings.width')}>
-        <SegmentedControl value={reader.width} options={widthOptions} onChange={reader.setWidth} />
+        <SegmentedControl
+          value={reader.width}
+          options={widthOptions}
+          onChange={reader.setWidth}
+        />
       </SettingRow>
-      <SettingRow label={t('reader.settings.background')} description={t('reader.backgroundDesc')}>
-        <SegmentedControl value={reader.background} options={bgOptions} onChange={reader.setBackground} />
+      <SettingRow
+        label={t('reader.settings.background')}
+        description={t('reader.backgroundDesc')}
+      >
+        <SegmentedControl
+          value={reader.background}
+          options={bgOptions}
+          onChange={reader.setBackground}
+        />
       </SettingRow>
-      <SettingRow label={t('settings.reading.autoMarkRead')} description={t('settings.reading.autoMarkReadDesc')}>
+      <SettingRow
+        label={t('settings.reading.autoMarkRead')}
+        description={t('settings.reading.autoMarkReadDesc')}
+      >
         <SegmentedControl
           value={settings?.autoMarkReadDelay ?? 0}
           options={autoMarkOptions}
@@ -193,8 +222,15 @@ export function ThemeSection(): JSX.Element {
   return (
     <div>
       <h3 className={styles.sectionTitle}>{t('settings.theme.title')}</h3>
-      <SettingRow label={t('settings.theme.theme')} description={t('settings.theme.themeDesc')}>
-        <SegmentedControl value={preference} options={themeOptions} onChange={setPreference} />
+      <SettingRow
+        label={t('settings.theme.theme')}
+        description={t('settings.theme.themeDesc')}
+      >
+        <SegmentedControl
+          value={preference}
+          options={themeOptions}
+          onChange={setPreference}
+        />
       </SettingRow>
     </div>
   )
@@ -215,8 +251,13 @@ export function NotificationSection(): JSX.Element {
 
   return (
     <div>
-      <h3 className={styles.sectionTitle}>{t('settings.notification.titleSection')}</h3>
-      <SettingRow label={t('settings.notification.title')} description={t('settings.notification.modeDesc')}>
+      <h3 className={styles.sectionTitle}>
+        {t('settings.notification.titleSection')}
+      </h3>
+      <SettingRow
+        label={t('settings.notification.title')}
+        description={t('settings.notification.modeDesc')}
+      >
         <SegmentedControl
           value={settings?.notificationMode ?? 'each'}
           options={notifOptions}
@@ -264,7 +305,9 @@ export function DataSection(): JSX.Element {
     }
   }
 
-  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+  async function handleImportFile(
+    e: React.ChangeEvent<HTMLInputElement>,
+  ): Promise<void> {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
@@ -272,7 +315,13 @@ export function DataSection(): JSX.Element {
     try {
       const res = await importOpmlFromFile(file)
       await useSidebarStore.getState().load()
-      notify(t('settings.data.importSuccess', { feeds: res.feeds, skipped: res.skipped, categories: res.categories }))
+      notify(
+        t('settings.data.importSuccess', {
+          feeds: res.feeds,
+          skipped: res.skipped,
+          categories: res.categories,
+        }),
+      )
     } catch (err) {
       notify(`${t('settings.data.importError')}：${toApiError(err)}`, true)
     } finally {
@@ -293,7 +342,11 @@ export function DataSection(): JSX.Element {
     setBusy(true)
     try {
       const ok = await SettingsService.BackupDatabase()
-      notify(ok ? t('settings.data.backupSuccess') : t('settings.data.backupCancelled'))
+      notify(
+        ok
+          ? t('settings.data.backupSuccess')
+          : t('settings.data.backupCancelled'),
+      )
     } catch (err) {
       notify(`${t('settings.data.backupError')}：${toApiError(err)}`, true)
     } finally {
@@ -305,7 +358,11 @@ export function DataSection(): JSX.Element {
     setBusy(true)
     try {
       const ok = await SettingsService.RestoreDatabase()
-      notify(ok ? t('settings.data.restoreSuccess') : t('settings.data.restoreCancelled'))
+      notify(
+        ok
+          ? t('settings.data.restoreSuccess')
+          : t('settings.data.restoreCancelled'),
+      )
     } catch (err) {
       notify(`${t('settings.data.restoreError')}：${toApiError(err)}`, true)
     } finally {
@@ -317,52 +374,110 @@ export function DataSection(): JSX.Element {
     <div>
       <h3 className={styles.sectionTitle}>{t('settings.data.title')}</h3>
 
-      <SettingRow label={t('settings.data.dbPath')} description={t('settings.data.dbPathDesc')}>
-        <div className={styles.pathBox}>{dbPath || t('settings.data.loading')}</div>
+      <SettingRow
+        label={t('settings.data.dbPath')}
+        description={t('settings.data.dbPathDesc')}
+      >
+        <div className={styles.pathBox}>
+          {dbPath || t('settings.data.loading')}
+        </div>
       </SettingRow>
 
-      <SettingRow label={t('settings.data.clearCache')} description={t('settings.data.clearCacheDesc')}>
+      <SettingRow
+        label={t('settings.data.clearCache')}
+        description={t('settings.data.clearCacheDesc')}
+      >
         {confirmClear ? (
           <div className={styles.btnGroup}>
-            <button type="button" className={`${styles.btn} ${styles.btnDanger}`} onClick={handleClearCache} disabled={busy}>
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnDanger}`}
+              onClick={handleClearCache}
+              disabled={busy}
+            >
               {t('settings.data.clearCacheConfirm')}
             </button>
-            <button type="button" className={styles.btn} onClick={() => setConfirmClear(false)}>
+            <button
+              type="button"
+              className={styles.btn}
+              onClick={() => setConfirmClear(false)}
+            >
               {t('confirm.cancel')}
             </button>
           </div>
         ) : (
-          <button type="button" className={styles.btn} onClick={() => setConfirmClear(true)} disabled={busy}>
+          <button
+            type="button"
+            className={styles.btn}
+            onClick={() => setConfirmClear(true)}
+            disabled={busy}
+          >
             {t('settings.data.clearCacheBtn')}…
           </button>
         )}
       </SettingRow>
 
-      <SettingRow label={t('settings.data.opml')} description={t('settings.data.opmlDesc')}>
+      <SettingRow
+        label={t('settings.data.opml')}
+        description={t('settings.data.opmlDesc')}
+      >
         <div className={styles.btnGroup}>
-          <button type="button" className={styles.btn} onClick={() => importRef.current?.click()} disabled={busy}>
+          <button
+            type="button"
+            className={styles.btn}
+            onClick={() => importRef.current?.click()}
+            disabled={busy}
+          >
             {t('settings.data.import')}
           </button>
-          <button type="button" className={styles.btn} onClick={handleExportOpml} disabled={busy}>
+          <button
+            type="button"
+            className={styles.btn}
+            onClick={handleExportOpml}
+            disabled={busy}
+          >
             {t('settings.data.export')}
           </button>
         </div>
-        <input ref={importRef} type="file" accept=".opml,.xml,text/xml,application/xml" style={{ display: 'none' }} onChange={handleImportFile} />
+        <input
+          ref={importRef}
+          type="file"
+          accept=".opml,.xml,text/xml,application/xml"
+          style={{ display: 'none' }}
+          onChange={handleImportFile}
+        />
       </SettingRow>
 
-      <SettingRow label={t('settings.data.backup')} description={t('settings.data.backupDesc')}>
+      <SettingRow
+        label={t('settings.data.backup')}
+        description={t('settings.data.backupDesc')}
+      >
         <div className={styles.btnGroup}>
-          <button type="button" className={styles.btn} onClick={handleBackup} disabled={busy}>
+          <button
+            type="button"
+            className={styles.btn}
+            onClick={handleBackup}
+            disabled={busy}
+          >
             {t('settings.data.backupBtn')}…
           </button>
-          <button type="button" className={styles.btn} onClick={handleRestore} disabled={busy}>
+          <button
+            type="button"
+            className={styles.btn}
+            onClick={handleRestore}
+            disabled={busy}
+          >
             {t('settings.data.restoreBtn')}…
           </button>
         </div>
       </SettingRow>
 
       {feedback ? (
-        <p className={`${styles.feedback} ${isError ? styles.feedbackError : ''}`}>{feedback}</p>
+        <p
+          className={`${styles.feedback} ${isError ? styles.feedbackError : ''}`}
+        >
+          {feedback}
+        </p>
       ) : null}
     </div>
   )
@@ -378,7 +493,9 @@ export function ProxySection(): JSX.Element {
   const [port, setPort] = useState(settings?.proxyPort?.toString() ?? '')
   const [testing, setTesting] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null)
+  const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(
+    null,
+  )
 
   useEffect(() => {
     setHost(settings?.proxyHost ?? '')
@@ -397,7 +514,10 @@ export function ProxySection(): JSX.Element {
       await SettingsService.TestProxy(host, portNum)
       setStatus({ ok: true, msg: t('settings.proxy.success') })
     } catch (err) {
-      setStatus({ ok: false, msg: `${t('settings.proxy.failed')}：${toApiError(err)}` })
+      setStatus({
+        ok: false,
+        msg: `${t('settings.proxy.failed')}：${toApiError(err)}`,
+      })
     } finally {
       setTesting(false)
     }
@@ -411,7 +531,10 @@ export function ProxySection(): JSX.Element {
       await stored({ proxyHost: host, proxyPort: portNum })
       setStatus({ ok: true, msg: t('settings.proxy.saved') })
     } catch (err) {
-      setStatus({ ok: false, msg: `${t('settings.proxy.saveError')}：${toApiError(err)}` })
+      setStatus({
+        ok: false,
+        msg: `${t('settings.proxy.saveError')}：${toApiError(err)}`,
+      })
     } finally {
       setSaving(false)
     }
@@ -420,24 +543,53 @@ export function ProxySection(): JSX.Element {
   return (
     <div>
       <h3 className={styles.sectionTitle}>{t('settings.proxy.title')}</h3>
-      <SettingRow label={t('settings.proxy.host')} description={t('settings.proxy.hostDesc')}>
-        <input className={styles.input} type="text" value={host} onChange={(e) => setHost(e.target.value)} placeholder="127.0.0.1" />
+      <SettingRow
+        label={t('settings.proxy.host')}
+        description={t('settings.proxy.hostDesc')}
+      >
+        <input
+          className={styles.input}
+          type="text"
+          value={host}
+          onChange={(e) => setHost(e.target.value)}
+          placeholder="127.0.0.1"
+        />
       </SettingRow>
       <SettingRow label={t('settings.proxy.port')}>
-        <input className={styles.input} type="number" value={port} onChange={(e) => setPort(e.target.value)} placeholder="8080" />
+        <input
+          className={styles.input}
+          type="number"
+          value={port}
+          onChange={(e) => setPort(e.target.value)}
+          placeholder="8080"
+        />
       </SettingRow>
 
       <div className={styles.btnRow}>
-        <button type="button" className={styles.btn} onClick={handleTest} disabled={testing}>
+        <button
+          type="button"
+          className={styles.btn}
+          onClick={handleTest}
+          disabled={testing}
+        >
           {testing ? t('settings.proxy.testing') : t('settings.proxy.testBtn')}
         </button>
-        <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSave} disabled={saving}>
+        <button
+          type="button"
+          className={`${styles.btn} ${styles.btnPrimary}`}
+          onClick={handleSave}
+          disabled={saving}
+        >
           {saving ? t('settings.proxy.saving') : t('settings.proxy.save')}
         </button>
       </div>
 
       {status ? (
-        <p className={`${styles.feedback} ${status.ok ? '' : styles.feedbackError}`}>{status.msg}</p>
+        <p
+          className={`${styles.feedback} ${status.ok ? '' : styles.feedbackError}`}
+        >
+          {status.msg}
+        </p>
       ) : null}
     </div>
   )
@@ -451,14 +603,25 @@ interface ShortcutDef {
 }
 
 const MAC_KEY: Record<string, string> = {
-  mod: '⌘', shift: '⇧', alt: '⌥', ctrl: '⌃', space: '␣', 'shift+space': '⇧␣',
+  mod: '⌘',
+  shift: '⇧',
+  alt: '⌥',
+  ctrl: '⌃',
+  space: '␣',
+  'shift+space': '⇧␣',
 }
 const WIN_KEY: Record<string, string> = {
-  mod: 'Ctrl', shift: 'Shift', alt: 'Alt', ctrl: 'Ctrl', space: 'space', 'shift+space': 'shiftSpace',
+  mod: 'Ctrl',
+  shift: 'Shift',
+  alt: 'Alt',
+  ctrl: 'Ctrl',
+  space: 'space',
+  'shift+space': 'shiftSpace',
 }
 
 function formatCombo(combo: string, platform: Platform | null): string {
-  if (combo.includes('/') || combo.includes('↑') || combo.includes('↓')) return combo
+  if (combo.includes('/') || combo.includes('↑') || combo.includes('↓'))
+    return combo
   if (combo === 'Esc') return 'Esc'
 
   const isMac = platform === 'mac'
@@ -523,7 +686,9 @@ export function ShortcutSection(): JSX.Element {
           <h4 className={styles.shortcutGroupTitle}>{t(group.titleKey)}</h4>
           {group.items.map((item) => (
             <div key={item.combo} className={styles.shortcutRow}>
-              <kbd className={styles.kbd}>{formatCombo(item.combo, platform)}</kbd>
+              <kbd className={styles.kbd}>
+                {formatCombo(item.combo, platform)}
+              </kbd>
               <span className={styles.shortcutDesc}>{t(item.descKey)}</span>
             </div>
           ))}

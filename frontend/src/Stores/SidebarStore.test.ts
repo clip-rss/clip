@@ -63,7 +63,9 @@ beforeEach(() => {
 describe('SidebarStore', () => {
   it('load 并发拉取并写入状态', async () => {
     ListCategories.mockResolvedValue([{ id: 1, name: '科技' }])
-    ListFeeds.mockResolvedValue([{ id: 10, title: 'A', categoryId: 1, unreadCount: 3 }])
+    ListFeeds.mockResolvedValue([
+      { id: 10, title: 'A', categoryId: 1, unreadCount: 3 },
+    ])
 
     await useSidebarStore.getState().load()
 
@@ -84,7 +86,10 @@ describe('SidebarStore', () => {
 
   it('select 设置选中项', () => {
     useSidebarStore.getState().select({ kind: 'feed', id: 7 })
-    expect(useSidebarStore.getState().selection).toEqual({ kind: 'feed', id: 7 })
+    expect(useSidebarStore.getState().selection).toEqual({
+      kind: 'feed',
+      id: 7,
+    })
   })
 
   it('toggleExpand 切换展开集合', () => {
@@ -113,11 +118,15 @@ describe('SidebarStore', () => {
 
   it('renameFeed 基于已加载源提交完整对象', async () => {
     useSidebarStore.setState({
-      feeds: [{ id: 10, title: '旧', categoryId: null, unreadCount: 0 } as never],
+      feeds: [
+        { id: 10, title: '旧', categoryId: null, unreadCount: 0 } as never,
+      ],
     })
     await useSidebarStore.getState().renameFeed(10, '新标题')
     expect(UpdateFeed).toHaveBeenCalledTimes(1)
-    expect((UpdateFeed.mock.calls[0][0] as { title: string }).title).toBe('新标题')
+    expect((UpdateFeed.mock.calls[0][0] as { title: string }).title).toBe(
+      '新标题',
+    )
   })
 
   it('删除当前选中的源后选中项回退到「全部」', async () => {

@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\""
   },
   "dependencies": {
     "@radix-ui/react-context-menu": "^2.3.0",

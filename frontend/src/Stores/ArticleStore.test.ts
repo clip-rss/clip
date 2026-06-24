@@ -109,7 +109,11 @@ describe('ArticleStore', () => {
 
   it('markAllRead 批量标记并调用 BatchMarkRead', async () => {
     useArticleStore.setState({
-      items: [item(1, { isRead: false }), item(2, { isRead: false }), item(3, { isRead: true })],
+      items: [
+        item(1, { isRead: false }),
+        item(2, { isRead: false }),
+        item(3, { isRead: true }),
+      ],
     })
     await useArticleStore.getState().markAllRead([1, 2])
     expect(BatchMarkRead).toHaveBeenCalledWith([1, 2])
@@ -121,7 +125,9 @@ describe('ArticleStore', () => {
     useArticleStore.setState({ items: [item(1), item(2)] })
     await useArticleStore.getState().batchStar([1, 2])
     expect(ToggleStar).toHaveBeenCalledTimes(2)
-    expect(useArticleStore.getState().items.every((i) => i.isStarred)).toBe(true)
+    expect(useArticleStore.getState().items.every((i) => i.isStarred)).toBe(
+      true,
+    )
   })
 
   it('saveNote 乐观更新 note 并调用 AddNote', async () => {
@@ -218,10 +224,15 @@ describe('ArticleStore', () => {
       // 默认为立即标记（delay = 0）
       useSettingsStore.setState({
         settings: {
-          theme: 'system', language: 'zh', defaultUpdateInterval: 30,
-          defaultMaxItems: 100, notificationMode: 'each',
-          autoMarkReadDelay: 0, launchMinimized: false,
-          proxyHost: '', proxyPort: 0,
+          theme: 'system',
+          language: 'zh',
+          defaultUpdateInterval: 30,
+          defaultMaxItems: 100,
+          notificationMode: 'each',
+          autoMarkReadDelay: 0,
+          launchMinimized: false,
+          proxyHost: '',
+          proxyPort: 0,
         },
       })
     })
@@ -235,7 +246,10 @@ describe('ArticleStore', () => {
 
     it('delay=2000 时点击后 2s 才标记已读', () => {
       useSettingsStore.setState({
-        settings: { ...useSettingsStore.getState().settings!, autoMarkReadDelay: 2000 },
+        settings: {
+          ...useSettingsStore.getState().settings!,
+          autoMarkReadDelay: 2000,
+        },
       })
       useArticleStore.setState({ items: [item(1, { isRead: false })] })
       useArticleStore.getState().selectItem(1)
@@ -251,9 +265,14 @@ describe('ArticleStore', () => {
 
     it('delay>0 时切换文章则取消前一延迟，前一篇保持未读', () => {
       useSettingsStore.setState({
-        settings: { ...useSettingsStore.getState().settings!, autoMarkReadDelay: 5000 },
+        settings: {
+          ...useSettingsStore.getState().settings!,
+          autoMarkReadDelay: 5000,
+        },
       })
-      useArticleStore.setState({ items: [item(1, { isRead: false }), item(2, { isRead: false })] })
+      useArticleStore.setState({
+        items: [item(1, { isRead: false }), item(2, { isRead: false })],
+      })
       useArticleStore.getState().selectItem(1)
       vi.advanceTimersByTime(1000) // 才过 1s
       useArticleStore.getState().selectItem(2) // 切换到第二篇
@@ -270,7 +289,10 @@ describe('ArticleStore', () => {
 
     it('delay<0 时点击不自动标记已读', () => {
       useSettingsStore.setState({
-        settings: { ...useSettingsStore.getState().settings!, autoMarkReadDelay: -1 },
+        settings: {
+          ...useSettingsStore.getState().settings!,
+          autoMarkReadDelay: -1,
+        },
       })
       useArticleStore.setState({ items: [item(1, { isRead: false })] })
       useArticleStore.getState().selectItem(1)

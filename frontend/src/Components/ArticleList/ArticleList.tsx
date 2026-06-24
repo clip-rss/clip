@@ -84,17 +84,31 @@ function ArticleList(): JSX.Element {
       />
 
       {showEmpty ? (
-        <EmptyState filter={filter} searchQuery={searchActive ? searchQuery : undefined} />
+        <EmptyState
+          filter={filter}
+          searchQuery={searchActive ? searchQuery : undefined}
+        />
       ) : (
-        <div ref={scrollRef} className={styles.scroll} role="listbox" aria-label="文章列表">
-          <div className={styles.virtualInner} style={{ height: virtualizer.getTotalSize() }}>
+        <div
+          ref={scrollRef}
+          className={styles.scroll}
+          role="listbox"
+          aria-label="文章列表"
+        >
+          <div
+            className={styles.virtualInner}
+            style={{ height: virtualizer.getTotalSize() }}
+          >
             {virtualizer.getVirtualItems().map((row) => {
               const item = visibleItems[row.index]
               return (
                 <div
                   key={item.id}
                   className={styles.virtualRow}
-                  style={{ height: row.size, transform: `translateY(${row.start}px)` }}
+                  style={{
+                    height: row.size,
+                    transform: `translateY(${row.start}px)`,
+                  }}
                 >
                   <ArticleRow
                     item={item}

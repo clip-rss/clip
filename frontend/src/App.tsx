@@ -40,7 +40,9 @@ function App() {
   return (
     <>
       <Layout
-        toolbar={<Toolbar onAddFeed={openAddFeed} onOpenSettings={openSettings} />}
+        toolbar={
+          <Toolbar onAddFeed={openAddFeed} onOpenSettings={openSettings} />
+        }
         sidebar={<Sidebar onAddFeed={openAddFeed} />}
         list={<ArticleList />}
         reader={<ReadingView />}

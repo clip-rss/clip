@@ -1,7 +1,12 @@
 import { useTranslation } from 'react-i18next'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
-import { useArticleStore, useLayoutStore, useReaderStore, useSidebarStore } from '../../Stores'
+import {
+  useArticleStore,
+  useLayoutStore,
+  useReaderStore,
+  useSidebarStore,
+} from '../../Stores'
 import { useArticleNavigation, usePlatform } from '../../Hooks'
 import { readerBackgroundClass, readerContentStyle } from '../../Utils'
 import { ReaderArticle, Lightbox, NotePanel } from '../ReadingView'
@@ -30,7 +35,9 @@ function FocusMode(): JSX.Element | null {
   const closeNotePanel = useLayoutStore((s) => s.closeNotePanel)
   const platform = usePlatform()
 
-  const item = useArticleStore((s) => s.items.find((it) => it.id === s.selectedItemId) ?? null)
+  const item = useArticleStore(
+    (s) => s.items.find((it) => it.id === s.selectedItemId) ?? null,
+  )
   const feeds = useSidebarStore((s) => s.feeds)
   const prefs = useReaderStore()
   const nav = useArticleNavigation()
@@ -133,7 +140,13 @@ function FocusMode(): JSX.Element | null {
       background: prefs.background,
     })
     return { ...base, maxWidth: FOCUS_MAX_WIDTH }
-  }, [prefs.fontFamily, prefs.fontSize, prefs.lineHeight, prefs.width, prefs.background])
+  }, [
+    prefs.fontFamily,
+    prefs.fontSize,
+    prefs.lineHeight,
+    prefs.width,
+    prefs.background,
+  ])
 
   const bgClass = readerBackgroundClass(prefs.background)
 
@@ -144,7 +157,9 @@ function FocusMode(): JSX.Element | null {
 
   if (!mounted) return null
 
-  const sourceName = item ? feeds.find((f) => f.id === item.feedId)?.title ?? '' : ''
+  const sourceName = item
+    ? (feeds.find((f) => f.id === item.feedId)?.title ?? '')
+    : ''
 
   return (
     <div
@@ -184,7 +199,9 @@ function FocusMode(): JSX.Element | null {
         )}
       </div>
 
-      {item && notePanelOpen ? <NotePanel item={item} onClose={closeNotePanel} /> : null}
+      {item && notePanelOpen ? (
+        <NotePanel item={item} onClose={closeNotePanel} />
+      ) : null}
 
       <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </div>

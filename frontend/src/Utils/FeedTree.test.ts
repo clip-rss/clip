@@ -2,8 +2,20 @@ import { describe, it, expect } from 'vitest'
 import { buildFeedTree, flattenCategories } from './FeedTree'
 import type { Category, FeedWithUnread } from '../Types'
 
-function cat(id: number, name: string, parentId: number | null = null, sortOrder = 0): Category {
-  return { id, name, parentId, sortOrder, createdAt: null, updatedAt: null } as Category
+function cat(
+  id: number,
+  name: string,
+  parentId: number | null = null,
+  sortOrder = 0,
+): Category {
+  return {
+    id,
+    name,
+    parentId,
+    sortOrder,
+    createdAt: null,
+    updatedAt: null,
+  } as Category
 }
 
 function feed(
@@ -89,7 +101,11 @@ describe('buildFeedTree', () => {
     ]
     const tree = buildFeedTree(categories, [])
     // sortOrder: Alpha(1) Gamma(1) Beta(2) → 同序按名称 Alpha<Gamma
-    expect(tree.roots.map((n) => n.category.name)).toEqual(['Alpha', 'Gamma', 'Beta'])
+    expect(tree.roots.map((n) => n.category.name)).toEqual([
+      'Alpha',
+      'Gamma',
+      'Beta',
+    ])
   })
 
   it('分类内的源按标题排序', () => {
@@ -108,7 +124,11 @@ describe('flattenCategories', () => {
 
   it('按前序展开并标注层级深度', () => {
     // 子分类用 sortOrder 决定顺序，避免依赖区域排序规则。
-    const categories = [cat(2, 'B 子', 1, 2), cat(1, '根', null, 0), cat(3, 'A 子', 1, 1)]
+    const categories = [
+      cat(2, 'B 子', 1, 2),
+      cat(1, '根', null, 0),
+      cat(3, 'A 子', 1, 1),
+    ]
     const flat = flattenCategories(categories)
     expect(flat).toEqual([
       { id: 1, name: '根', depth: 0 },

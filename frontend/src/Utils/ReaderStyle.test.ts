@@ -16,12 +16,21 @@ describe('readerContentStyle', () => {
   })
 
   it('serif / mono 字体族', () => {
-    expect(readerContentStyle({ ...base, fontFamily: 'serif' }).fontFamily).toContain('serif')
-    expect(readerContentStyle({ ...base, fontFamily: 'mono' }).fontFamily).toContain('monospace')
+    expect(
+      readerContentStyle({ ...base, fontFamily: 'serif' }).fontFamily,
+    ).toContain('serif')
+    expect(
+      readerContentStyle({ ...base, fontFamily: 'mono' }).fontFamily,
+    ).toContain('monospace')
   })
 
   it('字号 / 行高 / 宽度映射', () => {
-    const s = readerContentStyle({ ...base, fontSize: 18, lineHeight: 2.0, width: '800' })
+    const s = readerContentStyle({
+      ...base,
+      fontSize: 18,
+      lineHeight: 2.0,
+      width: '800',
+    })
     expect(s.fontSize).toBe('18px')
     expect(s.lineHeight).toBe('2')
     expect(s.maxWidth).toBe('800px')

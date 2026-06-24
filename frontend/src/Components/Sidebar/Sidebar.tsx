@@ -58,7 +58,10 @@ function Sidebar(props: SidebarProps): JSX.Element {
     return () => window.clearInterval(timer)
   }, [])
 
-  const tree = useMemo(() => buildFeedTree(categories, feeds), [categories, feeds])
+  const tree = useMemo(
+    () => buildFeedTree(categories, feeds),
+    [categories, feeds],
+  )
   const lastUpdated = useMemo(() => latestUpdated(feeds), [feeds])
   const allSelected = selection.kind === 'all'
 
@@ -90,7 +93,11 @@ function Sidebar(props: SidebarProps): JSX.Element {
 
       <div className={styles.tree} role="tree">
         <div
-          className={clsx(styles.row, styles.feedRow, allSelected && styles.selected)}
+          className={clsx(
+            styles.row,
+            styles.feedRow,
+            allSelected && styles.selected,
+          )}
           style={{ paddingLeft: rowPaddingLeft(0) }}
           onClick={() => select({ kind: 'all' })}
           role="treeitem"
@@ -103,7 +110,10 @@ function Sidebar(props: SidebarProps): JSX.Element {
         </div>
 
         {creatingFolder ? (
-          <div className={clsx(styles.row, styles.folderRow)} style={{ paddingLeft: rowPaddingLeft(0) }}>
+          <div
+            className={clsx(styles.row, styles.folderRow)}
+            style={{ paddingLeft: rowPaddingLeft(0) }}
+          >
             <span className={styles.chevronSlot} />
             <RenameInput
               initialValue={t('sidebar.newFolder')}
@@ -121,7 +131,10 @@ function Sidebar(props: SidebarProps): JSX.Element {
         ))}
 
         <div
-          className={clsx(styles.uncategorized, uncatDragOver && styles.dragOver)}
+          className={clsx(
+            styles.uncategorized,
+            uncatDragOver && styles.dragOver,
+          )}
           onDragOver={handleUncatDragOver}
           onDragLeave={() => setUncatDragOver(false)}
           onDrop={handleUncatDrop}
@@ -135,10 +148,18 @@ function Sidebar(props: SidebarProps): JSX.Element {
       <footer className={styles.footer}>
         <div className={styles.footerStatus}>
           <span className={styles.lastUpdated}>
-            {t('sidebar.lastUpdated')}{formatRelativeTime(lastUpdated)}
+            {t('sidebar.lastUpdated')}
+            {formatRelativeTime(lastUpdated)}
           </span>
-          <IconAction label="手动更新 (R)" onClick={handleRefresh} disabled={refreshing}>
-            <RefreshIcon size={15} className={refreshing ? styles.spinning : undefined} />
+          <IconAction
+            label="手动更新 (R)"
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            <RefreshIcon
+              size={15}
+              className={refreshing ? styles.spinning : undefined}
+            />
           </IconAction>
         </div>
       </footer>
@@ -157,18 +178,30 @@ function Sidebar(props: SidebarProps): JSX.Element {
 }
 
 /** 头部「＋」下拉菜单。 */
-function AddMenu(props: { onNewFolder: () => void; onAddFeed?: () => void }): JSX.Element {
+function AddMenu(props: {
+  onNewFolder: () => void
+  onAddFeed?: () => void
+}): JSX.Element {
   const { t } = useTranslation()
   const { onNewFolder, onAddFeed } = props
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button type="button" className={styles.headerAdd} title={t('sidebar.title')} aria-label={t('sidebar.title')}>
+        <button
+          type="button"
+          className={styles.headerAdd}
+          title={t('sidebar.title')}
+          aria-label={t('sidebar.title')}
+        >
           <PlusIcon size={18} />
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className={styles.menuContent} align="end" sideOffset={4}>
+        <DropdownMenu.Content
+          className={styles.menuContent}
+          align="end"
+          sideOffset={4}
+        >
           <DropdownMenu.Item className={styles.menuItem} onSelect={onNewFolder}>
             {t('sidebar.contextMenu.newFolder')}
           </DropdownMenu.Item>

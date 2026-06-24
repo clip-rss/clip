@@ -24,7 +24,8 @@ function ReaderContent(props: ReaderContentProps): JSX.Element {
     }
     const img = target.closest('img')
     if (img) {
-      const src = (img as HTMLImageElement).currentSrc || (img as HTMLImageElement).src
+      const src =
+        (img as HTMLImageElement).currentSrc || (img as HTMLImageElement).src
       if (src) onImageClick(src)
     }
   }

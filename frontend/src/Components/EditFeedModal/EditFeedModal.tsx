@@ -70,9 +70,15 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
           onInteractOutside={(e) => e.preventDefault()}
         >
           <header className={styles.header}>
-            <Dialog.Title className={styles.title}>{t('feed.edit.title')}</Dialog.Title>
+            <Dialog.Title className={styles.title}>
+              {t('feed.edit.title')}
+            </Dialog.Title>
             <Dialog.Close asChild>
-              <button type="button" className={styles.closeBtn} aria-label={t('confirm.cancel')}>
+              <button
+                type="button"
+                className={styles.closeBtn}
+                aria-label={t('confirm.cancel')}
+              >
                 <CloseIcon />
               </button>
             </Dialog.Close>
@@ -168,7 +174,16 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
 
 function CloseIcon(): JSX.Element {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
       <path d="M18 6 6 18M6 6l12 12" />
     </svg>
   )

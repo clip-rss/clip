@@ -44,7 +44,11 @@ function FeedItem(props: FeedItemProps): JSX.Element {
       <ContextMenu.Root>
         <ContextMenu.Trigger asChild>
           <div
-            className={clsx(styles.row, styles.feedRow, selected && styles.selected)}
+            className={clsx(
+              styles.row,
+              styles.feedRow,
+              selected && styles.selected,
+            )}
             style={{ paddingLeft: rowPaddingLeft(depth) }}
             draggable={!editing}
             onDragStart={handleDragStart}
@@ -67,21 +71,31 @@ function FeedItem(props: FeedItemProps): JSX.Element {
             ) : (
               <span className={styles.rowName}>{feed.title}</span>
             )}
-            {paused ? <PauseIcon size={12} className={styles.pausedMark} /> : null}
+            {paused ? (
+              <PauseIcon size={12} className={styles.pausedMark} />
+            ) : null}
             {!editing ? <UnreadBadge count={feed.unreadCount} /> : null}
           </div>
         </ContextMenu.Trigger>
         <ContextMenu.Portal>
           <ContextMenu.Content className={styles.menuContent}>
-            <ContextMenu.Item className={styles.menuItem} onSelect={() => setEditing(true)}>
+            <ContextMenu.Item
+              className={styles.menuItem}
+              onSelect={() => setEditing(true)}
+            >
               重命名
             </ContextMenu.Item>
-            <ContextMenu.Item className={styles.menuItem} onSelect={() => setEditOpen(true)}>
+            <ContextMenu.Item
+              className={styles.menuItem}
+              onSelect={() => setEditOpen(true)}
+            >
               编辑…
             </ContextMenu.Item>
             <ContextMenu.Item
               className={styles.menuItem}
-              onSelect={() => (paused ? resumeFeed(feed.id) : pauseFeed(feed.id))}
+              onSelect={() =>
+                paused ? resumeFeed(feed.id) : pauseFeed(feed.id)
+              }
             >
               {paused ? '恢复更新' : '暂停更新'}
             </ContextMenu.Item>

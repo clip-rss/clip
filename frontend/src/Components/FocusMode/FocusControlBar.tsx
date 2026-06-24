@@ -38,8 +38,18 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
       onMouseEnter={onBarEnter}
       onMouseLeave={onBarLeave}
     >
-      <div className={clsx(styles.barLeft, platform === 'mac' && styles.barLeftMac)}>
-        <button type="button" className={styles.exitBtn} onClick={onExit} aria-label={t('focus.exit')}>
+      <div
+        className={clsx(
+          styles.barLeft,
+          platform === 'mac' && styles.barLeftMac,
+        )}
+      >
+        <button
+          type="button"
+          className={styles.exitBtn}
+          onClick={onExit}
+          aria-label={t('focus.exit')}
+        >
           <BackIcon size={18} />
           <span>{t('focus.exit')}</span>
         </button>
@@ -56,17 +66,35 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
               type="button"
               className={clsx(styles.barBtn, item.isStarred && styles.starred)}
               onClick={() => toggleStar(item.id)}
-              title={item.isStarred ? t('reader.toolbar.unstar') : t('reader.toolbar.star')}
-              aria-label={item.isStarred ? t('reader.toolbar.unstar') : t('reader.toolbar.star')}
+              title={
+                item.isStarred
+                  ? t('reader.toolbar.unstar')
+                  : t('reader.toolbar.star')
+              }
+              aria-label={
+                item.isStarred
+                  ? t('reader.toolbar.unstar')
+                  : t('reader.toolbar.star')
+              }
             >
               <StarIcon size={18} filled={item.isStarred} />
             </button>
             <button
               type="button"
               className={styles.barBtn}
-              onClick={() => (item.isRead ? markUnread(item.id) : markRead(item.id))}
-              title={item.isRead ? t('reader.toolbar.markUnread') : t('reader.toolbar.markRead')}
-              aria-label={item.isRead ? t('reader.toolbar.markUnread') : t('reader.toolbar.markRead')}
+              onClick={() =>
+                item.isRead ? markUnread(item.id) : markRead(item.id)
+              }
+              title={
+                item.isRead
+                  ? t('reader.toolbar.markUnread')
+                  : t('reader.toolbar.markRead')
+              }
+              aria-label={
+                item.isRead
+                  ? t('reader.toolbar.markUnread')
+                  : t('reader.toolbar.markRead')
+              }
             >
               {item.isRead ? <ReadIcon size={18} /> : <UnreadIcon size={18} />}
             </button>
@@ -87,7 +115,9 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
                 item.note.trim() !== '' && styles.hasNote,
               )}
               onClick={toggleNotePanel}
-              title={notePanelOpen ? t('reader.toolbar.closeNote') : t('note.title')}
+              title={
+                notePanelOpen ? t('reader.toolbar.closeNote') : t('note.title')
+              }
               aria-label={t('note.title')}
               aria-pressed={notePanelOpen}
             >

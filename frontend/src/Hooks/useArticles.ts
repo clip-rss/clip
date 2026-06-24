@@ -23,7 +23,10 @@ function useScopeContext(): {
     return categoryFeedIds(categories, feeds, selection.id)
   }, [selection, categories, feeds])
 
-  const feedTitleOf = useMemo(() => (id: number) => feedTitle.get(id) ?? '', [feedTitle])
+  const feedTitleOf = useMemo(
+    () => (id: number) => feedTitle.get(id) ?? '',
+    [feedTitle],
+  )
 
   return { feedTitleOf, allowedFeedIds }
 }
@@ -40,8 +43,21 @@ export function useVisibleArticles(): Item[] {
   return useMemo(() => {
     // 搜索模式：全库结果，已按后端 rank/时间排序，不再套用筛选与分类限定。
     if (searchActive) return searchResults
-    return filterAndSortItems(items, { filter, sort, allowedFeedIds, feedTitleOf })
-  }, [searchActive, searchResults, items, filter, sort, allowedFeedIds, feedTitleOf])
+    return filterAndSortItems(items, {
+      filter,
+      sort,
+      allowedFeedIds,
+      feedTitleOf,
+    })
+  }, [
+    searchActive,
+    searchResults,
+    items,
+    filter,
+    sort,
+    allowedFeedIds,
+    feedTitleOf,
+  ])
 }
 
 export interface ArticleNavigation {
@@ -68,12 +84,23 @@ export function useArticleNavigation(): ArticleNavigation {
   const { feedTitleOf, allowedFeedIds } = useScopeContext()
 
   const ordered = useMemo(
-    () => filterAndSortItems(items, { filter: 'all', sort, allowedFeedIds, feedTitleOf }),
+    () =>
+      filterAndSortItems(items, {
+        filter: 'all',
+        sort,
+        allowedFeedIds,
+        feedTitleOf,
+      }),
     [items, sort, allowedFeedIds, feedTitleOf],
   )
 
   const candidateIds = useMemo(() => {
-    const visible = filterAndSortItems(items, { filter, sort, allowedFeedIds, feedTitleOf })
+    const visible = filterAndSortItems(items, {
+      filter,
+      sort,
+      allowedFeedIds,
+      feedTitleOf,
+    })
     return new Set(visible.map((it) => it.id))
   }, [items, filter, sort, allowedFeedIds, feedTitleOf])
 

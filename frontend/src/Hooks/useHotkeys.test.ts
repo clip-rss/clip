@@ -17,15 +17,21 @@ describe('comboFromEvent', () => {
   })
 
   it('修饰键顺序固定为 mod+alt+shift+key', () => {
-    expect(comboFromEvent(key({ key: 'i', ctrlKey: true, shiftKey: true }))).toBe('mod+shift+i')
-    expect(comboFromEvent(key({ key: 'i', metaKey: true, altKey: true, shiftKey: true }))).toBe(
-      'mod+alt+shift+i',
-    )
+    expect(
+      comboFromEvent(key({ key: 'i', ctrlKey: true, shiftKey: true })),
+    ).toBe('mod+shift+i')
+    expect(
+      comboFromEvent(
+        key({ key: 'i', metaKey: true, altKey: true, shiftKey: true }),
+      ),
+    ).toBe('mod+alt+shift+i')
   })
 
   it('空格映射为 space', () => {
     expect(comboFromEvent(key({ key: ' ' }))).toBe('space')
-    expect(comboFromEvent(key({ key: ' ', shiftKey: true }))).toBe('shift+space')
+    expect(comboFromEvent(key({ key: ' ', shiftKey: true }))).toBe(
+      'shift+space',
+    )
   })
 
   it('数字与符号键', () => {

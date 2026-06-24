@@ -45,13 +45,17 @@ function ListHeader(props: ListHeaderProps): JSX.Element {
     today: t('article.filter.today'),
   }
 
-  const sortLabel = sort === 'time' ? t('article.sort.time') : t('article.sort.source')
-  const sortTitle = sort === 'time' ? t('article.sort.byTime') : t('article.sort.bySource')
+  const sortLabel =
+    sort === 'time' ? t('article.sort.time') : t('article.sort.source')
+  const sortTitle =
+    sort === 'time' ? t('article.sort.byTime') : t('article.sort.bySource')
 
   if (searchActive) {
     return (
       <div className={styles.header}>
-        <span className={styles.resultCount}>{t('article.searchResult', { count: resultCount })}</span>
+        <span className={styles.resultCount}>
+          {t('article.searchResult', { count: resultCount })}
+        </span>
       </div>
     )
   }
@@ -66,7 +70,11 @@ function ListHeader(props: ListHeaderProps): JSX.Element {
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
-          <DropdownMenu.Content className={styles.menuContent} align="start" sideOffset={4}>
+          <DropdownMenu.Content
+            className={styles.menuContent}
+            align="start"
+            sideOffset={4}
+          >
             {filterOptions.map((opt) => (
               <DropdownMenu.Item
                 key={opt.value}
@@ -97,16 +105,31 @@ function ListHeader(props: ListHeaderProps): JSX.Element {
 
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button type="button" className={styles.iconButton} title="批量操作" aria-label="批量操作">
+            <button
+              type="button"
+              className={styles.iconButton}
+              title="批量操作"
+              aria-label="批量操作"
+            >
               <MoreIcon size={18} />
             </button>
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
-            <DropdownMenu.Content className={styles.menuContent} align="end" sideOffset={4}>
-              <DropdownMenu.Item className={clsx(styles.menuItem, styles.menuItemPlain)} onSelect={onMarkAllRead}>
+            <DropdownMenu.Content
+              className={styles.menuContent}
+              align="end"
+              sideOffset={4}
+            >
+              <DropdownMenu.Item
+                className={clsx(styles.menuItem, styles.menuItemPlain)}
+                onSelect={onMarkAllRead}
+              >
                 {t('article.actions.markAllRead')}
               </DropdownMenu.Item>
-              <DropdownMenu.Item className={clsx(styles.menuItem, styles.menuItemPlain)} onSelect={onBatchStar}>
+              <DropdownMenu.Item
+                className={clsx(styles.menuItem, styles.menuItemPlain)}
+                onSelect={onBatchStar}
+              >
                 {t('article.actions.batchStar')}
               </DropdownMenu.Item>
             </DropdownMenu.Content>

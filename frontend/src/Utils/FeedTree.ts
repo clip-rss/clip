@@ -20,13 +20,17 @@ function compareFeed(a: FeedWithUnread, b: FeedWithUnread): number {
  * - 订阅源 categoryId 为 null/0 归入 uncategorized。
  * - 每个分类节点的 unreadCount 递归累加自身直属源与全部子孙分类的未读数。
  */
-export function buildFeedTree(categories: Category[], feeds: FeedWithUnread[]): FeedTree {
+export function buildFeedTree(
+  categories: Category[],
+  feeds: FeedWithUnread[],
+): FeedTree {
   // 分类按父级分组
   const childrenOf = new Map<number, Category[]>()
   const validIds = new Set<number>()
   for (const c of categories) validIds.add(c.id)
   for (const c of categories) {
-    const parent = c.parentId !== null && validIds.has(c.parentId) ? c.parentId : 0
+    const parent =
+      c.parentId !== null && validIds.has(c.parentId) ? c.parentId : 0
     const list = childrenOf.get(parent)
     if (list) list.push(c)
     else childrenOf.set(parent, [c])
@@ -64,7 +68,10 @@ export function buildFeedTree(categories: Category[], feeds: FeedWithUnread[]): 
     return { category, children, feeds: ownFeeds, unreadCount }
   }
 
-  const roots = (childrenOf.get(0) ?? []).slice().sort(compareCategory).map(buildNode)
+  const roots = (childrenOf.get(0) ?? [])
+    .slice()
+    .sort(compareCategory)
+    .map(buildNode)
 
   let totalUnread = 0
   for (const f of feeds) totalUnread += f.unreadCount
@@ -89,7 +96,8 @@ export function flattenCategories(categories: Category[]): CategoryOption[] {
 
   const childrenOf = new Map<number, Category[]>()
   for (const c of categories) {
-    const parent = c.parentId !== null && validIds.has(c.parentId) ? c.parentId : 0
+    const parent =
+      c.parentId !== null && validIds.has(c.parentId) ? c.parentId : 0
     const list = childrenOf.get(parent)
     if (list) list.push(c)
     else childrenOf.set(parent, [c])
@@ -98,7 +106,9 @@ export function flattenCategories(categories: Category[]): CategoryOption[] {
   const out: CategoryOption[] = []
   const visited = new Set<number>()
   function walk(parentId: number, depth: number): void {
-    const children = (childrenOf.get(parentId) ?? []).slice().sort(compareCategory)
+    const children = (childrenOf.get(parentId) ?? [])
+      .slice()
+      .sort(compareCategory)
     for (const c of children) {
       if (visited.has(c.id)) continue // 防御性：避免环
       visited.add(c.id)
