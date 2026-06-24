@@ -6,27 +6,13 @@
     {
       "layers" : [
         {
-          "fill-specializations" : [
-            {
-              "appearance" : "dark",
-              "value" : {
-                "solid" : "srgb:0.92143,0.92145,0.92144,1.00000"
-              }
-            },
-            {
-              "appearance" : "tinted",
-              "value" : {
-                "solid" : "srgb:0.83742,0.83744,0.83743,1.00000"
-              }
-            }
-          ],
-          "image-name" : "wails_icon_vector.svg",
-          "name" : "wails_icon_vector",
+          "image-name" : "applogo.png",
+          "name" : "applogo",
           "position" : {
-            "scale" : 1.25,
+            "scale" : 2.4,
             "translation-in-points" : [
-              36.890625,
-              4.96875
+              0,
+              0
             ]
           }
         }
@@ -35,7 +21,6 @@
         "kind" : "neutral",
         "opacity" : 0.5
       },
-      "specular" : true,
       "translucency" : {
         "enabled" : true,
         "value" : 0.5
