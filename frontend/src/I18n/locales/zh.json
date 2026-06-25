@@ -11,7 +11,12 @@
     "allArticles": "全部文章",
     "newFolder": "新建文件夹",
     "lastUpdated": "上次更新：",
-    "contextMenu": { "newFolder": "新建文件夹", "addFeed": "添加订阅" }
+    "contextMenu": { "newFolder": "新建文件夹", "addFeed": "添加订阅", "rename": "重命名", "edit": "编辑…", "delete": "删除", "pause": "暂停更新", "resume": "恢复更新" },
+    "deleteFeed": { "title": "删除订阅源", "description": "确定删除「{{title}}」吗？该源下的全部文章也会被删除，此操作不可撤销。", "confirm": "删除" },
+    "deleteFolder": { "title": "删除文件夹", "description": "确定删除文件夹「{{name}}」吗？其子文件夹也会被删除，文件夹内的订阅源将变为未分类。", "confirm": "删除" },
+    "chevron": { "expand": "展开", "collapse": "折叠" },
+    "refresh": "手动更新 (R)",
+    "addMenu": "添加菜单"
   },
   "article": {
     "filter": { "all": "全部", "unread": "未读", "read": "已读", "starred": "星标", "today": "今日" },

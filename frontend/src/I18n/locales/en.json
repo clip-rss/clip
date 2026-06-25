@@ -11,7 +11,12 @@
     "allArticles": "All Articles",
     "newFolder": "New Folder",
     "lastUpdated": "Last updated: ",
-    "contextMenu": { "newFolder": "New Folder", "addFeed": "Add Feed" }
+    "contextMenu": { "newFolder": "New Folder", "addFeed": "Add Feed", "rename": "Rename", "edit": "Edit…", "delete": "Delete", "pause": "Pause Updates", "resume": "Resume Updates" },
+    "deleteFeed": { "title": "Delete Feed", "description": "Are you sure you want to delete \"{{title}}\"? All articles from this feed will also be deleted. This action cannot be undone.", "confirm": "Delete" },
+    "deleteFolder": { "title": "Delete Folder", "description": "Are you sure you want to delete the folder \"{{name}}\"? Its subfolders will also be deleted. Feeds inside will become uncategorized.", "confirm": "Delete" },
+    "chevron": { "expand": "Expand", "collapse": "Collapse" },
+    "refresh": "Refresh (R)",
+    "addMenu": "Add menu"
   },
   "article": {
     "filter": { "all": "All", "unread": "Unread", "read": "Read", "starred": "Starred", "today": "Today" },

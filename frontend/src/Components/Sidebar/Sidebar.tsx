@@ -152,7 +152,7 @@ function Sidebar(props: SidebarProps): JSX.Element {
             {formatRelativeTime(lastUpdated)}
           </span>
           <IconAction
-            label="手动更新 (R)"
+            label={t('sidebar.refresh')}
             onClick={handleRefresh}
             disabled={refreshing}
           >
@@ -190,8 +190,8 @@ function AddMenu(props: {
         <button
           type="button"
           className={styles.headerAdd}
-          title={t('sidebar.title')}
-          aria-label={t('sidebar.title')}
+          title={t('sidebar.addMenu')}
+          aria-label={t('sidebar.addMenu')}
         >
           <PlusIcon size={18} />
         </button>

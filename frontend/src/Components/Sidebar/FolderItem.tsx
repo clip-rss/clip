@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import * as ContextMenu from '@radix-ui/react-context-menu'
 import clsx from 'clsx'
 import { useSidebarStore } from '../../Stores'
@@ -17,6 +18,7 @@ interface FolderItemProps {
 }
 
 function FolderItem(props: FolderItemProps): JSX.Element {
+  const { t } = useTranslation()
   const { node, depth } = props
   const { category, children, feeds, unreadCount } = node
 
@@ -84,7 +86,7 @@ function FolderItem(props: FolderItemProps): JSX.Element {
                 expanded && styles.expanded,
               )}
               onClick={handleChevronClick}
-              aria-label={expanded ? '折叠' : '展开'}
+              aria-label={expanded ? t('sidebar.chevron.collapse') : t('sidebar.chevron.expand')}
               tabIndex={-1}
             >
               <ChevronIcon />
@@ -111,14 +113,14 @@ function FolderItem(props: FolderItemProps): JSX.Element {
               className={styles.menuItem}
               onSelect={() => setEditing(true)}
             >
-              重命名
+              {t('sidebar.contextMenu.rename')}
             </ContextMenu.Item>
             <ContextMenu.Separator className={styles.menuSeparator} />
             <ContextMenu.Item
               className={clsx(styles.menuItem, styles.menuItemDanger)}
               onSelect={() => setConfirmOpen(true)}
             >
-              删除
+              {t('sidebar.contextMenu.delete')}
             </ContextMenu.Item>
           </ContextMenu.Content>
         </ContextMenu.Portal>
@@ -142,9 +144,9 @@ function FolderItem(props: FolderItemProps): JSX.Element {
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title="删除文件夹"
-        description={`确定删除文件夹「${category.name}」吗？其子文件夹也会被删除，文件夹内的订阅源将变为未分类。`}
-        confirmText="删除"
+        title={t('sidebar.deleteFolder.title')}
+        description={t('sidebar.deleteFolder.description', { name: category.name })}
+        confirmText={t('sidebar.deleteFolder.confirm')}
         danger
         onConfirm={() => deleteCategory(category.id)}
       />

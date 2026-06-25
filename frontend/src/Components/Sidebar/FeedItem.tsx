@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import * as ContextMenu from '@radix-ui/react-context-menu'
 import clsx from 'clsx'
 import { useSidebarStore } from '../../Stores'
@@ -18,6 +19,7 @@ interface FeedItemProps {
 }
 
 function FeedItem(props: FeedItemProps): JSX.Element {
+  const { t } = useTranslation()
   const { feed, depth } = props
   const selected = useSidebarStore(
     (s) => s.selection.kind === 'feed' && s.selection.id === feed.id,
@@ -83,13 +85,13 @@ function FeedItem(props: FeedItemProps): JSX.Element {
               className={styles.menuItem}
               onSelect={() => setEditing(true)}
             >
-              重命名
+              {t('sidebar.contextMenu.rename')}
             </ContextMenu.Item>
             <ContextMenu.Item
               className={styles.menuItem}
               onSelect={() => setEditOpen(true)}
             >
-              编辑…
+              {t('sidebar.contextMenu.edit')}
             </ContextMenu.Item>
             <ContextMenu.Item
               className={styles.menuItem}
@@ -97,14 +99,14 @@ function FeedItem(props: FeedItemProps): JSX.Element {
                 paused ? resumeFeed(feed.id) : pauseFeed(feed.id)
               }
             >
-              {paused ? '恢复更新' : '暂停更新'}
+              {paused ? t('sidebar.contextMenu.resume') : t('sidebar.contextMenu.pause')}
             </ContextMenu.Item>
             <ContextMenu.Separator className={styles.menuSeparator} />
             <ContextMenu.Item
               className={clsx(styles.menuItem, styles.menuItemDanger)}
               onSelect={() => setConfirmOpen(true)}
             >
-              删除
+              {t('sidebar.contextMenu.delete')}
             </ContextMenu.Item>
           </ContextMenu.Content>
         </ContextMenu.Portal>
@@ -115,9 +117,9 @@ function FeedItem(props: FeedItemProps): JSX.Element {
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title="删除订阅源"
-        description={`确定删除「${feed.title}」吗？该源下的全部文章也会被删除，此操作不可撤销。`}
-        confirmText="删除"
+        title={t('sidebar.deleteFeed.title')}
+        description={t('sidebar.deleteFeed.description', { title: feed.title })}
+        confirmText={t('sidebar.deleteFeed.confirm')}
         danger
         onConfirm={() => deleteFeed(feed.id)}
       />
