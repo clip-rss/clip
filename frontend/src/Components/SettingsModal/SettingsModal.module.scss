@@ -18,6 +18,17 @@
   }
 }
 
+@keyframes panelContentIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -113,7 +124,8 @@
   text-align: left;
   transition:
     background-color 0.15s,
-    color 0.15s;
+    color 0.15s,
+    box-shadow 0.15s;
 
   &:hover {
     background-color: var(--bg-tertiary);
@@ -132,6 +144,11 @@
   min-width: 0;
   padding: 20px 24px;
   overflow-y: auto;
+}
+
+.panelContent {
+  min-height: 100%;
+  animation: panelContentIn 0.18s cubic-bezier(0.2, 0, 0.2, 1);
 }
 
 .sectionTitle {
@@ -179,13 +196,38 @@
 
 /* ===== 分段控件 ===== */
 .segmented {
-  display: inline-flex;
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: repeat(var(--seg-count), minmax(44px, 1fr));
   padding: 2px;
   border-radius: 8px;
   background-color: var(--bg-tertiary);
+  overflow: hidden;
+}
+
+.segIndicator {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc((100% - 4px) / var(--seg-count));
+  border-radius: 6px;
+  background-color: var(--bg-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  pointer-events: none;
+  transform: translateX(var(--seg-indicator-offset));
+  transition:
+    transform 0.2s cubic-bezier(0.2, 0, 0.2, 1),
+    background-color 0.15s,
+    box-shadow 0.15s;
+  z-index: 0;
 }
 
 .segItem {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
   min-width: 44px;
   height: 30px;
   padding: 0 12px;
@@ -201,13 +243,24 @@
   &:hover {
     color: var(--text-primary);
   }
+
+  &::after {
+    content: attr(data-label);
+    grid-area: 1 / 1;
+    font-weight: 600;
+    visibility: hidden;
+    white-space: nowrap;
+  }
+}
+
+.segLabel {
+  grid-area: 1 / 1;
+  white-space: nowrap;
 }
 
 .segItemActive {
-  background-color: var(--bg-primary);
   color: var(--text-primary);
   font-weight: 600;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 /* ===== 下拉选择 ===== */
@@ -258,6 +311,20 @@
 }
 
 /* ===== 数据管理 ===== */
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .content,
+  .panelContent {
+    animation: none;
+  }
+
+  .segIndicator,
+  .toggle,
+  .toggleKnob {
+    transition: none;
+  }
+}
+
 .pathBox {
   width: 100%;
   margin-top: 4px;

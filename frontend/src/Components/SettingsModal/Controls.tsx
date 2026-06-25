@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import clsx from 'clsx'
 import styles from './SettingsModal.module.scss'
 
@@ -28,21 +29,34 @@ export function SegmentedControl<T extends string | number>(props: {
   onChange: (value: T) => void
 }): JSX.Element {
   const { value, options, onChange } = props
+  const activeIndex = Math.max(
+    0,
+    options.findIndex((o) => o.value === value),
+  )
+  const style = {
+    '--seg-count': Math.max(1, options.length),
+    '--seg-indicator-offset': `${activeIndex * 100}%`,
+  } as CSSProperties
+
   return (
-    <div className={styles.segmented} role="radiogroup">
+    <div className={styles.segmented} role="radiogroup" style={style}>
+      {options.length ? (
+        <span className={styles.segIndicator} aria-hidden="true" />
+      ) : null}
       {options.map((o) => (
         <button
           key={String(o.value)}
           type="button"
           role="radio"
           aria-checked={o.value === value}
+          data-label={o.label}
           className={clsx(
             styles.segItem,
             o.value === value && styles.segItemActive,
           )}
           onClick={() => onChange(o.value)}
         >
-          {o.label}
+          <span className={styles.segLabel}>{o.label}</span>
         </button>
       ))}
     </div>

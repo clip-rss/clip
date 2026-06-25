@@ -92,14 +92,16 @@ function SettingsModal(props: SettingsModalProps): JSX.Element {
             </nav>
 
             <div className={styles.panel}>
-              {active === 'general' ? <GeneralSection /> : null}
-              {active === 'reading' ? <ReadingSection /> : null}
-              {active === 'theme' ? <ThemeSection /> : null}
-              {active === 'notification' ? <NotificationSection /> : null}
-              {active === 'proxy' ? <ProxySection /> : null}
-              {active === 'shortcuts' ? <ShortcutSection /> : null}
-              {active === 'data' ? <DataSection /> : null}
-              {active === 'about' ? <AboutSection /> : null}
+              <div key={active} className={styles.panelContent}>
+                {active === 'general' ? <GeneralSection /> : null}
+                {active === 'reading' ? <ReadingSection /> : null}
+                {active === 'theme' ? <ThemeSection /> : null}
+                {active === 'notification' ? <NotificationSection /> : null}
+                {active === 'proxy' ? <ProxySection /> : null}
+                {active === 'shortcuts' ? <ShortcutSection /> : null}
+                {active === 'data' ? <DataSection /> : null}
+                {active === 'about' ? <AboutSection /> : null}
+              </div>
             </div>
           </div>
         </Dialog.Content>
