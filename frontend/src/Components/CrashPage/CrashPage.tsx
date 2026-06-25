@@ -1,9 +1,4 @@
-import {
-  Component,
-  type ErrorInfo,
-  type ReactNode,
-  useMemo,
-} from 'react'
+import { Component, type ErrorInfo, type ReactNode, useMemo } from 'react'
 import styles from './CrashPage.module.scss'
 
 export interface CrashReport {
@@ -156,11 +151,7 @@ function CrashPage(props: { report: CrashReport }): JSX.Element {
           >
             Reload app
           </button>
-          <button
-            type="button"
-            className={styles.button}
-            disabled
-          >
+          <button type="button" className={styles.button} disabled>
             Report a bug
           </button>
         </div>
