@@ -75,6 +75,7 @@ func main() {
 	)
 
 	// 绑定服务（暴露给前端）。
+	sysSvc := &api.SystemService{}
 	app := application.New(application.Options{
 		Name:        "clip",
 		Description: "跨平台 RSS 阅读器",
@@ -85,7 +86,7 @@ func main() {
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
 		Services: []application.Service{
-			application.NewService(&api.SystemService{}),
+			application.NewService(sysSvc),
 			application.NewService(api.NewFeedService(st, ft, sch)),
 			application.NewService(api.NewItemService(st)),
 			application.NewService(api.NewCategoryService(st)),
@@ -152,6 +153,8 @@ func main() {
 		},
 		URL: "/",
 	})
+
+	sysSvc.Window = mainWindow
 
 	if err := app.Run(); err != nil {
 		log.Fatal(err)

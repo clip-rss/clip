@@ -1,9 +1,15 @@
 package api
 
-import "runtime"
+import (
+	"runtime"
+
+	"github.com/wailsapp/wails/v3/pkg/application"
+)
 
 // SystemService 提供与运行平台相关的信息，暴露给前端用于平台差异化渲染。
-type SystemService struct{}
+type SystemService struct {
+	Window application.Window
+}
 
 // Platform 返回当前运行的操作系统标识。
 //

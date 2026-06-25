@@ -22,3 +22,16 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 export function Platform() {
     return $Call.ByID(2821667470);
 }
+
+/**
+ * SetTheme 将原生窗口标题栏切换为指定的主题。
+ * 
+ * mode 的值：
+ *   - "dark"  — 暗色主题
+ *   - 其它值  — 亮色主题（默认）
+ * @param {string} mode
+ * @returns {$CancellablePromise<void>}
+ */
+export function SetTheme(mode) {
+    return $Call.ByID(1434316160, mode);
+}

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { ThemeMode, ThemePreference } from '../Types'
+import { SystemService } from '../Utils/Api'
 
 interface ThemeState {
   preference: ThemePreference
@@ -24,6 +25,8 @@ function applyTheme(mode: ThemeMode): void {
   } else if (mode === 'sepia') {
     root.classList.add('sepia')
   }
+  // 同步 Windows 原生窗口标题栏主题
+  SystemService.SetTheme(mode)
 }
 
 export const useThemeStore = create<ThemeState>()(
