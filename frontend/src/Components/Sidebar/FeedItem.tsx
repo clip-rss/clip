@@ -99,7 +99,9 @@ function FeedItem(props: FeedItemProps): JSX.Element {
                 paused ? resumeFeed(feed.id) : pauseFeed(feed.id)
               }
             >
-              {paused ? t('sidebar.contextMenu.resume') : t('sidebar.contextMenu.pause')}
+              {paused
+                ? t('sidebar.contextMenu.resume')
+                : t('sidebar.contextMenu.pause')}
             </ContextMenu.Item>
             <ContextMenu.Separator className={styles.menuSeparator} />
             <ContextMenu.Item

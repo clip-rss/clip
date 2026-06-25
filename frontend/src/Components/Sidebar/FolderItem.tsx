@@ -86,7 +86,11 @@ function FolderItem(props: FolderItemProps): JSX.Element {
                 expanded && styles.expanded,
               )}
               onClick={handleChevronClick}
-              aria-label={expanded ? t('sidebar.chevron.collapse') : t('sidebar.chevron.expand')}
+              aria-label={
+                expanded
+                  ? t('sidebar.chevron.collapse')
+                  : t('sidebar.chevron.expand')
+              }
               tabIndex={-1}
             >
               <ChevronIcon />
@@ -145,7 +149,9 @@ function FolderItem(props: FolderItemProps): JSX.Element {
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title={t('sidebar.deleteFolder.title')}
-        description={t('sidebar.deleteFolder.description', { name: category.name })}
+        description={t('sidebar.deleteFolder.description', {
+          name: category.name,
+        })}
         confirmText={t('sidebar.deleteFolder.confirm')}
         danger
         onConfirm={() => deleteCategory(category.id)}
