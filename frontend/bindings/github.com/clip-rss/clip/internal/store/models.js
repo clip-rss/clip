@@ -646,6 +646,22 @@ export class Settings {
              */
             this["launchMinimized"] = false;
         }
+        if (!("windowWidth" in $$source)) {
+            /**
+             * 主窗口上次关闭时的宽度
+             * @member
+             * @type {number}
+             */
+            this["windowWidth"] = 0;
+        }
+        if (!("windowHeight" in $$source)) {
+            /**
+             * 主窗口上次关闭时的高度
+             * @member
+             * @type {number}
+             */
+            this["windowHeight"] = 0;
+        }
         if (!("proxyHost" in $$source)) {
             /**
              * HTTP 代理 IP / 主机名

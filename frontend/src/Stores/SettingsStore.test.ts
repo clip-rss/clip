@@ -23,6 +23,8 @@ const defaults: Settings = {
   notificationMode: 'each',
   autoMarkReadDelay: 0,
   launchMinimized: false,
+  windowWidth: 1200,
+  windowHeight: 800,
   proxyHost: '',
   proxyPort: 0,
 }

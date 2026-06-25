@@ -25,6 +25,8 @@ type Settings struct {
 	NotificationMode      string `json:"notificationMode"`      // each / summary / off
 	AutoMarkReadDelay     int    `json:"autoMarkReadDelay"`     // 自动标记已读延迟（毫秒）：-1 关闭 / 0 立即 / >0 延迟
 	LaunchMinimized       bool   `json:"launchMinimized"`       // 启动时最小化窗口
+	WindowWidth           int    `json:"windowWidth"`           // 主窗口上次关闭时的宽度
+	WindowHeight          int    `json:"windowHeight"`          // 主窗口上次关闭时的高度
 	ProxyHost             string `json:"proxyHost"`             // HTTP 代理 IP / 主机名
 	ProxyPort             int    `json:"proxyPort"`             // HTTP 代理端口
 }
@@ -39,6 +41,8 @@ func DefaultSettings() Settings {
 		NotificationMode:      NotifyEach,
 		AutoMarkReadDelay:     0,
 		LaunchMinimized:       false,
+		WindowWidth:           1200,
+		WindowHeight:          800,
 	}
 }
 

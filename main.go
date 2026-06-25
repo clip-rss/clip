@@ -22,6 +22,13 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+const (
+	defaultWindowWidth  = 1200
+	defaultWindowHeight = 800
+	minWindowWidth      = 800
+	minWindowHeight     = 600
+)
+
 // wailsEmitter 用 Wails 运行时事件总线实现 scheduler.Emitter，
 // 通过全局 application.Get() 解耦，避免与 App 实例的构造顺序耦合。
 type wailsEmitter struct{}
@@ -44,6 +51,38 @@ func (s wailsNotifSender) Send(msg notify.Message) error {
 		Body:  msg.Body,
 		Data:  map[string]interface{}{"articleId": msg.ID},
 	})
+}
+
+func savedWindowSize(settings store.Settings) (int, int) {
+	width := settings.WindowWidth
+	height := settings.WindowHeight
+	if width < minWindowWidth {
+		width = defaultWindowWidth
+	}
+	if height < minWindowHeight {
+		height = defaultWindowHeight
+	}
+	return width, height
+}
+
+func saveWindowSize(st *store.Store, window application.Window) {
+	if window == nil {
+		return
+	}
+	width, height := window.Size()
+	if width < minWindowWidth || height < minWindowHeight {
+		return
+	}
+	settings, err := st.GetSettings()
+	if err != nil {
+		log.Printf("failed to load settings before saving window size: %v", err)
+		return
+	}
+	settings.WindowWidth = width
+	settings.WindowHeight = height
+	if err := st.UpdateSettings(settings); err != nil {
+		log.Printf("failed to save window size: %v", err)
+	}
 }
 
 func main() {
@@ -139,19 +178,23 @@ func main() {
 	if settings.LaunchMinimized {
 		startState = application.WindowStateMinimised
 	}
+	windowWidth, windowHeight := savedWindowSize(settings)
 
 	mainWindow = app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:      "Clip",
-		Width:      1200,
-		Height:     800,
-		MinWidth:   800,
-		MinHeight:  600,
+		Width:      windowWidth,
+		Height:     windowHeight,
+		MinWidth:   minWindowWidth,
+		MinHeight:  minWindowHeight,
 		StartState: startState,
 		Mac: application.MacWindow{
 			Backdrop: application.MacBackdropTranslucent,
 			TitleBar: application.MacTitleBarHiddenInset,
 		},
 		URL: "/",
+	})
+	mainWindow.OnWindowEvent(events.Common.WindowClosing, func(_ *application.WindowEvent) {
+		saveWindowSize(st, mainWindow)
 	})
 
 	sysSvc.Window = mainWindow
