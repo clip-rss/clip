@@ -18,6 +18,7 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
   const categories = useSidebarStore((s) => s.categories)
   const reload = useSidebarStore((s) => s.load)
 
+  const [url, setUrl] = useState(feed.url)
   const [title, setTitle] = useState(feed.title)
   const [categoryId, setCategoryId] = useState(feed.categoryId ?? 0)
   const [updateInterval, setUpdateInterval] = useState(feed.updateInterval)
@@ -28,6 +29,7 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
   // 每次打开时用最新 feed 初始化表单。
   useEffect(() => {
     if (open) {
+      setUrl(feed.url)
       setTitle(feed.title)
       setCategoryId(feed.categoryId ?? 0)
       setUpdateInterval(feed.updateInterval)
@@ -40,13 +42,15 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
   const options = flattenCategories(categories)
 
   async function save(): Promise<void> {
+    const finalUrl = url.trim()
     const finalTitle = title.trim()
-    if (!finalTitle || saving) return
+    if (!finalUrl || !finalTitle || saving) return
     setSaving(true)
     setErrorMsg('')
     try {
       await FeedService.UpdateFeed({
         ...feed,
+        url: finalUrl,
         title: finalTitle,
         categoryId: categoryId === 0 ? null : categoryId,
         updateInterval: Math.max(1, updateInterval),
@@ -86,6 +90,20 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
 
           <div className={styles.body}>
             <div className={styles.fieldGroup}>
+              <label className={styles.label} htmlFor="edit-feed-url">
+                {t('feed.edit.url')}
+              </label>
+              <input
+                id="edit-feed-url"
+                type="text"
+                className={styles.textInput}
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            <div className={styles.fieldGroup}>
               <label className={styles.label} htmlFor="edit-feed-title">
                 {t('feed.edit.label')}
               </label>
@@ -95,7 +113,6 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
                 className={styles.textInput}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                autoFocus
               />
             </div>
 
@@ -161,7 +178,7 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
               type="button"
               className={styles.saveBtn}
               onClick={save}
-              disabled={!title.trim() || saving}
+              disabled={!url.trim() || !title.trim() || saving}
             >
               {saving ? `${t('note.saving')}` : t('feed.edit.save')}
             </button>

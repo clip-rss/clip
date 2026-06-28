@@ -196,12 +196,13 @@ func (s *Store) ListFeedsWithUnread() ([]FeedWithUnread, error) {
 func (s *Store) UpdateFeed(feed *Feed) error {
 	query := `
 		UPDATE feeds
-		SET title = ?, description = ?, link = ?, icon = ?, category_id = ?,
+		SET url = ?, title = ?, description = ?, link = ?, icon = ?, category_id = ?,
 		    update_interval = ?, max_items = ?, last_updated = ?, error_count = ?,
 		    last_error = ?, status = ?, updated_at = CURRENT_TIMESTAMP
 		WHERE id = ?
 	`
 	result, err := s.db.Exec(query,
+		feed.URL,
 		feed.Title,
 		feed.Description,
 		feed.Link,

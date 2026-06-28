@@ -186,11 +186,15 @@ func TestFeedOperations(t *testing.T) {
 	}
 
 	// 更新订阅源
+	feed.URL = "https://example.com/updated.xml"
 	feed.Title = "Updated Feed"
 	if err := store.UpdateFeed(feed); err != nil {
 		t.Fatalf("failed to update feed: %v", err)
 	}
 	updated, _ := store.GetFeed(feed.ID)
+	if updated.URL != "https://example.com/updated.xml" {
+		t.Errorf("expected updated url, got '%s'", updated.URL)
+	}
 	if updated.Title != "Updated Feed" {
 		t.Errorf("expected updated title, got '%s'", updated.Title)
 	}
@@ -523,10 +527,10 @@ func TestSearchChineseSubstring(t *testing.T) {
 		kw   string
 		want int
 	}{
-		{"周刊", 1},     // 2 字 → LIKE
-		{"爱好者", 1},    // 3 字 → FTS
-		{"科技爱好", 1},   // 4 字 → FTS
-		{"清单", 1},     // 2 字 → LIKE
+		{"周刊", 1},   // 2 字 → LIKE
+		{"爱好者", 1},  // 3 字 → FTS
+		{"科技爱好", 1}, // 4 字 → FTS
+		{"清单", 1},   // 2 字 → LIKE
 		{"不存在的词", 0},
 	}
 	for _, c := range cases {
