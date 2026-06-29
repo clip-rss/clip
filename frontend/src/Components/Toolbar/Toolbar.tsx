@@ -67,11 +67,10 @@ function Toolbar(props: ToolbarProps): JSX.Element {
   return (
     <div
       className={styles.toolbar}
-      style={{ '--wails-draggable': 'drag' } as any}
+      style={{ '--wails-draggable': platform === 'mac' ? 'drag' : 'none' } as any}
     >
       <div className={styles.left}>
         <WindowControls platform={platform} />
-        <span className={styles.title}>Clip</span>
         <div
           className={clsx(
             styles.search,
@@ -156,30 +155,9 @@ function WindowControls(props: {
     return <div className={styles.macSpacer} aria-hidden="true" />
   }
 
-  // Windows：以应用图标占位
+  // Windows
   return (
-    <div className={styles.winIcon} aria-hidden="true">
-      <AppIcon />
-    </div>
-  )
-}
-
-function AppIcon(): JSX.Element {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M4 11a9 9 0 0 1 9 9" />
-      <path d="M4 4a16 16 0 0 1 16 16" />
-      <circle cx="5" cy="19" r="1" fill="currentColor" />
-    </svg>
+    <div className={styles.winSpacer} aria-hidden="true" />
   )
 }
 

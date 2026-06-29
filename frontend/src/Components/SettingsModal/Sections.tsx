@@ -490,6 +490,12 @@ export function AboutSection(): JSX.Element {
 
   return (
     <div className={styles.aboutSection}>
+      <img
+        src="/appicon.png"
+        alt="Clip"
+        className={styles.aboutLogo}
+        draggable={false}
+      />
       <div className={styles.aboutAppName}>{t('settings.about.appName')}</div>
     </div>
   )

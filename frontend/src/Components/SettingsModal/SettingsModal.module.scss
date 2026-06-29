@@ -387,10 +387,20 @@
 /* ===== 文本 / 数字输入 ===== */
 .aboutSection {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100%;
   padding: 32px 0;
+  gap: 16px;
+}
+
+.aboutLogo {
+  width: 164px;
+  height: 164px;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
 }
 
 .aboutAppName {

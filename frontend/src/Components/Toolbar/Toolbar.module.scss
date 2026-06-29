@@ -10,13 +10,6 @@
 .left {
   display: flex;
   align-items: center;
-  gap: 16px;
-}
-
-.title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
 }
 
 // macOS：为系统原生红绿灯预留空间
@@ -27,7 +20,7 @@
 }
 
 // Windows：应用图标占位
-.winIcon {
+.winSpacer {
   display: flex;
   flex-shrink: 0;
   align-items: center;
