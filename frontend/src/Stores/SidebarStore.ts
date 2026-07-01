@@ -163,11 +163,8 @@ export const useSidebarStore = create<SidebarState>()(
       },
 
       async refreshSelected() {
-        const { selection } = get()
         try {
-          if (selection.kind === 'feed')
-            await FeedService.RefreshFeed(selection.id)
-          else await FeedService.RefreshAll()
+          await FeedService.RefreshAll()
           // 新文章经后端 items:updated 事件驱动列表刷新；此处刷新源元信息（上次更新等）。
           await get().load()
         } catch (err) {

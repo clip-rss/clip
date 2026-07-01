@@ -136,19 +136,12 @@ describe('SidebarStore', () => {
     expect(useSidebarStore.getState().selection).toEqual({ kind: 'all' })
   })
 
-  it('refreshSelected 选中单源时刷新该源', async () => {
+  it('refreshSelected 总是刷新全部源', async () => {
     useSidebarStore.setState({ selection: { kind: 'feed', id: 7 } })
-    await useSidebarStore.getState().refreshSelected()
-    expect(RefreshFeed).toHaveBeenCalledWith(7)
-    expect(RefreshAll).not.toHaveBeenCalled()
-    expect(ListFeeds).toHaveBeenCalled() // 触发 load 刷新源元信息
-  })
-
-  it('refreshSelected 非单源选中时刷新全部', async () => {
-    useSidebarStore.setState({ selection: { kind: 'category', id: 2 } })
     await useSidebarStore.getState().refreshSelected()
     expect(RefreshAll).toHaveBeenCalled()
     expect(RefreshFeed).not.toHaveBeenCalled()
+    expect(ListFeeds).toHaveBeenCalled() // 触发 load 刷新源元信息
   })
 
   it('refreshSelected 失败时记录 error', async () => {
