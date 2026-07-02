@@ -35,7 +35,7 @@ type Settings struct {
 func DefaultSettings() Settings {
 	return Settings{
 		Theme:                 "system",
-		Language:              "zh",
+		Language:              detectDefaultLanguage(),
 		DefaultUpdateInterval: 30,
 		DefaultMaxItems:       100,
 		NotificationMode:      NotifyEach,
@@ -52,7 +52,11 @@ func (s *Store) GetSettings() (Settings, error) {
 	var value string
 	err := s.db.QueryRow(`SELECT value FROM settings WHERE key = ?`, settingsKey).Scan(&value)
 	if err == sql.ErrNoRows {
-		return DefaultSettings(), nil
+		defaults := DefaultSettings()
+		if err := s.UpdateSettings(defaults); err != nil {
+			return Settings{}, err
+		}
+		return defaults, nil
 	}
 	if err != nil {
 		return Settings{}, fmt.Errorf("failed to get settings: %w", err)

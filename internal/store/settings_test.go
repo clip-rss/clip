@@ -7,6 +7,9 @@ import (
 )
 
 func TestSettingsDefaultsWhenMissing(t *testing.T) {
+	restore := stubSystemLocale(t, "zh-CN")
+	defer restore()
+
 	st := setupTestDB(t)
 
 	got, err := st.GetSettings()
@@ -16,6 +19,42 @@ func TestSettingsDefaultsWhenMissing(t *testing.T) {
 	want := DefaultSettings()
 	if got != want {
 		t.Errorf("defaults = %+v, want %+v", got, want)
+	}
+
+	// 首次读取会把默认设置写入数据库，之后环境变化也不覆盖用户设置。
+	restore()
+	stubSystemLocale(t, "en-US")
+	got, err = st.GetSettings()
+	if err != nil {
+		t.Fatalf("GetSettings after persisted default: %v", err)
+	}
+	if got.Language != "zh" {
+		t.Errorf("persisted language = %q, want zh", got.Language)
+	}
+}
+
+func TestDefaultSettingsLanguageFromSystemLocale(t *testing.T) {
+	tests := []struct {
+		name   string
+		locale string
+		want   string
+	}{
+		{name: "simplified chinese", locale: "zh-CN", want: "zh"},
+		{name: "traditional chinese", locale: "zh_Hant_TW", want: "zh"},
+		{name: "english", locale: "en-US", want: "en"},
+		{name: "japanese", locale: "ja-JP", want: "en"},
+		{name: "empty", locale: "", want: "en"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := stubSystemLocale(t, tt.locale)
+			defer restore()
+
+			if got := DefaultSettings().Language; got != tt.want {
+				t.Errorf("language = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
 
@@ -58,6 +97,9 @@ func TestSettingsRoundTrip(t *testing.T) {
 
 // TestSettingsPartialMergeKeepsDefaults 验证旧数据缺失字段时回退默认值。
 func TestSettingsPartialMergeKeepsDefaults(t *testing.T) {
+	restore := stubSystemLocale(t, "en-US")
+	defer restore()
+
 	st := setupTestDB(t)
 
 	// 模拟仅持久化了部分字段的历史数据。
@@ -75,8 +117,17 @@ func TestSettingsPartialMergeKeepsDefaults(t *testing.T) {
 	if got.Theme != "dark" {
 		t.Errorf("theme = %q, want dark", got.Theme)
 	}
-	if got.DefaultUpdateInterval != 30 || got.Language != "zh" {
+	if got.DefaultUpdateInterval != 30 || got.Language != "en" {
 		t.Errorf("missing fields should fall back to defaults, got %+v", got)
+	}
+}
+
+func stubSystemLocale(t *testing.T, locale string) func() {
+	t.Helper()
+	previous := systemLocale
+	systemLocale = func() string { return locale }
+	return func() {
+		systemLocale = previous
 	}
 }
 
