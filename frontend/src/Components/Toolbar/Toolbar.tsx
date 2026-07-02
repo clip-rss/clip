@@ -67,7 +67,9 @@ function Toolbar(props: ToolbarProps): JSX.Element {
   return (
     <div
       className={styles.toolbar}
-      style={{ '--wails-draggable': platform === 'mac' ? 'drag' : 'none' } as any}
+      style={
+        { '--wails-draggable': platform === 'mac' ? 'drag' : 'none' } as any
+      }
     >
       <div className={styles.left}>
         <WindowControls platform={platform} />
@@ -156,9 +158,7 @@ function WindowControls(props: {
   }
 
   // Windows
-  return (
-    <div className={styles.winSpacer} aria-hidden="true" />
-  )
+  return <div className={styles.winSpacer} aria-hidden="true" />
 }
 
 function SearchIcon(): JSX.Element {

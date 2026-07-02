@@ -144,6 +144,13 @@ describe('SidebarStore', () => {
     expect(ListFeeds).toHaveBeenCalled() // 触发 load 刷新源元信息
   })
 
+  it('refreshFeed 只刷新指定订阅源', async () => {
+    await useSidebarStore.getState().refreshFeed(7)
+    expect(RefreshFeed).toHaveBeenCalledWith(7)
+    expect(RefreshAll).not.toHaveBeenCalled()
+    expect(ListFeeds).toHaveBeenCalled()
+  })
+
   it('refreshSelected 失败时记录 error', async () => {
     RefreshAll.mockRejectedValueOnce(new Error('net'))
     useSidebarStore.setState({ selection: { kind: 'all' } })

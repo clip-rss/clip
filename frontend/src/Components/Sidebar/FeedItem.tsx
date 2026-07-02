@@ -29,6 +29,7 @@ function FeedItem(props: FeedItemProps): JSX.Element {
   const deleteFeed = useSidebarStore((s) => s.deleteFeed)
   const pauseFeed = useSidebarStore((s) => s.pauseFeed)
   const resumeFeed = useSidebarStore((s) => s.resumeFeed)
+  const refreshFeed = useSidebarStore((s) => s.refreshFeed)
 
   const [editing, setEditing] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -92,6 +93,14 @@ function FeedItem(props: FeedItemProps): JSX.Element {
               onSelect={() => setEditOpen(true)}
             >
               {t('sidebar.contextMenu.edit')}
+            </ContextMenu.Item>
+            <ContextMenu.Item
+              className={styles.menuItem}
+              onSelect={() => {
+                void refreshFeed(feed.id)
+              }}
+            >
+              {t('sidebar.contextMenu.refresh')}
             </ContextMenu.Item>
             <ContextMenu.Item
               className={styles.menuItem}

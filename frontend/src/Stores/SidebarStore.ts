@@ -26,6 +26,7 @@ interface SidebarState {
   deleteFeed: (id: number) => Promise<void>
   pauseFeed: (id: number) => Promise<void>
   resumeFeed: (id: number) => Promise<void>
+  refreshFeed: (id: number) => Promise<void>
   /** 把订阅源移入分类；categoryId 为 0 表示移出到「未分类」。 */
   moveFeed: (feedId: number, categoryId: number) => Promise<void>
 
@@ -147,6 +148,15 @@ export const useSidebarStore = create<SidebarState>()(
       async resumeFeed(id) {
         try {
           await FeedService.ResumeFeed(id)
+          await get().load()
+        } catch (err) {
+          set({ error: toApiError(err) })
+        }
+      },
+
+      async refreshFeed(id) {
+        try {
+          await FeedService.RefreshFeed(id)
           await get().load()
         } catch (err) {
           set({ error: toApiError(err) })
