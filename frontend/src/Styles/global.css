@@ -28,7 +28,9 @@
 }
 
 /* ===== 亮色主题（显式类，用于阅读区独立背景在暗色应用下重置 token） ===== */
-.light {
+/* 注意：主题类统一加 theme- 前缀，避免与 Tailwind 内置滤镜工具类（如 .sepia）同名，
+   否则 --tw-sepia 会级联到整棵子树，给图片等叠加真实的 sepia 滤镜。 */
+.theme-light {
   --bg-primary: #ffffff;
   --bg-secondary: #f3f4f6;
   --bg-tertiary: #e5e7eb;
@@ -42,7 +44,7 @@
 }
 
 /* ===== 暗色主题 ===== */
-.dark {
+.theme-dark {
   --bg-primary: #1e1e1e;
   --bg-secondary: #252526;
   --bg-tertiary: #333333;
@@ -56,17 +58,17 @@
 }
 
 /* ===== Sepia 护眼主题 ===== */
-.sepia {
+.theme-sepia {
   --bg-primary: #f5ecd7;
-  --bg-secondary: #ede4cc;
-  --bg-tertiary: #e2d9c0;
-  --text-primary: #3d3322;
-  --text-secondary: #655844;
-  --accent: #1d4ed8;
-  --star: #c2670e;
-  --danger: #b91c1c;
-  --border: #d4c9b0;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --bg-secondary: #ede0c8;
+  --bg-tertiary: #e2d3b8;
+  --text-primary: #3b2e1e;
+  --text-secondary: #6b5a42;
+  --accent: #7c5c2e;
+  --star: #a9701c;
+  --danger: #a83232;
+  --border: #d6c4a0;
+  --shadow: 0 2px 8px rgba(59, 46, 30, 0.12);
 }
 
 /* ===== Tailwind v4 主题映射 ===== */

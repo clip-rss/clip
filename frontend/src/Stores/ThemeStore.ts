@@ -19,11 +19,13 @@ function resolveTheme(preference: ThemePreference): ThemeMode {
 
 function applyTheme(mode: ThemeMode): void {
   const root = document.documentElement
-  root.classList.remove('dark', 'sepia')
+  // 同时清理历史遗留的裸类名（'light'/'dark'/'sepia'）：它们与 Tailwind 内置滤镜
+  // 工具类同名，若残留在 <html> 上会给整页叠加真实滤镜。
+  root.classList.remove('theme-dark', 'theme-sepia', 'light', 'dark', 'sepia')
   if (mode === 'dark') {
-    root.classList.add('dark')
+    root.classList.add('theme-dark')
   } else if (mode === 'sepia') {
-    root.classList.add('sepia')
+    root.classList.add('theme-sepia')
   }
   // 同步 Windows 原生窗口标题栏主题
   SystemService.SetTheme(mode)

@@ -27,8 +27,9 @@ export function readerContentStyle(prefs: ReaderPrefs): ReaderContentStyle {
 
 /**
  * 阅读区独立背景对应的全局主题类名（在子树内重置 CSS 变量 token，使标题/正文/边框一并适配）。
- * 'default' 返回 null（继承应用主题）；其余直接映射到 global.css 中的 `.light/.sepia/.dark`。
+ * 'default' 返回 null（继承应用主题）；其余映射到 global.css 中的 `.theme-light/.theme-sepia/.theme-dark`。
+ * 注意加 theme- 前缀：避免与 Tailwind 内置滤镜工具类（.sepia 等）同名而给子树叠加真实滤镜。
  */
 export function readerBackgroundClass(bg: ReaderBackground): string | null {
-  return bg === 'default' ? null : bg
+  return bg === 'default' ? null : `theme-${bg}`
 }

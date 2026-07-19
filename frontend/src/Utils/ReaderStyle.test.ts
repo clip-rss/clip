@@ -46,9 +46,9 @@ describe('readerBackgroundClass', () => {
     expect(readerBackgroundClass('default')).toBeNull()
   })
 
-  it('其他映射到对应全局主题类名', () => {
-    expect(readerBackgroundClass('light')).toBe('light')
-    expect(readerBackgroundClass('sepia')).toBe('sepia')
-    expect(readerBackgroundClass('dark')).toBe('dark')
+  it('其他映射到对应全局主题类名（theme- 前缀，避免与 Tailwind 工具类冲突）', () => {
+    expect(readerBackgroundClass('light')).toBe('theme-light')
+    expect(readerBackgroundClass('sepia')).toBe('theme-sepia')
+    expect(readerBackgroundClass('dark')).toBe('theme-dark')
   })
 })

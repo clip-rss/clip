@@ -110,7 +110,7 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  // 携带 token：当应用独立阅读背景类（.light/.sepia/.dark）时，子树 token 被重置，
+  // 携带 token：当应用独立阅读背景类（.theme-light/.theme-sepia/.theme-dark）时，子树 token 被重置，
   // 标题/正文/边框等一并适配。
   background-color: var(--bg-primary);
   color: var(--text-primary);
