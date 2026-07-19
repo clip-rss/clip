@@ -77,7 +77,9 @@
       "modeDesc": "每篇：每条新文章一条；摘要：每次刷新一条汇总",
       "each": "每篇",
       "summary": "摘要",
-      "off": "关闭"
+      "off": "关闭",
+      "unreadBadge": "未读角标",
+      "unreadBadgeDesc": "在程序坞图标上显示未读文章数量"
     },
     "proxy": {
       "title": "代理",

@@ -8,6 +8,7 @@ export {
   SettingsService,
   OPMLService,
   SystemService,
+  DockService,
   onItemsUpdated,
   onFeedError,
   onNotificationOpen,

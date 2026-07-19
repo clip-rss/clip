@@ -630,6 +630,14 @@ export class Settings {
              */
             this["notificationMode"] = "";
         }
+        if (!("showUnreadBadge" in $$source)) {
+            /**
+             * 是否在 Dock 图标展示未读角标（仅 macOS）
+             * @member
+             * @type {boolean}
+             */
+            this["showUnreadBadge"] = false;
+        }
         if (!("autoMarkReadDelay" in $$source)) {
             /**
              * 自动标记已读延迟（毫秒）：-1 关闭 / 0 立即 / >0 延迟

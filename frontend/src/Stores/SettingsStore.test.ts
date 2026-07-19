@@ -21,6 +21,7 @@ const defaults: Settings = {
   defaultUpdateInterval: 30,
   defaultMaxItems: 100,
   notificationMode: 'each',
+  showUnreadBadge: true,
   autoMarkReadDelay: 0,
   launchMinimized: false,
   windowWidth: 1200,

@@ -12,3 +12,4 @@ export {
 export type { Hotkey } from './useHotkeys'
 export { useAppHotkeys } from './useAppHotkeys'
 export { useNotificationNavigation } from './useNotificationNavigation'
+export { useDockBadge } from './useDockBadge'

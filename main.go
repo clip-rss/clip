@@ -16,6 +16,7 @@ import (
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
+	"github.com/wailsapp/wails/v3/pkg/services/dock"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 )
 
@@ -100,6 +101,8 @@ func main() {
 	notifSender := wailsNotifSender{ns: notifSvc}
 	notifier := notify.NewService(st, notifSender)
 
+	dockService := dock.New()
+
 	// 抓取与调度层。
 	ft := fetcher.New()
 	if settings.ProxyHost != "" && settings.ProxyPort > 0 {
@@ -132,6 +135,7 @@ func main() {
 			application.NewService(api.NewSettingsService(st, sch, ft.Client())),
 			application.NewService(api.NewOPMLService(st)),
 			application.NewService(notifSvc),
+			application.NewService(dockService),
 		},
 	})
 
@@ -203,4 +207,3 @@ func main() {
 		log.Fatal(err)
 	}
 }
-

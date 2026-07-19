@@ -9,7 +9,7 @@ import {
   Sidebar,
   Toolbar,
 } from './Components'
-import { useAppHotkeys, useNotificationNavigation } from './Hooks'
+import { useAppHotkeys, useDockBadge, useNotificationNavigation } from './Hooks'
 import './I18n'
 import i18next from 'i18next'
 import { useSettingsStore } from './Stores'
@@ -28,6 +28,7 @@ function App() {
 
   useAppHotkeys({ onAddFeed: openAddFeed, onOpenSettings: openSettings })
   useNotificationNavigation()
+  useDockBadge()
 
   useEffect(() => {
     const store = useSettingsStore.getState()

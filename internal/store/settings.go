@@ -23,6 +23,7 @@ type Settings struct {
 	DefaultUpdateInterval int    `json:"defaultUpdateInterval"` // 默认更新间隔（分钟）
 	DefaultMaxItems       int    `json:"defaultMaxItems"`       // 默认每源最大保留条目数
 	NotificationMode      string `json:"notificationMode"`      // each / summary / off
+	ShowUnreadBadge       bool   `json:"showUnreadBadge"`       // 是否在 Dock 图标展示未读角标（仅 macOS）
 	AutoMarkReadDelay     int    `json:"autoMarkReadDelay"`     // 自动标记已读延迟（毫秒）：-1 关闭 / 0 立即 / >0 延迟
 	LaunchMinimized       bool   `json:"launchMinimized"`       // 启动时最小化窗口
 	WindowWidth           int    `json:"windowWidth"`           // 主窗口上次关闭时的宽度
@@ -39,6 +40,7 @@ func DefaultSettings() Settings {
 		DefaultUpdateInterval: 30,
 		DefaultMaxItems:       100,
 		NotificationMode:      NotifyEach,
+		ShowUnreadBadge:       true,
 		AutoMarkReadDelay:     0,
 		LaunchMinimized:       false,
 		WindowWidth:           1200,

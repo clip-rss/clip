@@ -24,11 +24,9 @@ export function Platform() {
 }
 
 /**
- * SetTheme 将原生窗口标题栏切换为指定的主题。
+ * SetTheme 在非 Windows 平台上是空操作。
  * 
- * mode 的值：
- *   - "dark"  — 暗色主题
- *   - 其它值  — 亮色主题（默认）
+ * macOS 使用隐藏式标题栏（MacTitleBarHiddenInset），无需切换原生主题。
  * @param {string} mode
  * @returns {$CancellablePromise<void>}
  */

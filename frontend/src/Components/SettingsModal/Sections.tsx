@@ -47,6 +47,24 @@ export function GeneralSection(): JSX.Element {
     <div>
       <h3 className={styles.sectionTitle}>{t('settings.general.title')}</h3>
       <SettingRow
+        label={t('settings.general.language')}
+        description={t('settings.general.languageDesc')}
+      >
+        <select
+          className={styles.select}
+          value={settings?.language ?? 'zh'}
+          onChange={(e) => {
+            const lang = e.target.value
+            i18n.changeLanguage(lang)
+            update({ language: lang })
+          }}
+        >
+          <option value="zh">简体中文</option>
+          <option value="en">English</option>
+        </select>
+      </SettingRow>
+
+      <SettingRow
         label={t('settings.general.updateInterval')}
         description={t('settings.general.updateIntervalDesc')}
       >
@@ -83,24 +101,6 @@ export function GeneralSection(): JSX.Element {
           onChange={(v) => update({ launchMinimized: v })}
           label={t('settings.general.launchMinimized')}
         />
-      </SettingRow>
-
-      <SettingRow
-        label={t('settings.general.language')}
-        description={t('settings.general.languageDesc')}
-      >
-        <select
-          className={styles.select}
-          value={settings?.language ?? 'zh'}
-          onChange={(e) => {
-            const lang = e.target.value
-            i18n.changeLanguage(lang)
-            update({ language: lang })
-          }}
-        >
-          <option value="zh">简体中文</option>
-          <option value="en">English</option>
-        </select>
       </SettingRow>
     </div>
   )
@@ -242,6 +242,8 @@ export function NotificationSection(): JSX.Element {
   const { t } = useTranslation()
   const settings = useSettingsStore((s) => s.settings)
   const setNotificationMode = useSettingsStore((s) => s.setNotificationMode)
+  const update = useSettingsStore((s) => s.update)
+  const platform = usePlatform()
 
   const notifOptions = [
     { value: 'each', label: t('settings.notification.each') },
@@ -264,6 +266,19 @@ export function NotificationSection(): JSX.Element {
           onChange={(v) => setNotificationMode(v as 'each' | 'summary' | 'off')}
         />
       </SettingRow>
+
+      {platform === 'mac' ? (
+        <SettingRow
+          label={t('settings.notification.unreadBadge')}
+          description={t('settings.notification.unreadBadgeDesc')}
+        >
+          <Toggle
+            checked={settings?.showUnreadBadge ?? true}
+            onChange={(v) => update({ showUnreadBadge: v })}
+            label={t('settings.notification.unreadBadge')}
+          />
+        </SettingRow>
+      ) : null}
     </div>
   )
 }

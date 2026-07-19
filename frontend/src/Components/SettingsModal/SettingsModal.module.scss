@@ -301,13 +301,21 @@
   left: 3px;
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  border-radius: 999px;
   background-color: #ffffff;
-  transition: transform 0.2s;
+  transition: transform 0.2s, width 0.15s;
 }
 
 .toggleKnobOn {
   transform: translateX(18px);
+}
+
+.toggle:active .toggleKnob {
+  width: 24px;
+}
+
+.toggle:active .toggleKnobOn {
+  transform: translateX(12px);
 }
 
 /* ===== 数据管理 ===== */

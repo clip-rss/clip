@@ -68,6 +68,15 @@ function ArticleRow(props: ArticleRowProps): JSX.Element {
       <div className={styles.actions}>
         <button
           type="button"
+          className={styles.actionBtn}
+          onClick={handleOpen}
+          title={t('reader.toolbar.openInBrowser')}
+          aria-label={t('reader.toolbar.openInBrowser')}
+        >
+          <ExternalLinkIcon size={16} />
+        </button>
+        <button
+          type="button"
           className={clsx(styles.actionBtn, item.isStarred && styles.starred)}
           onClick={handleStar}
           title={
@@ -82,15 +91,6 @@ function ArticleRow(props: ArticleRowProps): JSX.Element {
           }
         >
           <StarIcon size={16} filled={item.isStarred} />
-        </button>
-        <button
-          type="button"
-          className={styles.actionBtn}
-          onClick={handleOpen}
-          title={t('reader.toolbar.openInBrowser')}
-          aria-label={t('reader.toolbar.openInBrowser')}
-        >
-          <ExternalLinkIcon size={16} />
         </button>
       </div>
     </div>
