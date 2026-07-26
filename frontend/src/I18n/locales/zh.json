@@ -1,6 +1,8 @@
 {
   "toolbar": {
-    "search": { "placeholder": "搜索文章、笔记…" },
+    "search": {
+      "placeholder": "搜索文章、笔记…"
+    },
     "addFeed": "＋ 订阅",
     "focusMode": "专注模式",
     "settings": "设置",
@@ -11,47 +13,136 @@
     "allArticles": "全部文章",
     "newFolder": "新建文件夹",
     "lastUpdated": "上次更新：",
-    "contextMenu": { "newFolder": "新建文件夹", "addFeed": "添加订阅", "rename": "重命名", "edit": "编辑…", "refresh": "刷新订阅", "delete": "删除", "pause": "暂停更新", "resume": "恢复更新" },
-    "deleteFeed": { "title": "删除订阅源", "description": "确定删除「{{title}}」吗？该源下的全部文章也会被删除，此操作不可撤销。", "confirm": "删除" },
-    "deleteFolder": { "title": "删除文件夹", "description": "确定删除文件夹「{{name}}」吗？其子文件夹也会被删除，文件夹内的订阅源将变为未分类。", "confirm": "删除" },
-    "chevron": { "expand": "展开", "collapse": "折叠" },
+    "contextMenu": {
+      "newFolder": "新建文件夹",
+      "addFeed": "添加订阅",
+      "rename": "重命名",
+      "edit": "编辑…",
+      "refresh": "刷新订阅",
+      "delete": "删除",
+      "pause": "暂停更新",
+      "resume": "恢复更新"
+    },
+    "deleteFeed": {
+      "title": "删除订阅源",
+      "description": "确定删除「{{title}}」吗？该源下的全部文章也会被删除，此操作不可撤销。",
+      "confirm": "删除"
+    },
+    "deleteFolder": {
+      "title": "删除文件夹",
+      "description": "确定删除文件夹「{{name}}」吗？其子文件夹也会被删除，文件夹内的订阅源将变为未分类。",
+      "confirm": "删除"
+    },
+    "chevron": {
+      "expand": "展开",
+      "collapse": "折叠"
+    },
     "refresh": "手动更新 (R)",
     "addMenu": "添加菜单"
   },
   "article": {
-    "filter": { "all": "全部", "unread": "未读", "read": "已读", "starred": "星标", "today": "今日" },
-    "sort": { "time": "时间", "source": "来源", "byTime": "按时间排序", "bySource": "按来源排序" },
-    "actions": { "markAllRead": "全部标记为已读", "batchStar": "批量星标" },
+    "filter": {
+      "all": "全部",
+      "unread": "未读",
+      "read": "已读",
+      "starred": "星标",
+      "today": "今日"
+    },
+    "sort": {
+      "time": "时间",
+      "source": "来源",
+      "byTime": "按时间排序",
+      "bySource": "按来源排序"
+    },
+    "actions": {
+      "markAllRead": "全部标记为已读",
+      "batchStar": "批量星标"
+    },
     "searchResult": "找到 {{count}} 篇文章",
     "empty": {
-      "noArticles": "暂无文章", "noUnread": "暂无未读文章", "noRead": "暂无已读文章",
-      "noStarred": "暂无星标文章", "noToday": "今日暂无文章", "noMatch": "未找到匹配「{{query}}」的文章"
+      "noArticles": "暂无文章",
+      "noUnread": "暂无未读文章",
+      "noRead": "暂无已读文章",
+      "noStarred": "暂无星标文章",
+      "noToday": "今日暂无文章",
+      "noMatch": "未找到匹配「{{query}}」的文章"
     }
   },
   "reader": {
     "toolbar": {
-      "markUnread": "标记为未读", "markRead": "标记为已读", "star": "星标", "unstar": "取消星标",
-      "note": "添加笔记", "viewNote": "查看笔记", "closeNote": "关闭笔记", "openInBrowser": "在浏览器打开"
+      "markUnread": "标记为未读",
+      "markRead": "标记为已读",
+      "star": "星标",
+      "unstar": "取消星标",
+      "note": "添加笔记",
+      "viewNote": "查看笔记",
+      "closeNote": "关闭笔记",
+      "openInBrowser": "在浏览器打开"
     },
-    "settings": { "title": "阅读设置", "font": "字体", "fontSize": "字号", "lineHeight": "行高", "width": "宽度", "background": "阅读背景" },
-    "font": { "sans": "无衬线", "serif": "衬线", "mono": "等宽" },
-    "size": { "small": "小", "medium": "中", "large": "大" },
-    "lineHeight": { "compact": "紧凑", "moderate": "适中", "loose": "宽松" },
-    "width": { "narrow": "窄", "wide": "宽", "full": "全宽" },
-    "background": { "default": "跟随", "light": "亮", "sepia": "护眼", "dark": "暗" },
+    "settings": {
+      "title": "阅读设置",
+      "font": "字体",
+      "fontSize": "字号",
+      "lineHeight": "行高",
+      "width": "宽度",
+      "background": "阅读背景"
+    },
+    "font": {
+      "sans": "无衬线",
+      "serif": "衬线",
+      "mono": "等宽"
+    },
+    "size": {
+      "small": "小",
+      "medium": "中",
+      "large": "大"
+    },
+    "lineHeight": {
+      "compact": "紧凑",
+      "moderate": "适中",
+      "loose": "宽松"
+    },
+    "width": {
+      "narrow": "窄",
+      "wide": "宽",
+      "full": "全宽"
+    },
+    "background": {
+      "default": "跟随",
+      "light": "亮",
+      "sepia": "护眼",
+      "dark": "暗"
+    },
     "backgroundDesc": "阅读区独立背景色，可与全局主题不同",
     "empty": "选择一篇文章以阅读",
     "endOfContent": "已是全部内容"
   },
-  "focus": { "exit": "退出专注", "empty": "未选择文章" },
+  "focus": {
+    "exit": "退出专注",
+    "empty": "未选择文章"
+  },
   "settings": {
     "title": "设置",
-    "tabs": { "general": "通用", "reading": "阅读", "theme": "主题", "notification": "通知", "proxy": "代理", "shortcuts": "快捷键", "data": "数据管理", "about": "关于" },
+    "tabs": {
+      "general": "通用",
+      "reading": "阅读",
+      "theme": "主题",
+      "notification": "通知",
+      "proxy": "代理",
+      "shortcuts": "快捷键",
+      "data": "数据管理",
+      "about": "关于"
+    },
     "general": {
       "title": "通用",
       "updateInterval": "订阅源全局更新间隔",
       "updateIntervalDesc": "新订阅源默认的自动刷新周期；选「手动」则不自动刷新",
-      "updateIntervalOptions": { "15m": "15 分钟", "30m": "30 分钟", "1h": "1 小时", "manual": "手动" },
+      "updateIntervalOptions": {
+        "15m": "15 分钟",
+        "30m": "30 分钟",
+        "1h": "1 小时",
+        "manual": "手动"
+      },
       "maxItems": "每源最大条目",
       "maxItemsDesc": "新订阅源默认保留的最大文章数",
       "itemsUnit": "篇",
@@ -63,13 +154,22 @@
     "reading": {
       "autoMarkRead": "自动标记已读",
       "autoMarkReadDesc": "文章打开后自动标记为已读的延迟时间",
-      "autoMark": { "immediate": "立即", "2s": "2 秒", "5s": "5 秒", "off": "关闭" }
+      "autoMark": {
+        "immediate": "立即",
+        "2s": "2 秒",
+        "5s": "5 秒",
+        "off": "关闭"
+      }
     },
     "theme": {
       "title": "主题",
       "theme": "外观",
-      "themeDesc": "护眼为暖色（Sepia）配色",
-      "mode": { "system": "跟随系统", "light": "亮色", "dark": "暗色" }
+      "themeDesc": "选择 App 的外观",
+      "mode": {
+        "system": "跟随系统",
+        "light": "亮色",
+        "dark": "暗色"
+      }
     },
     "notification": {
       "title": "新文章通知",
@@ -129,6 +229,7 @@
       "unavailable": "（无法获取路径）",
       "clearCache": "清理缓存",
       "clearCacheDesc": "移除已读且未星标的文章以释放空间",
+      "cacheEstimate": "预计可释放 {{mb}} MB",
       "clearCacheBtn": "清理",
       "clearCacheConfirm": "确认清理",
       "clearCacheResult": "已清理 {{count}} 篇文章",
@@ -155,31 +256,96 @@
       "restoreError": "恢复失败"
     },
     "about": {
-      "appName": "Clip"
+      "appName": "Clip",
+      "version": "版本 {{version}}",
+      "desc": "简单好用的跨平台 RSS 阅读器",
+      "updateAvailable": "新版本可用",
+      "links": {
+        "sourceCode": "Source Code (Github)",
+        "reportBug": "Report Bug",
+        "license": "MIT License",
+        "changelog": "Change Log"
+      }
     }
   },
-  "note": { "title": "笔记", "placeholder": "写点笔记…（纯文本，支持 Markdown）", "saving": "保存中…", "saved": "已保存" },
+  "note": {
+    "title": "笔记",
+    "placeholder": "写点笔记…（纯文本，支持 Markdown）",
+    "saving": "保存中…",
+    "saved": "已保存"
+  },
   "feed": {
     "add": {
-      "title": "添加订阅", "url": "RSS / Atom 订阅地址", "label": "显示名称",
-      "folder": "所属文件夹", "interval": "更新间隔", "maxItems": "最大条目数",
-      "urlPlaceholder": "输入 RSS/Atom 地址或网站 URL", "labelPlaceholder": "留空则使用源名称",
-      "searching": "正在查找订阅源…", "searchOk": "已找到订阅源",
-      "searchFailed": "未找到订阅源", "adding": "正在添加…", "added": "添加成功"
+      "title": "添加订阅",
+      "url": "RSS / Atom 订阅地址",
+      "label": "显示名称",
+      "folder": "所属文件夹",
+      "interval": "更新间隔",
+      "maxItems": "最大条目数",
+      "urlPlaceholder": "输入 RSS/Atom 地址或网站 URL",
+      "labelPlaceholder": "留空则使用源名称",
+      "searching": "正在查找订阅源…",
+      "searchOk": "已找到订阅源",
+      "searchFailed": "未找到订阅源",
+      "adding": "正在添加…",
+      "added": "添加成功"
     },
     "edit": {
-      "title": "编辑订阅源", "url": "订阅地址", "label": "标题", "folder": "所属文件夹",
-      "interval": "更新间隔（分钟）", "maxItems": "保留文章上限",
-      "save": "保存", "cancel": "取消", "delete": "删除订阅",
+      "title": "编辑订阅源",
+      "url": "订阅地址",
+      "label": "标题",
+      "folder": "所属文件夹",
+      "interval": "更新间隔（分钟）",
+      "maxItems": "保留文章上限",
+      "save": "保存",
+      "cancel": "取消",
+      "delete": "删除订阅",
       "deleteConfirm": "确定要删除此订阅源及其所有文章吗？此操作不可撤销。"
     }
   },
-  "confirm": { "confirm": "确认", "cancel": "取消" },
-  "theme": { "light": "亮色", "dark": "暗色", "sepia": "护眼", "system": "跟随系统", "ariaLabel": "当前主题：{{label}}，点击切换" },
-  "key": { "space": "空格", "shiftSpace": "Shift + 空格" },
+  "confirm": {
+    "confirm": "确认",
+    "cancel": "取消"
+  },
+  "theme": {
+    "light": "亮色",
+    "dark": "暗色",
+    "sepia": "护眼",
+    "system": "跟随系统",
+    "ariaLabel": "当前主题：{{label}}，点击切换"
+  },
+  "key": {
+    "space": "空格",
+    "shiftSpace": "Shift + 空格"
+  },
   "time": {
-    "never": "从未", "justNow": "刚刚",
-    "minutesAgo": "{{count}} 分钟前", "hoursAgo": "{{count}} 小时前",
+    "never": "从未",
+    "justNow": "刚刚",
+    "minutesAgo": "{{count}} 分钟前",
+    "hoursAgo": "{{count}} 小时前",
     "daysAgo": "{{count}} 天前"
+  },
+  "updater": {
+    "checking": "正在检查更新…",
+    "contactingServer": "正在连接更新服务器…",
+    "updateAvailable": "有可用更新",
+    "upToDate": "已是最新版本",
+    "downloading": "正在下载更新",
+    "startingDownload": "开始下载…",
+    "downloadProgress": "{{pct}}% · {{written}} / {{total}}",
+    "downloaded": "已下载 {{written}}",
+    "verifying": "正在验证更新",
+    "checkingSignature": "正在校验签名…",
+    "installing": "正在安装更新",
+    "unpacking": "正在解压并部署…",
+    "updateReady": "更新已就绪",
+    "updateFailed": "更新失败",
+    "errorOccurred": "出现错误。",
+    "skipVersion": "跳过此版本",
+    "remindLater": "稍后提醒",
+    "close": "关闭",
+    "installUpdate": "安装更新",
+    "restartApply": "重启并应用",
+    "tryAgain": "重试"
   }
 }

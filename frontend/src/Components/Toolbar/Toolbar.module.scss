@@ -162,3 +162,14 @@
     color: var(--accent);
   }
 }
+
+.updateBadge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 7px;
+  height: 7px;
+  background: var(--danger);
+  border-radius: 50%;
+  pointer-events: none;
+}

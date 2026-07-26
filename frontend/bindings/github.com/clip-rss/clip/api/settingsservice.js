@@ -41,12 +41,22 @@ export function DatabasePath() {
 }
 
 /**
+ * GetCacheStats 返回当前可清理缓存的统计信息（文章数 + 预计可释放字节数）。
+ * @returns {$CancellablePromise<store$0.CacheStats>}
+ */
+export function GetCacheStats() {
+    return $Call.ByID(3388141918).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType0($result);
+    }));
+}
+
+/**
  * GetSettings 读取全局设置（未持久化时返回默认值）。
  * @returns {$CancellablePromise<store$0.Settings>}
  */
 export function GetSettings() {
     return $Call.ByID(1931376994).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType0($result);
+        return $$createType1($result);
     }));
 }
 
@@ -80,4 +90,5 @@ export function UpdateSettings(settings) {
 }
 
 // Private type creation functions
-const $$createType0 = store$0.Settings.createFrom;
+const $$createType0 = store$0.CacheStats.createFrom;
+const $$createType1 = store$0.Settings.createFrom;

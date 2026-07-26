@@ -27,6 +27,7 @@
 | 18 | [国际化（i18n）](18-i18n.md) | ✅ 已完成 |
 | 19 | [性能优化与离线支持](19-performance-offline.md) | ⬜ 待开发 |
 | 20 | [无障碍与最终打磨](20-accessibility-polish.md) | ⬜ 待开发 |
+| 21 | [软件更新（自动更新）](21-software-update.md) | 🟡 部分完成 |
 
 ## 状态图例
 

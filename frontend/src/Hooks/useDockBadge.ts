@@ -79,7 +79,8 @@ export function useDockBadge(): void {
 
     function sync(): void {
       const count = totalUnread(useSidebarStore.getState().feeds)
-      const enabled = useSettingsStore.getState().settings?.showUnreadBadge ?? true
+      const enabled =
+        useSettingsStore.getState().settings?.showUnreadBadge ?? true
       const action = badgeAction(platform as Platform, count, enabled)
       let promise: ReturnType<typeof DockService.RemoveBadge>
       switch (action.kind) {
@@ -106,7 +107,8 @@ export function useDockBadge(): void {
     })
     // 开关变化 → 重算 badge。
     const offSettings = useSettingsStore.subscribe((state, prev) => {
-      if (state.settings?.showUnreadBadge !== prev.settings?.showUnreadBadge) sync()
+      if (state.settings?.showUnreadBadge !== prev.settings?.showUnreadBadge)
+        sync()
     })
 
     return () => {

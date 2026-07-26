@@ -4,7 +4,7 @@ import clsx from 'clsx'
 import { ThemeToggle } from '../ThemeToggle'
 import { usePlatform, type Platform } from '../../Hooks'
 import { modKey } from '../../Utils'
-import { useArticleStore, useLayoutStore } from '../../Stores'
+import { useArticleStore, useLayoutStore, useUpdateStore } from '../../Stores'
 import styles from './Toolbar.module.scss'
 
 const SEARCH_DEBOUNCE_MS = 300
@@ -21,6 +21,7 @@ function Toolbar(props: ToolbarProps): JSX.Element {
   const focusMode = useLayoutStore((s) => s.focusMode)
   const toggleFocus = useLayoutStore((s) => s.toggleFocus)
   const hasSelection = useArticleStore((s) => s.selectedItemId !== null)
+  const updateAvailable = useUpdateStore((s) => s.updateAvailable)
 
   const searchQuery = useArticleStore((s) => s.searchQuery)
   const setSearchQuery = useArticleStore((s) => s.setSearchQuery)
@@ -134,8 +135,10 @@ function Toolbar(props: ToolbarProps): JSX.Element {
           onClick={onOpenSettings}
           title={settingsTitle}
           aria-label={t('toolbar.settings')}
+          style={{ position: 'relative' }}
         >
           <SettingsIcon />
+          {updateAvailable && <span className={styles.updateBadge} />}
         </button>
       </div>
     </div>

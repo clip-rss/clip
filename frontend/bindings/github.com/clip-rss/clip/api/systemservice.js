@@ -12,6 +12,24 @@
 import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Create } from "@wailsio/runtime";
 
 /**
+ * CheckForUpdates 供前端调用（如设置-关于页的「检查更新」按钮），触发与菜单
+ * 「Check for Updates…」相同的更新流程：弹出 Software Update 窗口 + 只做检查。
+ * @returns {$CancellablePromise<void>}
+ */
+export function CheckForUpdates() {
+    return $Call.ByID(3236035852);
+}
+
+/**
+ * CheckForUpdatesSilent 供前端在启动时调用，触发静默更新检查（后台运行，不弹窗）。
+ * 若有新版本可用，会通过 "clip:update:available" 事件通知前端。
+ * @returns {$CancellablePromise<void>}
+ */
+export function CheckForUpdatesSilent() {
+    return $Call.ByID(3958633237);
+}
+
+/**
  * Platform 返回当前运行的操作系统标识。
  * 
  * 仅区分本项目支持的两个桌面平台：
@@ -32,4 +50,12 @@ export function Platform() {
  */
 export function SetTheme(mode) {
     return $Call.ByID(1434316160, mode);
+}
+
+/**
+ * Version 返回当前应用版本号，供设置-关于页展示。
+ * @returns {$CancellablePromise<string>}
+ */
+export function Version() {
+    return $Call.ByID(4285456131);
 }

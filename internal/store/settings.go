@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
 )
 
 // settingsKey 全局应用设置在 settings 表中的固定键名。
@@ -86,6 +87,37 @@ func (s *Store) UpdateSettings(settings Settings) error {
 		return fmt.Errorf("failed to update settings: %w", err)
 	}
 	return nil
+}
+
+// CacheStats 缓存统计：可清理的文章条数及预计可释放空间（字节）。
+type CacheStats struct {
+	CacheCount  int64 `json:"cacheCount"`  // 可清理文章数（已读且未星标）
+	EstimatedBytes int64 `json:"estimatedBytes"` // 预计可释放字节数
+}
+
+// GetCacheStats 统计可清理缓存的规模：文章数 + 按比例估算的可释放字节数。
+//
+// 估算方法：可清理条数 / 全部条数 × 数据库文件大小。
+// 该估算偏保守（content 字段是大头，已读文章的 content 占比通常更高），
+// 但不需要逐行 sizeof，足够用于展示"预计可释放 xx MB"。
+func (s *Store) GetCacheStats() (CacheStats, error) {
+	var cacheCount, totalCount int64
+	if err := s.db.QueryRow(
+		`SELECT COUNT(*) FROM items WHERE is_read = 1 AND is_starred = 0`,
+	).Scan(&cacheCount); err != nil {
+		return CacheStats{}, fmt.Errorf("failed to count cache items: %w", err)
+	}
+	if err := s.db.QueryRow(`SELECT COUNT(*) FROM items`).Scan(&totalCount); err != nil {
+		return CacheStats{}, fmt.Errorf("failed to count total items: %w", err)
+	}
+
+	var estimatedBytes int64
+	if totalCount > 0 {
+		if fi, err := os.Stat(s.dbPath); err == nil {
+			estimatedBytes = fi.Size() * cacheCount / totalCount
+		}
+	}
+	return CacheStats{CacheCount: cacheCount, EstimatedBytes: estimatedBytes}, nil
 }
 
 // PruneReadItems 清理缓存：删除已读且未收藏的文章，随后 VACUUM 回收空间。

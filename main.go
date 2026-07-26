@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/clip-rss/clip/api"
@@ -18,10 +20,80 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/events"
 	"github.com/wailsapp/wails/v3/pkg/services/dock"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
+	"github.com/wailsapp/wails/v3/pkg/updater"
+	"github.com/wailsapp/wails/v3/pkg/updater/providers/github"
 )
 
 //go:embed all:frontend/dist
 var assets embed.FS
+
+// softwareUpdateHTML 是「Software Update」子窗口的页面模板。我们自建窗口、自驱 UI，而
+// Updater 的内置模板 HTML 未导出，故自带一份。内容复制自 wails/v3
+// pkg/updater/assets/window.html：监听 wails:updater:* 状态事件、通过
+// AllowSimpleEventEmit 回发 wails:updater:user:* 动作事件。升级 Wails 时需同步此文件。
+//
+// 其中的 i18n 字典与当前语言由 Go 在建窗时注入（见 buildSoftwareUpdateHTML），模板里以
+// __CLIP_I18N_DICT__ / __CLIP_I18N_LANG__ 两个占位符标记，避免手抄字典到 HTML 里。
+//
+//go:embed build/updater/window.html
+var softwareUpdateHTML string
+
+// updaterLocaleEN / updaterLocaleZH 是前端 locale 文件，作为更新窗口 i18n 的**唯一数据源**。
+// 启动时取其中的 "updater" 段注入窗口，不再在 HTML 里手抄字典。
+//
+//go:embed frontend/src/I18n/locales/en.json
+var updaterLocaleEN []byte
+
+//go:embed frontend/src/I18n/locales/zh.json
+var updaterLocaleZH []byte
+
+const (
+	updI18nDictMarker = "__CLIP_I18N_DICT__"
+	updI18nLangMarker = "__CLIP_I18N_LANG__"
+)
+
+const (
+	currentVersion = "0.1.0"
+	repo           = "clip-rss/clip"
+)
+
+// updaterI18nDict 解析出 en/zh 两份 locale 的 "updater" 段，拼成 {en:{...},zh:{...}} 的
+// JSON（注入窗口用）。任一 locale 缺 "updater" 段则 panic —— 属于开发期集成错误，早失败。
+func updaterI18nDict() string {
+	extract := func(raw []byte, lang string) map[string]any {
+		var all map[string]any
+		if err := json.Unmarshal(raw, &all); err != nil {
+			log.Fatalf("updater i18n: parse %s locale: %v", lang, err)
+		}
+		seg, ok := all["updater"].(map[string]any)
+		if !ok {
+			log.Fatalf("updater i18n: %s locale 缺少 \"updater\" 段", lang)
+		}
+		return seg
+	}
+	dict := map[string]any{
+		"en": extract(updaterLocaleEN, "en"),
+		"zh": extract(updaterLocaleZH, "zh"),
+	}
+	// json.Marshal 默认转义 <>& 为 \uXXXX，可安全内嵌进 <script>。
+	b, err := json.Marshal(dict)
+	if err != nil {
+		log.Fatalf("updater i18n: marshal dict: %v", err)
+	}
+	return string(b)
+}
+
+// buildSoftwareUpdateHTML 把 i18n 字典与选定语言注入模板，返回可用于建窗的完整 HTML。
+// 两个占位符必须都被替换，否则视为模板与代码不同步，panic 早失败。
+func buildSoftwareUpdateHTML(dict, lang string) string {
+	if !strings.Contains(softwareUpdateHTML, updI18nDictMarker) ||
+		!strings.Contains(softwareUpdateHTML, updI18nLangMarker) {
+		log.Fatalf("updater i18n: window.html 缺少占位符 %s / %s", updI18nDictMarker, updI18nLangMarker)
+	}
+	html := strings.Replace(softwareUpdateHTML, updI18nDictMarker, dict, 1)
+	html = strings.Replace(html, updI18nLangMarker, lang, 1)
+	return html
+}
 
 const (
 	defaultWindowWidth  = 1200
@@ -52,6 +124,256 @@ func (s wailsNotifSender) Send(msg notify.Message) error {
 		Body:  msg.Body,
 		Data:  map[string]interface{}{"articleId": msg.ID},
 	})
+}
+
+// 窗口尺寸：改编自 Wails 内置更新窗口的常量（那些常量未导出）。
+// full = 有新版/下载/安装等需要展示 release notes 与进度时；compact = 无新版/出错。
+const (
+	updWinFullWidth     = 520
+	updWinFullHeight    = 560
+	updWinCompactWidth  = 380
+	updWinCompactHeight = 220
+)
+
+// softwareUpdateWindow 管理「Software Update」子窗口：用 app.Window.NewWithOptions
+// 自建，页面是内置的更新 UI 模板（build/updater/window.html）。窗口靠事件总线与
+// updateController 交互——窗口 JS 监听 wails:updater:* 状态事件、通过
+// AllowSimpleEventEmit 回发 wails:updater:user:* 动作事件。
+//
+// 每轮检查都 rebuild 一个全新窗口：Wails 的 WindowClosing 会无条件销毁窗口，销毁后的
+// *WebviewWindow 无法再 Show() 复活；且 Reload() 在 macOS 是空实现，无法重置页面里
+// 单调递增的状态守卫（rank/errored）。所以复用旧窗口会卡在上一轮状态，必须新建。
+//
+// i18n：语言在**建窗时**由 langFn 现读并注入 HTML（连同 dict）。因窗口每轮 rebuild，
+// 下次打开即用最新语言；代价是弹窗开着时切换 App 语言不会实时生效（短命对话框可接受）。
+type softwareUpdateWindow struct {
+	app    *application.App
+	dict   string        // 注入的 i18n 字典 JSON（{en:{...},zh:{...}}），启动时算好、不变
+	langFn func() string // 现读当前 App 语言（"zh"/"en"）
+
+	mu  sync.Mutex
+	win *application.WebviewWindow // 当前窗口；被销毁后置 nil
+}
+
+// ensure 返回一个可用窗口：不存在或已被销毁时新建。
+func (s *softwareUpdateWindow) ensure() *application.WebviewWindow {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.win != nil {
+		return s.win
+	}
+	lang := "en"
+	if s.langFn != nil {
+		if l := s.langFn(); l != "" {
+			lang = l
+		}
+	}
+	win := s.app.Window.NewWithOptions(application.WebviewWindowOptions{
+		Name:   "software-update",
+		Title:  "Software Update",
+		Width:  updWinFullWidth,
+		Height: updWinFullHeight,
+		HTML:   buildSoftwareUpdateHTML(s.dict, lang),
+		// 必须开启：窗口内 JS 靠 postMessage 回发 user:* 动作事件，否则按钮无效。
+		AllowSimpleEventEmit: true,
+	})
+	// 窗口被关闭（用户点 X 或我们调 Close）后会被销毁，清空引用以便下轮重建。
+	win.OnWindowEvent(events.Common.WindowClosing, func(*application.WindowEvent) {
+		s.mu.Lock()
+		s.win = nil
+		s.mu.Unlock()
+	})
+	s.win = win
+	return win
+}
+
+// rebuild 关掉旧窗口并新建一个，保证每轮检查都是干净的页面状态。
+func (s *softwareUpdateWindow) rebuild() {
+	s.mu.Lock()
+	old := s.win
+	s.win = nil
+	s.mu.Unlock()
+	if old != nil {
+		old.Close() // InvokeSync 同步销毁；WindowClosing 回调会再置 nil（幂等）
+	}
+	s.ensure().Show()
+}
+
+func (s *softwareUpdateWindow) Close() {
+	s.mu.Lock()
+	win := s.win
+	s.mu.Unlock()
+	if win != nil {
+		win.Close()
+	}
+}
+
+func (s *softwareUpdateWindow) SetSize(width, height int) {
+	s.mu.Lock()
+	win := s.win
+	s.mu.Unlock()
+	if win != nil {
+		win.SetSize(width, height)
+	}
+}
+
+// updateController 编排「先展示、再由用户决定」的更新流程，替代 updater.CheckAndInstall
+// （后者检查到新版会立即下载）。它自己把窗口按钮事件接到 Updater 的导出方法上：
+//
+//	点检查 → Show 窗口 + 只调 Check（不下载）→ 窗口展示 release notes/状态
+//	  ├─ Install → DownloadAndInstall → …→ update-ready → Restart & Apply
+//	  ├─ Skip    → SkipVersion(该版本) + 关窗
+//	  ├─ Remind  → 关窗
+//	  └─ Close   → 关窗
+//
+// 事件走应用事件总线：Updater 用 app.Event.Emit 广播 wails:updater:* 状态，窗口 JS 监听；
+// 窗口按钮通过 AllowSimpleEventEmit 回发 wails:updater:user:*，这里用 app.Event.On 收。
+type updateController struct {
+	app            *application.App
+	updater        *updater.Updater
+	win            *softwareUpdateWindow
+	currentVersion string
+
+	mu          sync.Mutex
+	lastRelease *updater.Release // 最近一次 Check 命中的新版（供 Skip 用）
+	lastStatus  func()           // 窗口 ready 时重放最近状态的闭包
+}
+
+func newUpdateController(app *application.App, up *updater.Updater, win *softwareUpdateWindow, version string) *updateController {
+	c := &updateController{app: app, updater: up, win: win, currentVersion: version}
+	c.wire()
+	return c
+}
+
+// wire 只在启动时注册一次全部监听器（长期存活，幂等），避免每轮重复订阅导致泄漏。
+func (c *updateController) wire() {
+	on := c.app.Event.On
+
+	// —— 用户动作 ——
+	on(updater.EventUserInstall, func(*application.CustomEvent) {
+		go func() {
+			if err := c.updater.DownloadAndInstall(context.Background()); err != nil {
+				c.app.Logger.Error("update", "stage", "download", "error", err)
+			}
+		}()
+	})
+	on(updater.EventUserRestart, func(*application.CustomEvent) {
+		go func() {
+			if err := c.updater.Restart(context.Background()); err != nil {
+				c.app.Logger.Error("update", "stage", "restart", "error", err)
+			}
+		}()
+	})
+	on(updater.EventUserSkip, func(*application.CustomEvent) {
+		c.mu.Lock()
+		rel := c.lastRelease
+		c.mu.Unlock()
+		if rel != nil {
+			c.updater.SkipVersion(rel.Version)
+		}
+		c.win.Close()
+	})
+	on(updater.EventUserRemind, func(*application.CustomEvent) { c.win.Close() })
+	on(updater.EventUserCancel, func(*application.CustomEvent) { c.win.Close() })
+
+	// —— 状态事件：调整窗口尺寸（我们不走 CheckAndInstall，Updater 的自动 SetSize
+	//    不会触发，这里自己按状态放大/缩小），并记录“最近状态”供 ready 重放。——
+	full := func() { c.win.SetSize(updWinFullWidth, updWinFullHeight) }
+	compact := func() { c.win.SetSize(updWinCompactWidth, updWinCompactHeight) }
+
+	on(updater.EventUpdateAvailable, func(*application.CustomEvent) {
+		c.setLastStatus(func() { c.app.Event.Emit(updater.EventUpdateAvailable, c.currentRelease()) })
+		full()
+	})
+	on(updater.EventUpdateReady, func(*application.CustomEvent) {
+		c.setLastStatus(func() { c.app.Event.Emit(updater.EventUpdateReady, c.currentRelease()) })
+		full()
+	})
+	on(updater.EventNoUpdate, func(*application.CustomEvent) {
+		c.setLastStatus(func() { c.app.Event.Emit(updater.EventNoUpdate) })
+		compact()
+	})
+	on(updater.EventError, func(e *application.CustomEvent) {
+		// 保留错误 payload 以便窗口 ready 时重放同样的错误横幅。
+		var data any
+		if e != nil {
+			data = e.Data
+		}
+		c.setLastStatus(func() { c.app.Event.Emit(updater.EventError, data) })
+		compact()
+	})
+
+	// —— 窗口就绪：每轮新建的窗口 JS 载入后会发 window:ready。先补发 Meta（Check 本身
+	//    不发，否则“当前版本 → 新版本”里的当前版本渲染不出来），再重放最近状态，解决
+	//    “窗口还没订阅上、Check 就已经发过事件”的竞态。——
+	on(updater.EventWindowReady, func(*application.CustomEvent) {
+		// 语言已在建窗时注入 HTML，无需再下发；这里只补 Meta（当前版本号，Check 不发它）。
+		c.app.Event.Emit(updater.EventMeta, updater.Meta{
+			CurrentVersion: c.currentVersion,
+			SkippedVersion: c.updater.SkippedVersion(),
+		})
+		c.mu.Lock()
+		replay := c.lastStatus
+		c.mu.Unlock()
+		if replay != nil {
+			replay()
+		}
+	})
+}
+
+func (c *updateController) setLastStatus(f func()) {
+	c.mu.Lock()
+	c.lastStatus = f
+	c.mu.Unlock()
+}
+
+func (c *updateController) currentRelease() *updater.Release {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.lastRelease
+}
+
+// check 是菜单「Check for Updates」的入口：新建窗口并只做检查（不下载）。
+func (c *updateController) check() {
+	// 重置本轮状态，rebuild 全新窗口（干净 JS 状态）。
+	c.mu.Lock()
+	c.lastRelease = nil
+	c.lastStatus = func() { c.app.Event.Emit(updater.EventCheckStarted) }
+	c.mu.Unlock()
+	c.win.rebuild()
+
+	go func() {
+		rel, err := c.updater.Check(context.Background())
+		if err != nil {
+			// Check 已发过 EventError；记录重放（携带错误信息由 Updater 内部 emit 决定）。
+			c.app.Logger.Error("update", "stage", "check", "error", err)
+			return
+		}
+		if rel != nil {
+			c.mu.Lock()
+			c.lastRelease = rel
+			c.mu.Unlock()
+		}
+	}()
+}
+
+// checkSilent 是静默更新检查（启动时后台运行）：只检查、不弹窗，若有新版本则通过
+// "clip:update:available" 事件通知主窗口前端。
+func (c *updateController) checkSilent() {
+	go func() {
+		rel, err := c.updater.Check(context.Background())
+		if err != nil {
+			c.app.Logger.Error("update", "stage", "check-silent", "error", err)
+			return
+		}
+		if rel != nil {
+			c.mu.Lock()
+			c.lastRelease = rel
+			c.mu.Unlock()
+			// 通知主窗口前端：有新版本可用
+			c.app.Event.Emit("clip:update:available", rel)
+		}
+	}()
 }
 
 func savedWindowSize(settings store.Settings) (int, int) {
@@ -117,10 +439,10 @@ func main() {
 	)
 
 	// 绑定服务（暴露给前端）。
-	sysSvc := &api.SystemService{}
+	sysSvc := &api.SystemService{AppVersion: currentVersion}
 	app := application.New(application.Options{
 		Name:        "clip",
-		Description: "跨平台 RSS 阅读器",
+		Description: "简单好用的跨平台 RSS 阅读器",
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},
@@ -138,6 +460,65 @@ func main() {
 			application.NewService(dockService),
 		},
 	})
+
+	gh, err := github.New(github.Config{
+		Repository:    repo,
+		ChecksumAsset: "SHA256SUMS",
+	})
+	if err != nil {
+		log.Fatalf("github.New: %v", err)
+	}
+
+	// langFn 每次现读设置里的语言（用户可能在运行时切换），建窗时注入更新窗口做 i18n。
+	updLangFn := func() string {
+		if s, err := st.GetSettings(); err == nil && s.Language != "" {
+			return s.Language
+		}
+		return "en"
+	}
+
+	// 自建「Software Update」子窗口 + 控制器。Window 用 WindowNone：Updater 只做无头的
+	// 检查/下载/安装并广播事件，UI 完全由我们自己驱动（先展示、由用户决定是否更新）。
+	// i18n 字典启动时算好、语言建窗时现读注入 HTML。
+	updWin := &softwareUpdateWindow{app: app, dict: updaterI18nDict(), langFn: updLangFn}
+
+	if err := app.Updater.Init(updater.Config{
+		CurrentVersion: currentVersion,
+		Providers:      []updater.Provider{gh},
+		Window:         updater.WindowNone,
+	}); err != nil {
+		log.Fatalf("Updater.Init: %v", err)
+	}
+
+	updCtrl := newUpdateController(app, app.Updater, updWin, currentVersion)
+	sysSvc.CheckUpdateFn = updCtrl.check
+	sysSvc.CheckSilentFn = updCtrl.checkSilent
+
+	menu := application.DefaultApplicationMenu()
+
+	// 「检查更新…」点击处理：与前端 SystemService.CheckForUpdates() 走同一条路。
+	checkForUpdates := func(*application.Context) {
+		updCtrl.check()
+	}
+
+	if appMenu := menu.FindByRole(application.AppMenu); appMenu != nil {
+		sub := appMenu.GetSubmenu()
+		sub.Clear()
+		sub.AddRole(application.About)
+		sub.Add("Check for Updates…").OnClick(checkForUpdates)
+		sub.AddSeparator()
+		sub.AddRole(application.ServicesMenu)
+		sub.AddSeparator()
+		sub.AddRole(application.Hide)
+		sub.AddRole(application.HideOthers)
+		sub.AddRole(application.UnHide)
+		sub.AddSeparator()
+		sub.AddRole(application.Quit)
+	} else if help := menu.FindByRole(application.HelpMenu); help != nil {
+		help.GetSubmenu().Add("Check for Updates…").OnClick(checkForUpdates)
+	}
+
+	app.Menu.SetApplicationMenu(menu)
 
 	// 点击通知 → 调起窗口 + 向前端推送 article ID，前端自行定位。
 	var mainWindow application.Window

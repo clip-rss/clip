@@ -1,6 +1,8 @@
 {
   "toolbar": {
-    "search": { "placeholder": "Search articles, notes…" },
+    "search": {
+      "placeholder": "Search articles, notes…"
+    },
     "addFeed": "+ Subscribe",
     "focusMode": "Focus Mode",
     "settings": "Settings",
@@ -11,47 +13,136 @@
     "allArticles": "All Articles",
     "newFolder": "New Folder",
     "lastUpdated": "Last updated: ",
-    "contextMenu": { "newFolder": "New Folder", "addFeed": "Add Feed", "rename": "Rename", "edit": "Edit…", "refresh": "Refresh Feed", "delete": "Delete", "pause": "Pause Updates", "resume": "Resume Updates" },
-    "deleteFeed": { "title": "Delete Feed", "description": "Are you sure you want to delete \"{{title}}\"? All articles from this feed will also be deleted. This action cannot be undone.", "confirm": "Delete" },
-    "deleteFolder": { "title": "Delete Folder", "description": "Are you sure you want to delete the folder \"{{name}}\"? Its subfolders will also be deleted. Feeds inside will become uncategorized.", "confirm": "Delete" },
-    "chevron": { "expand": "Expand", "collapse": "Collapse" },
+    "contextMenu": {
+      "newFolder": "New Folder",
+      "addFeed": "Add Feed",
+      "rename": "Rename",
+      "edit": "Edit…",
+      "refresh": "Refresh Feed",
+      "delete": "Delete",
+      "pause": "Pause Updates",
+      "resume": "Resume Updates"
+    },
+    "deleteFeed": {
+      "title": "Delete Feed",
+      "description": "Are you sure you want to delete \"{{title}}\"? All articles from this feed will also be deleted. This action cannot be undone.",
+      "confirm": "Delete"
+    },
+    "deleteFolder": {
+      "title": "Delete Folder",
+      "description": "Are you sure you want to delete the folder \"{{name}}\"? Its subfolders will also be deleted. Feeds inside will become uncategorized.",
+      "confirm": "Delete"
+    },
+    "chevron": {
+      "expand": "Expand",
+      "collapse": "Collapse"
+    },
     "refresh": "Refresh (R)",
     "addMenu": "Add menu"
   },
   "article": {
-    "filter": { "all": "All", "unread": "Unread", "read": "Read", "starred": "Starred", "today": "Today" },
-    "sort": { "time": "Time", "source": "Source", "byTime": "Sort by time", "bySource": "Sort by source" },
-    "actions": { "markAllRead": "Mark All Read", "batchStar": "Batch Star" },
+    "filter": {
+      "all": "All",
+      "unread": "Unread",
+      "read": "Read",
+      "starred": "Starred",
+      "today": "Today"
+    },
+    "sort": {
+      "time": "Time",
+      "source": "Source",
+      "byTime": "Sort by time",
+      "bySource": "Sort by source"
+    },
+    "actions": {
+      "markAllRead": "Mark All Read",
+      "batchStar": "Batch Star"
+    },
     "searchResult": "{{count}} articles found",
     "empty": {
-      "noArticles": "No articles", "noUnread": "No unread articles", "noRead": "No read articles",
-      "noStarred": "No starred articles", "noToday": "No articles today", "noMatch": "No articles matching \"{{query}}\""
+      "noArticles": "No articles",
+      "noUnread": "No unread articles",
+      "noRead": "No read articles",
+      "noStarred": "No starred articles",
+      "noToday": "No articles today",
+      "noMatch": "No articles matching \"{{query}}\""
     }
   },
   "reader": {
     "toolbar": {
-      "markUnread": "Mark as unread", "markRead": "Mark as read", "star": "Star", "unstar": "Unstar",
-      "note": "Add note", "viewNote": "View note", "closeNote": "Close note", "openInBrowser": "Open in browser"
+      "markUnread": "Mark as unread",
+      "markRead": "Mark as read",
+      "star": "Star",
+      "unstar": "Unstar",
+      "note": "Add note",
+      "viewNote": "View note",
+      "closeNote": "Close note",
+      "openInBrowser": "Open in browser"
     },
-    "settings": { "title": "Reading Settings", "font": "Font", "fontSize": "Font Size", "lineHeight": "Line Height", "width": "Width", "background": "Background" },
-    "font": { "sans": "Sans Serif", "serif": "Serif", "mono": "Monospace" },
-    "size": { "small": "Small", "medium": "Medium", "large": "Large" },
-    "lineHeight": { "compact": "Compact", "moderate": "Moderate", "loose": "Loose" },
-    "width": { "narrow": "Narrow", "wide": "Wide", "full": "Full" },
-    "background": { "default": "Auto", "light": "Light", "sepia": "Sepia", "dark": "Dark" },
+    "settings": {
+      "title": "Reading Settings",
+      "font": "Font",
+      "fontSize": "Font Size",
+      "lineHeight": "Line Height",
+      "width": "Width",
+      "background": "Background"
+    },
+    "font": {
+      "sans": "Sans Serif",
+      "serif": "Serif",
+      "mono": "Monospace"
+    },
+    "size": {
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large"
+    },
+    "lineHeight": {
+      "compact": "Compact",
+      "moderate": "Moderate",
+      "loose": "Loose"
+    },
+    "width": {
+      "narrow": "Narrow",
+      "wide": "Wide",
+      "full": "Full"
+    },
+    "background": {
+      "default": "Auto",
+      "light": "Light",
+      "sepia": "Sepia",
+      "dark": "Dark"
+    },
     "backgroundDesc": "Independent reading background, separate from global theme",
     "empty": "Select an article to read",
     "endOfContent": "End of content"
   },
-  "focus": { "exit": "Exit Focus", "empty": "No article selected" },
+  "focus": {
+    "exit": "Exit Focus",
+    "empty": "No article selected"
+  },
   "settings": {
     "title": "Settings",
-    "tabs": { "general": "General", "reading": "Reading", "theme": "Theme", "notification": "Notifications", "proxy": "Proxy", "shortcuts": "Shortcuts", "data": "Data", "about": "About" },
+    "tabs": {
+      "general": "General",
+      "reading": "Reading",
+      "theme": "Theme",
+      "notification": "Notifications",
+      "proxy": "Proxy",
+      "shortcuts": "Shortcuts",
+      "data": "Data",
+      "about": "About"
+    },
     "general": {
       "title": "General",
       "updateInterval": "Default update interval",
       "updateIntervalDesc": "Auto-refresh interval for new feeds; select \"Manual\" to disable",
-      "updateIntervalOptions": { "15m": "15 min", "30m": "30 min", "1h": "1 hour", "manual": "Manual" },
+      "updateIntervalOptions": {
+        "15m": "15 min",
+        "30m": "30 min",
+        "1h": "1 hour",
+        "manual": "Manual"
+      },
       "maxItems": "Max items per feed",
       "maxItemsDesc": "Maximum articles retained per feed",
       "itemsUnit": "items",
@@ -63,13 +154,22 @@
     "reading": {
       "autoMarkRead": "Auto mark as read",
       "autoMarkReadDesc": "Delay before auto-marking an opened article as read",
-      "autoMark": { "immediate": "Immediate", "2s": "2 sec", "5s": "5 sec", "off": "Off" }
+      "autoMark": {
+        "immediate": "Immediate",
+        "2s": "2 sec",
+        "5s": "5 sec",
+        "off": "Off"
+      }
     },
     "theme": {
       "title": "Theme",
       "theme": "Appearance",
-      "themeDesc": "Sepia is a warm, eye-friendly palette",
-      "mode": { "system": "System", "light": "Light", "dark": "Dark" }
+      "themeDesc": "Choose the app's appearance",
+      "mode": {
+        "system": "System",
+        "light": "Light",
+        "dark": "Dark"
+      }
     },
     "notification": {
       "title": "New article notifications",
@@ -129,6 +229,7 @@
       "unavailable": "(unavailable)",
       "clearCache": "Clear cache",
       "clearCacheDesc": "Remove read, unstarred articles to free space",
+      "cacheEstimate": "estimated {{mb}} MB freeable",
       "clearCacheBtn": "Clear",
       "clearCacheConfirm": "Confirm clear",
       "clearCacheResult": "Cleared {{count}} articles",
@@ -155,31 +256,97 @@
       "restoreError": "Restore failed"
     },
     "about": {
-      "appName": "Clip"
+      "appName": "Clip",
+      "version": "Version {{version}}",
+      "desc": "A simple cross-platform RSS reader",
+      "updateAvailable": "New Version Available",
+      "links": {
+        "sourceCode": "Source Code (Github)",
+        "reportBug": "Report Bug",
+        "license": "MIT License",
+        "changelog": "Change Log"
+      }
     }
   },
-  "note": { "title": "Notes", "placeholder": "Write a note… (plain text, Markdown supported)", "saving": "Saving…", "saved": "Saved" },
+  "note": {
+    "title": "Notes",
+    "placeholder": "Write a note… (plain text, Markdown supported)",
+    "saving": "Saving…",
+    "saved": "Saved"
+  },
   "feed": {
     "add": {
-      "title": "Add Feed", "url": "RSS / Atom feed URL", "label": "Display Name",
-      "folder": "Folder", "interval": "Update Interval", "maxItems": "Max Items",
-      "urlPlaceholder": "Enter RSS/Atom URL or website URL", "labelPlaceholder": "Leave blank to use feed title",
-      "searching": "Searching for feeds…", "searchOk": "Feed found",
-      "searchFailed": "No feed found", "adding": "Adding…", "added": "Added successfully"
+      "title": "Add Feed",
+      "url": "RSS / Atom feed URL",
+      "label": "Display Name",
+      "folder": "Folder",
+      "interval": "Update Interval",
+      "maxItems": "Max Items",
+      "urlPlaceholder": "Enter RSS/Atom URL or website URL",
+      "labelPlaceholder": "Leave blank to use feed title",
+      "searching": "Searching for feeds…",
+      "searchOk": "Feed found",
+      "searchFailed": "No feed found",
+      "adding": "Adding…",
+      "added": "Added successfully"
     },
     "edit": {
-      "title": "Edit Feed", "url": "Feed URL", "label": "Title", "folder": "Folder",
-      "interval": "Update interval (minutes)", "maxItems": "Max items retained",
-      "save": "Save", "cancel": "Cancel", "delete": "Delete Feed",
+      "title": "Edit Feed",
+      "url": "Feed URL",
+      "label": "Title",
+      "folder": "Folder",
+      "interval": "Update interval (minutes)",
+      "maxItems": "Max items retained",
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete Feed",
       "deleteConfirm": "Are you sure you want to delete this feed and all its articles? This cannot be undone."
     }
   },
-  "confirm": { "confirm": "Confirm", "cancel": "Cancel" },
-  "theme": { "light": "Light", "dark": "Dark", "sepia": "Sepia", "system": "System", "ariaLabel": "Current theme: {{label}}, click to toggle" },
-  "key": { "space": "Space", "shiftSpace": "Shift + Space" },
+  "confirm": {
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "sepia": "Sepia",
+    "system": "System",
+    "ariaLabel": "Current theme: {{label}}, click to toggle"
+  },
+  "key": {
+    "space": "Space",
+    "shiftSpace": "Shift + Space"
+  },
   "time": {
-    "never": "Never", "justNow": "Just now",
-    "minutesAgo": "{{count}} min ago", "hoursAgo": "{{count}} hr ago",
-    "daysAgo": "{{count}} day ago", "daysAgo_plural": "{{count}} days ago"
+    "never": "Never",
+    "justNow": "Just now",
+    "minutesAgo": "{{count}} min ago",
+    "hoursAgo": "{{count}} hr ago",
+    "daysAgo": "{{count}} day ago",
+    "daysAgo_plural": "{{count}} days ago"
+  },
+  "updater": {
+    "checking": "Checking for Updates…",
+    "contactingServer": "Contacting update server…",
+    "updateAvailable": "Update Available",
+    "upToDate": "You're Up to Date",
+    "downloading": "Downloading Update",
+    "startingDownload": "Starting download…",
+    "downloadProgress": "{{pct}}% · {{written}} of {{total}}",
+    "downloaded": "Downloaded {{written}}",
+    "verifying": "Verifying Update",
+    "checkingSignature": "Checking signature…",
+    "installing": "Installing Update",
+    "unpacking": "Unpacking and staging…",
+    "updateReady": "Update Ready",
+    "updateFailed": "Update Failed",
+    "errorOccurred": "An error occurred.",
+    "skipVersion": "Skip This Version",
+    "remindLater": "Remind Me Later",
+    "close": "Close",
+    "installUpdate": "Install Update",
+    "restartApply": "Restart & Apply",
+    "tryAgain": "Try Again"
   }
 }

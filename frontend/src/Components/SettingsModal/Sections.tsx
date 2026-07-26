@@ -7,9 +7,12 @@ import {
   useSettingsStore,
   useSidebarStore,
   useThemeStore,
+  useUpdateStore,
 } from '../../Stores'
 import {
   SettingsService,
+  SystemService,
+  openURL,
   exportOpmlToFile,
   importOpmlFromFile,
   toApiError,
@@ -300,16 +303,31 @@ export function NotificationSection(): JSX.Element {
 export function DataSection(): JSX.Element {
   const { t } = useTranslation()
   const [dbPath, setDbPath] = useState('')
+  const [cacheCount, setCacheCount] = useState<number | null>(null)
+  const [estimatedMB, setEstimatedMB] = useState<number | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [isError, setIsError] = useState(false)
   const [busy, setBusy] = useState(false)
   const importRef = useRef<HTMLInputElement>(null)
 
+  function loadCacheStats(): void {
+    SettingsService.GetCacheStats()
+      .then((s) => {
+        setCacheCount(Number(s.cacheCount))
+        setEstimatedMB(Number(s.estimatedBytes) / (1024 * 1024))
+      })
+      .catch(() => {
+        setCacheCount(null)
+        setEstimatedMB(null)
+      })
+  }
+
   useEffect(() => {
     SettingsService.DatabasePath()
       .then(setDbPath)
       .catch(() => setDbPath(t('settings.data.unavailable')))
+    loadCacheStats()
   }, [t])
 
   function notify(msg: string, error = false): void {
@@ -324,6 +342,7 @@ export function DataSection(): JSX.Element {
       const removed = await SettingsService.ClearCache()
       await useArticleStore.getState().reload()
       await useSidebarStore.getState().load()
+      loadCacheStats()
       notify(t('settings.data.clearCacheResult', { count: removed }))
     } catch (err) {
       notify(`${t('settings.data.clearCacheError')}：${toApiError(err)}`, true)
@@ -412,7 +431,11 @@ export function DataSection(): JSX.Element {
 
       <SettingRow
         label={t('settings.data.clearCache')}
-        description={t('settings.data.clearCacheDesc')}
+        description={
+          estimatedMB !== null && estimatedMB >= 0.01
+            ? `${t('settings.data.clearCacheDesc')}（${t('settings.data.cacheEstimate', { mb: estimatedMB.toFixed(1) })}）`
+            : t('settings.data.clearCacheDesc')
+        }
       >
         {confirmClear ? (
           <div className={styles.btnGroup}>
@@ -514,16 +537,84 @@ export function DataSection(): JSX.Element {
 
 export function AboutSection(): JSX.Element {
   const { t } = useTranslation()
+  const [version, setVersion] = useState('')
+  const updateAvailable = useUpdateStore((s) => s.updateAvailable)
+
+  useEffect(() => {
+    let active = true
+    SystemService.Version()
+      .then((v) => {
+        if (active) {
+          setVersion(v)
+        }
+      })
+      .catch(() => {
+        // 调用失败时保持空，隐藏版本号
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const links: { key: string; url?: string }[] = [
+    { key: 'sourceCode', url: 'https://github.com/clip-rss/clip' },
+    { key: 'reportBug', url: 'https://github.com/clip-rss/clip/issues' },
+    { key: 'license' },
+    { key: 'changelog' },
+  ]
 
   return (
     <div className={styles.aboutSection}>
-      <img
-        src="/appicon.png"
-        alt="Clip"
-        className={styles.aboutLogo}
-        draggable={false}
-      />
-      <div className={styles.aboutAppName}>{t('settings.about.appName')}</div>
+      <div className={styles.aboutMain}>
+        <img
+          src="/appicon.png"
+          alt="Clip"
+          className={styles.aboutLogo}
+          draggable={false}
+        />
+        <div className={styles.aboutAppName}>{t('settings.about.appName')}</div>
+        {version ? (
+          <div className={styles.aboutVersion}>
+            {t('settings.about.version', { version })}
+          </div>
+        ) : null}
+        {updateAvailable && (
+          <button
+            className={styles.updateButton}
+            onClick={() => SystemService.CheckForUpdates()}
+            type="button"
+          >
+            {t('settings.about.updateAvailable')}
+          </button>
+        )}
+        <div className={styles.aboutDesc}>{t('settings.about.desc')}</div>
+      </div>
+      <div className={styles.aboutLinks}>
+        {links.map((link, i) => (
+          <span key={link.key} className={styles.aboutLinkItem}>
+            {i > 0 && (
+              <span className={styles.aboutLinkSep} aria-hidden>
+                |
+              </span>
+            )}
+            {link.url ? (
+              <button
+                className={styles.aboutLink}
+                onClick={() => openURL(link.url!)}
+                type="button"
+              >
+                {t(`settings.about.links.${link.key}`)}
+              </button>
+            ) : (
+              <span
+                className={`${styles.aboutLink} ${styles.aboutLinkDisabled}`}
+              >
+                {t(`settings.about.links.${link.key}`)}
+              </span>
+            )}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }

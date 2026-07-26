@@ -139,6 +139,20 @@
   font-weight: 600;
 }
 
+.newTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--danger);
+  border-radius: var(--radius-button);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .panel {
   flex: 1 1 auto;
   min-width: 0;
@@ -397,9 +411,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   min-height: 100%;
-  padding: 32px 0;
+  padding: 32px 0 24px;
+}
+
+.aboutMain {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 16px;
 }
 
@@ -415,6 +436,73 @@
   color: var(--text-primary);
   font-size: 22px;
   font-weight: 700;
+}
+
+.aboutVersion {
+  /* 紧贴 app name，抵消 .aboutSection 的 gap */
+  margin-top: -10px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.aboutDesc {
+  margin-top: -8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.updateButton {
+  padding: 5px 14px;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: #ffffff;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-button);
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.aboutLinks {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0;
+  padding-top: 16px;
+}
+
+.aboutLinkItem {
+  display: flex;
+  align-items: center;
+}
+
+.aboutLinkSep {
+  margin: 0 8px;
+  color: var(--border);
+  font-size: 12px;
+  user-select: none;
+}
+
+.aboutLink {
+  all: unset;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+}
+
+.aboutLinkDisabled {
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 .input {

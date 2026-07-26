@@ -80,6 +80,11 @@ func (s *SettingsService) ClearCache() (int64, error) {
 	return s.store.PruneReadItems()
 }
 
+// GetCacheStats 返回当前可清理缓存的统计信息（文章数 + 预计可释放字节数）。
+func (s *SettingsService) GetCacheStats() (store.CacheStats, error) {
+	return s.store.GetCacheStats()
+}
+
 // BackupDatabase 弹出保存对话框，让用户选择位置后备份数据库。
 // 用户取消时返回 (false, nil)；成功返回 (true, nil)。
 func (s *SettingsService) BackupDatabase() (bool, error) {

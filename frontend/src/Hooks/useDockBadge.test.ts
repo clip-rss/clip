@@ -7,7 +7,11 @@ vi.mock('../Stores', () => ({
   useSettingsStore: { getState: vi.fn(), subscribe: vi.fn() },
 }))
 vi.mock('../Utils', () => ({
-  DockService: { SetBadge: vi.fn(), RemoveBadge: vi.fn(), SetCustomBadge: vi.fn() },
+  DockService: {
+    SetBadge: vi.fn(),
+    RemoveBadge: vi.fn(),
+    SetCustomBadge: vi.fn(),
+  },
 }))
 
 import { totalUnread, badgeLabel, badgeAction } from './useDockBadge'
@@ -53,7 +57,10 @@ describe('badgeAction', () => {
 
   it('macOS 有未读时显示数字', () => {
     expect(badgeAction('mac', 1, true)).toEqual({ kind: 'number', label: '1' })
-    expect(badgeAction('mac', 128, true)).toEqual({ kind: 'number', label: '128' })
+    expect(badgeAction('mac', 128, true)).toEqual({
+      kind: 'number',
+      label: '128',
+    })
   })
 
   it('Windows 有未读时只显示红点（不带数字）', () => {

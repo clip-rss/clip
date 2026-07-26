@@ -12,7 +12,9 @@ import {
 import { useAppHotkeys, useDockBadge, useNotificationNavigation } from './Hooks'
 import './I18n'
 import i18next from 'i18next'
-import { useSettingsStore } from './Stores'
+import { useSettingsStore, useUpdateStore } from './Stores'
+import { CheckForUpdatesSilent } from '../bindings/github.com/clip-rss/clip/api/systemservice'
+import { Events } from '@wailsio/runtime'
 
 function App() {
   const [addOpen, setAddOpen] = useState(false)
@@ -36,6 +38,20 @@ function App() {
       const lang = useSettingsStore.getState().settings?.language
       if (lang) i18next.changeLanguage(lang)
     })
+
+    // 监听更新可用事件
+    const unsubscribe = Events.On('clip:update:available', () => {
+      useUpdateStore.getState().setUpdateAvailable(true)
+    })
+
+    // 启动时静默检查更新
+    CheckForUpdatesSilent().catch(() => {
+      // 静默失败，不影响用户体验
+    })
+
+    return () => {
+      unsubscribe()
+    }
   }, [])
 
   return (

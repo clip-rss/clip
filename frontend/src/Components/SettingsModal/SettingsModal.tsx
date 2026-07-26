@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import * as Dialog from '@radix-ui/react-dialog'
 import clsx from 'clsx'
-import { useSettingsStore } from '../../Stores'
+import { useSettingsStore, useUpdateStore } from '../../Stores'
 import {
   AboutSection,
   DataSection,
@@ -45,6 +45,7 @@ function SettingsModal(props: SettingsModalProps): JSX.Element {
   const { t } = useTranslation()
   const { open, onOpenChange } = props
   const [active, setActive] = useState<SectionId>('general')
+  const updateAvailable = useUpdateStore((s) => s.updateAvailable)
 
   useEffect(() => {
     if (open) void useSettingsStore.getState().load()
@@ -87,6 +88,9 @@ function SettingsModal(props: SettingsModalProps): JSX.Element {
                   onClick={() => setActive(n.id)}
                 >
                   {t(n.labelKey)}
+                  {n.id === 'about' && updateAvailable && (
+                    <span className={styles.newTag}>NEW</span>
+                  )}
                 </button>
               ))}
             </nav>

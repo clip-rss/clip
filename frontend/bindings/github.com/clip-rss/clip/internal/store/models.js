@@ -11,6 +11,46 @@ import { Create as $Create } from "@wailsio/runtime";
 import * as time$0 from "../../../../../time/models.js";
 
 /**
+ * CacheStats 缓存统计：可清理的文章条数及预计可释放空间（字节）。
+ */
+export class CacheStats {
+    /**
+     * Creates a new CacheStats instance.
+     * @param {Partial<CacheStats>} [$$source = {}] - The source object to create the CacheStats.
+     */
+    constructor($$source = {}) {
+        if (!("cacheCount" in $$source)) {
+            /**
+             * 可清理文章数（已读且未星标）
+             * @member
+             * @type {number}
+             */
+            this["cacheCount"] = 0;
+        }
+        if (!("estimatedBytes" in $$source)) {
+            /**
+             * 预计可释放字节数
+             * @member
+             * @type {number}
+             */
+            this["estimatedBytes"] = 0;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new CacheStats instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {CacheStats}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new CacheStats(/** @type {Partial<CacheStats>} */($$parsedSource));
+    }
+}
+
+/**
  * Category 订阅源分类（支持树形结构）
  */
 export class Category {
