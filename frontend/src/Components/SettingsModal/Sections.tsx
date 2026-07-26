@@ -267,15 +267,27 @@ export function NotificationSection(): JSX.Element {
         />
       </SettingRow>
 
-      {platform === 'mac' ? (
+      {platform === 'mac' || platform === 'windows' ? (
         <SettingRow
-          label={t('settings.notification.unreadBadge')}
-          description={t('settings.notification.unreadBadgeDesc')}
+          label={t(
+            platform === 'windows'
+              ? 'settings.notification.unreadBadgeWin'
+              : 'settings.notification.unreadBadge',
+          )}
+          description={t(
+            platform === 'windows'
+              ? 'settings.notification.unreadBadgeWinDesc'
+              : 'settings.notification.unreadBadgeDesc',
+          )}
         >
           <Toggle
             checked={settings?.showUnreadBadge ?? true}
             onChange={(v) => update({ showUnreadBadge: v })}
-            label={t('settings.notification.unreadBadge')}
+            label={t(
+              platform === 'windows'
+                ? 'settings.notification.unreadBadgeWin'
+                : 'settings.notification.unreadBadge',
+            )}
           />
         </SettingRow>
       ) : null}

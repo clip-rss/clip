@@ -79,7 +79,9 @@
       "summary": "摘要",
       "off": "关闭",
       "unreadBadge": "未读角标",
-      "unreadBadgeDesc": "在程序坞图标上显示未读文章数量"
+      "unreadBadgeDesc": "在程序坞图标上显示未读文章数量",
+      "unreadBadgeWin": "讨人嫌的红点",
+      "unreadBadgeWinDesc": "有未读文章时，在任务栏图标上显示一个红点"
     },
     "proxy": {
       "title": "代理",

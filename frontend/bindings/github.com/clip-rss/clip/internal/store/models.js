@@ -632,7 +632,7 @@ export class Settings {
         }
         if (!("showUnreadBadge" in $$source)) {
             /**
-             * 是否在 Dock 图标展示未读角标（仅 macOS）
+             * 是否展示未读角标：macOS 在 Dock 显示数字，Windows 在任务栏显示红点
              * @member
              * @type {boolean}
              */

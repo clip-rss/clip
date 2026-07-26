@@ -79,7 +79,9 @@
       "summary": "Summary",
       "off": "Off",
       "unreadBadge": "Unread badge",
-      "unreadBadgeDesc": "Show the unread article count on the Dock icon"
+      "unreadBadgeDesc": "Show the unread article count on the Dock icon",
+      "unreadBadgeWin": "Annoying red dot",
+      "unreadBadgeWinDesc": "Show a red dot on the taskbar icon when there are unread articles"
     },
     "proxy": {
       "title": "Proxy",

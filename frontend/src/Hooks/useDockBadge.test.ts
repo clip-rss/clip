@@ -6,9 +6,11 @@ vi.mock('../Stores', () => ({
   useSidebarStore: { getState: vi.fn(), subscribe: vi.fn() },
   useSettingsStore: { getState: vi.fn(), subscribe: vi.fn() },
 }))
-vi.mock('../Utils', () => ({ DockService: { SetBadge: vi.fn(), RemoveBadge: vi.fn() } }))
+vi.mock('../Utils', () => ({
+  DockService: { SetBadge: vi.fn(), RemoveBadge: vi.fn(), SetCustomBadge: vi.fn() },
+}))
 
-import { totalUnread, badgeLabel } from './useDockBadge'
+import { totalUnread, badgeLabel, badgeAction } from './useDockBadge'
 
 describe('totalUnread', () => {
   it('空列表返回 0', () => {
@@ -35,5 +37,27 @@ describe('badgeLabel', () => {
   it('开关开启且未读大于 0 时返回数字字符串', () => {
     expect(badgeLabel(1, true)).toBe('1')
     expect(badgeLabel(42, true)).toBe('42')
+  })
+})
+
+describe('badgeAction', () => {
+  it('开关关闭时始终移除（任意平台）', () => {
+    expect(badgeAction('mac', 42, false)).toEqual({ kind: 'remove' })
+    expect(badgeAction('windows', 42, false)).toEqual({ kind: 'remove' })
+  })
+
+  it('未读为 0 时移除（任意平台）', () => {
+    expect(badgeAction('mac', 0, true)).toEqual({ kind: 'remove' })
+    expect(badgeAction('windows', 0, true)).toEqual({ kind: 'remove' })
+  })
+
+  it('macOS 有未读时显示数字', () => {
+    expect(badgeAction('mac', 1, true)).toEqual({ kind: 'number', label: '1' })
+    expect(badgeAction('mac', 128, true)).toEqual({ kind: 'number', label: '128' })
+  })
+
+  it('Windows 有未读时只显示红点（不带数字）', () => {
+    expect(badgeAction('windows', 1, true)).toEqual({ kind: 'dot' })
+    expect(badgeAction('windows', 128, true)).toEqual({ kind: 'dot' })
   })
 })
