@@ -131,8 +131,8 @@ func (s wailsNotifSender) Send(msg notify.Message) error {
 const (
 	updWinFullWidth     = 520
 	updWinFullHeight    = 560
-	updWinCompactWidth  = 380
-	updWinCompactHeight = 220
+	updWinCompactWidth  = 570
+	updWinCompactHeight = 275
 )
 
 // softwareUpdateWindow 管理「Software Update」子窗口：用 app.Window.NewWithOptions
@@ -222,8 +222,6 @@ func (s *softwareUpdateWindow) SetSize(width, height int) {
 //
 //	点检查 → Show 窗口 + 只调 Check（不下载）→ 窗口展示 release notes/状态
 //	  ├─ Install → DownloadAndInstall → …→ update-ready → Restart & Apply
-//	  ├─ Skip    → SkipVersion(该版本) + 关窗
-//	  ├─ Remind  → 关窗
 //	  └─ Close   → 关窗
 //
 // 事件走应用事件总线：Updater 用 app.Event.Emit 广播 wails:updater:* 状态，窗口 JS 监听；
@@ -235,7 +233,7 @@ type updateController struct {
 	currentVersion string
 
 	mu          sync.Mutex
-	lastRelease *updater.Release // 最近一次 Check 命中的新版（供 Skip 用）
+	lastRelease *updater.Release // 最近一次 Check 命中的新版（供状态重放）
 	lastStatus  func()           // 窗口 ready 时重放最近状态的闭包
 }
 
@@ -264,16 +262,6 @@ func (c *updateController) wire() {
 			}
 		}()
 	})
-	on(updater.EventUserSkip, func(*application.CustomEvent) {
-		c.mu.Lock()
-		rel := c.lastRelease
-		c.mu.Unlock()
-		if rel != nil {
-			c.updater.SkipVersion(rel.Version)
-		}
-		c.win.Close()
-	})
-	on(updater.EventUserRemind, func(*application.CustomEvent) { c.win.Close() })
 	on(updater.EventUserCancel, func(*application.CustomEvent) { c.win.Close() })
 
 	// —— 状态事件：调整窗口尺寸（我们不走 CheckAndInstall，Updater 的自动 SetSize

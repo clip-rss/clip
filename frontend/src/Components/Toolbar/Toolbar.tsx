@@ -135,9 +135,9 @@ function Toolbar(props: ToolbarProps): JSX.Element {
           onClick={onOpenSettings}
           title={settingsTitle}
           aria-label={t('toolbar.settings')}
-          style={{ position: 'relative' }}
+          style={updateAvailable ? { position: 'relative' } : undefined}
         >
-          <SettingsIcon />
+          <SettingsIcon className={updateAvailable ? styles.settingsSpinning : undefined} />
           {updateAvailable && <span className={styles.updateBadge} />}
         </button>
       </div>
@@ -218,9 +218,10 @@ function LayoutIcon(): JSX.Element {
   )
 }
 
-function SettingsIcon(): JSX.Element {
+function SettingsIcon({ className }: { className?: string }): JSX.Element {
   return (
     <svg
+      className={className}
       width="20"
       height="20"
       viewBox="0 0 24 24"

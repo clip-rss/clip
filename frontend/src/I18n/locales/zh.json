@@ -341,8 +341,6 @@
     "updateReady": "更新已就绪",
     "updateFailed": "更新失败",
     "errorOccurred": "出现错误。",
-    "skipVersion": "跳过此版本",
-    "remindLater": "稍后提醒",
     "close": "关闭",
     "installUpdate": "安装更新",
     "restartApply": "重启并应用",

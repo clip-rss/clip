@@ -342,8 +342,6 @@
     "updateReady": "Update Ready",
     "updateFailed": "Update Failed",
     "errorOccurred": "An error occurred.",
-    "skipVersion": "Skip This Version",
-    "remindLater": "Remind Me Later",
     "close": "Close",
     "installUpdate": "Install Update",
     "restartApply": "Restart & Apply",

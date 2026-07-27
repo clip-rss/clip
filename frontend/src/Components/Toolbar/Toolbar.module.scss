@@ -163,6 +163,20 @@
   }
 }
 
+@keyframes settingsSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.settingsSpinning {
+  animation: settingsSpin 4s linear infinite;
+  transform-origin: center;
+}
+
 .updateBadge {
   position: absolute;
   top: 2px;
