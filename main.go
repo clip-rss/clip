@@ -176,6 +176,8 @@ func (s *softwareUpdateWindow) ensure() *application.WebviewWindow {
 		HTML:   buildSoftwareUpdateHTML(s.dict, lang),
 		// 必须开启：窗口内 JS 靠 postMessage 回发 user:* 动作事件，否则按钮无效。
 		AllowSimpleEventEmit: true,
+		DisableResize:        true,
+		MaximiseButtonState:  application.ButtonDisabled,
 	})
 	// 窗口被关闭（用户点 X 或我们调 Close）后会被销毁，清空引用以便下轮重建。
 	win.OnWindowEvent(events.Common.WindowClosing, func(*application.WindowEvent) {

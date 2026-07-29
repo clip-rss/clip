@@ -276,6 +276,7 @@ body {
   align-items: center;
   gap: 10px;
   flex: 0 0 auto;
+  margin-top: auto;
 }
 .u__primary-actions {
   display: flex;
@@ -597,7 +598,7 @@ body {
     if (!rel) { els.subtitle.textContent = ""; return; }
     els.subtitle.innerHTML = "";
     if (currentVersion) {
-      var from = document.createElement("span"); from.className = "u__ver-from"; from.textContent = currentVersion;
+      var from = document.createElement("span"); from.className = "u__ver-from"; from.textContent = "v" + currentVersion;
       var arr  = document.createElement("span"); arr.className  = "u__ver-arrow"; arr.textContent  = "→";
       els.subtitle.appendChild(from);
       els.subtitle.appendChild(arr);
