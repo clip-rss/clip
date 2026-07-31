@@ -1,7 +1,9 @@
 package api
 
 import (
+	"net"
 	"runtime"
+	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -53,4 +55,17 @@ func (s *SystemService) CheckForUpdatesSilent() {
 	if s.CheckSilentFn != nil {
 		s.CheckSilentFn()
 	}
+}
+
+// IsOnline 探测网络连通性，返回 true 表示在线，false 表示离线。
+//
+// 实现方式：尝试连接 Google Public DNS (8.8.8.8:53)，超时 2 秒。
+// 该方法简单快速，但无法区分"本地网络正常但外网不通"的情况。
+func (s *SystemService) IsOnline() bool {
+	conn, err := net.DialTimeout("udp", "8.8.8.8:53", 2*time.Second)
+	if err != nil {
+		return false
+	}
+	defer conn.Close()
+	return true
 }

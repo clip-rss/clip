@@ -622,6 +622,135 @@ export class Item {
 }
 
 /**
+ * ItemLight 文章条目轻量版本（不含 content 字段，用于列表视图）
+ */
+export class ItemLight {
+    /**
+     * Creates a new ItemLight instance.
+     * @param {Partial<ItemLight>} [$$source = {}] - The source object to create the ItemLight.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["id"] = 0;
+        }
+        if (!("feedId" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["feedId"] = 0;
+        }
+        if (!("title" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["title"] = "";
+        }
+        if (!("author" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["author"] = "";
+        }
+        if (!("publishedAt" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time}
+             */
+            this["publishedAt"] = null;
+        }
+        if (!("updatedAt" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["updatedAt"] = null;
+        }
+        if (!("url" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["url"] = "";
+        }
+        if (!("summary" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["summary"] = "";
+        }
+        if (!("enclosure" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["enclosure"] = "";
+        }
+        if (!("categories" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["categories"] = "";
+        }
+        if (!("isRead" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["isRead"] = false;
+        }
+        if (!("isStarred" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["isStarred"] = false;
+        }
+        if (!("readAt" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["readAt"] = null;
+        }
+        if (!("note" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["note"] = "";
+        }
+        if (!("createdAt" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time}
+             */
+            this["createdAt"] = null;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new ItemLight instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {ItemLight}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new ItemLight(/** @type {Partial<ItemLight>} */($$parsedSource));
+    }
+}
+
+/**
  * Settings 应用全局设置。
  */
 export class Settings {

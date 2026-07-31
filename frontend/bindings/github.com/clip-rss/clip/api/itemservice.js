@@ -67,6 +67,19 @@ export function ListItems(feedID, limit, offset) {
 }
 
 /**
+ * ListItemsLight 列出文章（轻量版本，不含 content）：feedID > 0 时按源过滤，否则返回全部。
+ * @param {number} feedID
+ * @param {number} limit
+ * @param {number} offset
+ * @returns {$CancellablePromise<store$0.ItemLight[]>}
+ */
+export function ListItemsLight(feedID, limit, offset) {
+    return $Call.ByID(2640441307, feedID, limit, offset).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType4($result);
+    }));
+}
+
+/**
  * ListStarredItems 列出星标文章。
  * @param {number} limit
  * @param {number} offset
@@ -79,6 +92,18 @@ export function ListStarredItems(limit, offset) {
 }
 
 /**
+ * ListStarredItemsLight 列出星标文章（轻量版本）。
+ * @param {number} limit
+ * @param {number} offset
+ * @returns {$CancellablePromise<store$0.ItemLight[]>}
+ */
+export function ListStarredItemsLight(limit, offset) {
+    return $Call.ByID(422992066, limit, offset).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType4($result);
+    }));
+}
+
+/**
  * ListUnreadItems 列出未读文章。
  * @param {number} limit
  * @param {number} offset
@@ -87,6 +112,18 @@ export function ListStarredItems(limit, offset) {
 export function ListUnreadItems(limit, offset) {
     return $Call.ByID(1806062296, limit, offset).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType2($result);
+    }));
+}
+
+/**
+ * ListUnreadItemsLight 列出未读文章（轻量版本）。
+ * @param {number} limit
+ * @param {number} offset
+ * @returns {$CancellablePromise<store$0.ItemLight[]>}
+ */
+export function ListUnreadItemsLight(limit, offset) {
+    return $Call.ByID(935704524, limit, offset).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType4($result);
     }));
 }
 
@@ -143,3 +180,5 @@ export function ToggleStar(id) {
 const $$createType0 = store$0.Item.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);
 const $$createType2 = $Create.Array($$createType0);
+const $$createType3 = store$0.ItemLight.createFrom;
+const $$createType4 = $Create.Array($$createType3);

@@ -2,10 +2,15 @@ import { create } from 'zustand'
 import { ItemService, toApiError } from '../Utils'
 import { useSidebarStore } from './SidebarStore'
 import { useSettingsStore } from './SettingsStore'
-import type { ArticleFilter, ArticleSort, Item, Selection } from '../Types'
+import type { ArticleFilter, ArticleSort, Item, ItemLight, Selection } from '../Types'
 
 /** 单次拉取上限：客户端筛选/排序 + 虚拟滚动，足够覆盖常规留存量。 */
 const LOAD_LIMIT = 2000
+
+/** 将 ItemLight 转换为 Item（content 为空字符串）。 */
+function lightToItem(light: ItemLight): Item {
+  return { ...light, content: '' }
+}
 
 /** 自动标记已读的待定计时器（延迟模式下生效，切换文章时清除）。 */
 let autoMarkTimer: number | undefined
@@ -43,6 +48,14 @@ interface ArticleState {
   batchStar: (ids: number[]) => Promise<void>
   /** 保存文章笔记：乐观更新本地 note 字段并写入后端。 */
   saveNote: (id: number, note: string) => Promise<void>
+
+  /**
+   * 按需加载文章正文：首次选中某篇文章时，若其 content 为空，
+   * 则从后端拉取完整 Item 并 patch 到列表（content 字段填充）。
+   */
+  loadFullContent: (id: number) => Promise<void>
+  /** content 正在加载中的文章 ID。 */
+  loadingContentId: number | null
 
   /** 仅更新搜索框文本（不触发请求；防抖在调用方）。 */
   setSearchQuery: (q: string) => void
@@ -89,18 +102,19 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
   async function fetchAndResolve(selection: Selection): Promise<void> {
     set({ loading: true, error: null })
     try {
-      const items = await ItemService.ListItems(
+      const lights = await ItemService.ListItemsLight(
         scopeFeedId(selection),
         LOAD_LIMIT,
         0,
       )
+      const items = (lights ?? []).map(lightToItem)
       const pending = get().pendingSelectId
       const selectedId =
-        pending !== null && (items ?? []).some((it) => it.id === pending)
+        pending !== null && items.some((it) => it.id === pending)
           ? pending
           : null
       set({
-        items: items ?? [],
+        items,
         loading: false,
         selectedItemId: selectedId,
         pendingSelectId: null,
@@ -123,6 +137,7 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     searching: false,
     searchActive: false,
     pendingSelectId: null,
+    loadingContentId: null,
 
     async load(selection) {
       set({
@@ -153,7 +168,14 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
       const item =
         items.find((it) => it.id === id) ??
         searchResults.find((it) => it.id === id)
-      if (!item || item.isRead) return
+      if (!item) return
+
+      // 按需加载正文：列表拉取的轻量版本 content 为空，点击时才拉取完整内容。
+      if (!item.content) {
+        void get().loadFullContent(id)
+      }
+
+      if (item.isRead) return
 
       const delay = useSettingsStore.getState().settings?.autoMarkReadDelay ?? 0
       if (delay < 0) return // 关闭自动标记已读
@@ -237,6 +259,31 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
       } catch (err) {
         patchItem(id, { note: prev }) // 回滚
         set({ error: toApiError(err) })
+      }
+    },
+
+    async loadFullContent(id) {
+      // 防止并发重复加载同一篇文章。
+      if (get().loadingContentId === id) return
+      const existing =
+        get().items.find((it) => it.id === id) ??
+        get().searchResults.find((it) => it.id === id)
+      // 若已有 content，无需再请求。
+      if (existing?.content) return
+      set({ loadingContentId: id })
+      try {
+        const full = await ItemService.GetItem(id)
+        if (full) {
+          patchItem(id, { content: full.content })
+        }
+      } catch (err) {
+        // content 加载失败不阻断阅读流程，仅记录错误。
+        set({ error: toApiError(err) })
+      } finally {
+        // 只在仍是同一篇文章时清除 loading 状态（避免快速切换时错误清除）。
+        if (get().loadingContentId === id) {
+          set({ loadingContentId: null })
+        }
       }
     },
 

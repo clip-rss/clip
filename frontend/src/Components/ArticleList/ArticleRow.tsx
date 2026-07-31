@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { memo } from 'react'
 import clsx from 'clsx'
 import { formatRelativeTime, highlightText, openURL } from '../../Utils'
 import type { Item } from '../../Types'
@@ -97,4 +98,4 @@ function ArticleRow(props: ArticleRowProps): JSX.Element {
   )
 }
 
-export default ArticleRow
+export default memo(ArticleRow)

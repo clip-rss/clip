@@ -504,3 +504,109 @@ func (s *Store) scanItems(rows *sql.Rows) ([]Item, error) {
 	}
 	return items, rows.Err()
 }
+
+// 列表轻量查询列字段（不含 content），供 Light 系列查询复用。
+const itemColumnsLight = `i.id, i.feed_id, i.title, i.author, i.published_at, i.updated_at, i.url,
+	       i.summary, i.enclosure, i.categories, i.is_read, i.is_starred,
+	       i.read_at, i.note, i.created_at`
+
+// ListAllItemsLight 获取所有文章列表（轻量版本，不含 content）
+func (s *Store) ListAllItemsLight(limit, offset int) ([]ItemLight, error) {
+	query := `
+		SELECT ` + itemColumnsLight + `
+		FROM items i
+		ORDER BY i.published_at DESC
+		LIMIT ? OFFSET ?
+	`
+	rows, err := s.db.Query(query, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list all items (light): %w", err)
+	}
+	defer rows.Close()
+
+	return s.scanItemsLight(rows)
+}
+
+// ListItemsByFeedLight 获取指定订阅源的文章列表（轻量版本）
+func (s *Store) ListItemsByFeedLight(feedID int64, limit, offset int) ([]ItemLight, error) {
+	query := `
+		SELECT ` + itemColumnsLight + `
+		FROM items i
+		WHERE i.feed_id = ?
+		ORDER BY i.published_at DESC
+		LIMIT ? OFFSET ?
+	`
+	rows, err := s.db.Query(query, feedID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list items by feed (light): %w", err)
+	}
+	defer rows.Close()
+
+	return s.scanItemsLight(rows)
+}
+
+// ListUnreadItemsLight 获取未读文章列表（轻量版本）
+func (s *Store) ListUnreadItemsLight(limit, offset int) ([]ItemLight, error) {
+	query := `
+		SELECT ` + itemColumnsLight + `
+		FROM items i
+		WHERE i.is_read = 0
+		ORDER BY i.published_at DESC
+		LIMIT ? OFFSET ?
+	`
+	rows, err := s.db.Query(query, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list unread items (light): %w", err)
+	}
+	defer rows.Close()
+
+	return s.scanItemsLight(rows)
+}
+
+// ListStarredItemsLight 获取星标文章列表（轻量版本）
+func (s *Store) ListStarredItemsLight(limit, offset int) ([]ItemLight, error) {
+	query := `
+		SELECT ` + itemColumnsLight + `
+		FROM items i
+		WHERE i.is_starred = 1
+		ORDER BY i.published_at DESC
+		LIMIT ? OFFSET ?
+	`
+	rows, err := s.db.Query(query, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list starred items (light): %w", err)
+	}
+	defer rows.Close()
+
+	return s.scanItemsLight(rows)
+}
+
+// scanItemsLight 辅助函数：扫描轻量文章行（不含 content）
+func (s *Store) scanItemsLight(rows *sql.Rows) ([]ItemLight, error) {
+	items := []ItemLight{}
+	for rows.Next() {
+		item := ItemLight{}
+		err := rows.Scan(
+			&item.ID,
+			&item.FeedID,
+			&item.Title,
+			&item.Author,
+			&item.PublishedAt,
+			&item.UpdatedAt,
+			&item.URL,
+			&item.Summary,
+			&item.Enclosure,
+			&item.Categories,
+			&item.IsRead,
+			&item.IsStarred,
+			&item.ReadAt,
+			&item.Note,
+			&item.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan item (light): %w", err)
+		}
+		items = append(items, item)
+	}
+	return items, rows.Err()
+}

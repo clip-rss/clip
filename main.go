@@ -130,7 +130,7 @@ func (s wailsNotifSender) Send(msg notify.Message) error {
 // full = 有新版/下载/安装等需要展示 release notes 与进度时；compact = 无新版/出错。
 const (
 	updWinFullWidth     = 520
-	updWinFullHeight    = 560
+	updWinFullHeight    = 500
 	updWinCompactWidth  = 570
 	updWinCompactHeight = 275
 )

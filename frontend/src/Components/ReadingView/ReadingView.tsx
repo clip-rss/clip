@@ -19,6 +19,7 @@ function ReadingView(): JSX.Element {
   const item = useArticleStore(
     (s) => s.items.find((it) => it.id === s.selectedItemId) ?? null,
   )
+  const loadingContentId = useArticleStore((s) => s.loadingContentId)
   const feeds = useSidebarStore((s) => s.feeds)
   const prefs = useReaderStore()
   const notePanelOpen = useLayoutStore((s) => s.notePanelOpen)
@@ -77,6 +78,9 @@ function ReadingView(): JSX.Element {
 
   const sourceName = feeds.find((f) => f.id === item.feedId)?.title ?? ''
 
+  // content 正在加载中（首次点击文章，后端拉取完整正文）
+  const isLoadingContent = loadingContentId === item.id && !item.content
+
   return (
     <div className={styles.reader}>
       <ReaderToolbar item={item} />
@@ -86,12 +90,18 @@ function ReadingView(): JSX.Element {
         onScroll={handleScroll}
         data-reader-scroll="main"
       >
-        <ReaderArticle
-          item={item}
-          sourceName={sourceName}
-          contentStyle={contentStyle}
-          onImageClick={setLightboxSrc}
-        />
+        {isLoadingContent ? (
+          <div className={styles.loading}>
+            <p>{t('reader.loadingContent')}</p>
+          </div>
+        ) : (
+          <ReaderArticle
+            item={item}
+            sourceName={sourceName}
+            contentStyle={contentStyle}
+            onImageClick={setLightboxSrc}
+          />
+        )}
       </div>
       {notePanelOpen ? (
         <NotePanel item={item} onClose={closeNotePanel} />

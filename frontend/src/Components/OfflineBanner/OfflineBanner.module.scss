@@ -1,0 +1,22 @@
+.banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background-color: var(--warning-bg);
+  color: var(--warning-text);
+  font-size: 13px;
+  font-style: italic;
+  border-bottom: 1px solid var(--warning-border);
+  user-select: none;
+}
+
+.icon {
+  margin-right: 8px;
+  font-style: normal;
+}

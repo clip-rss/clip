@@ -13,7 +13,6 @@
 - [x] Software Update 窗口 i18n — **单一数据源**：Go 启动时取 `frontend/src/I18n/locales/{en,zh}.json` 的 `updater` 段，建窗时连同当前语言注入 window.html 的占位符（`__CLIP_I18N_DICT__`/`__CLIP_I18N_LANG__`）。语言现读 `store.Settings.Language`；因窗口每轮 rebuild，下次打开即用最新语言（弹窗开着时切语言不实时生效，可接受）。有回归测试 `TestUpdaterI18nInjection`
 - [ ] **临时目录孤儿更新包兜底清理**（见下方「待做」）
 - [ ] 更新失败错误消息本地化（错误文本由 Updater 产生，多为英文；窗口仅翻译了无消息时的兜底文案）
-- [ ] 「跳过此版本」的持久化（当前 `SkipVersion` 只在内存，重启即失效 → 可存 store.Settings）
 
 ## 待做：临时目录孤儿更新包兜底清理
 

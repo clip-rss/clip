@@ -62,3 +62,22 @@ type CategoryWithFeeds struct {
 	Category
 	Feeds []FeedWithUnread `json:"feeds"`
 }
+
+// ItemLight 文章条目轻量版本（不含 content 字段，用于列表视图）
+type ItemLight struct {
+	ID          int64      `json:"id"`
+	FeedID      int64      `json:"feedId"`
+	Title       string     `json:"title"`
+	Author      string     `json:"author"`
+	PublishedAt time.Time  `json:"publishedAt"`
+	UpdatedAt   *time.Time `json:"updatedAt"`
+	URL         string     `json:"url"`
+	Summary     string     `json:"summary"`
+	Enclosure   string     `json:"enclosure"`
+	Categories  string     `json:"categories"`
+	IsRead      bool       `json:"isRead"`
+	IsStarred   bool       `json:"isStarred"`
+	ReadAt      *time.Time `json:"readAt"`
+	Note        string     `json:"note"`
+	CreatedAt   time.Time  `json:"createdAt"`
+}

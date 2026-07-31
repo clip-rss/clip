@@ -4,6 +4,8 @@ import type { Item } from '../Types'
 vi.mock('../Utils', () => ({
   ItemService: {
     ListItems: vi.fn(),
+    ListItemsLight: vi.fn(),
+    GetItem: vi.fn(),
     MarkRead: vi.fn(),
     MarkUnread: vi.fn(),
     ToggleStar: vi.fn(),
@@ -26,6 +28,8 @@ import { useArticleStore } from './ArticleStore'
 import { useSettingsStore } from './SettingsStore'
 
 const ListItems = ItemService.ListItems as Mock
+const ListItemsLight = ItemService.ListItemsLight as Mock
+const GetItem = ItemService.GetItem as Mock
 const MarkRead = ItemService.MarkRead as Mock
 const ToggleStar = ItemService.ToggleStar as Mock
 const BatchMarkRead = ItemService.BatchMarkRead as Mock
@@ -55,6 +59,8 @@ function reset(): void {
 beforeEach(() => {
   vi.clearAllMocks()
   ListItems.mockResolvedValue([])
+  ListItemsLight.mockResolvedValue([])
+  GetItem.mockResolvedValue(null)
   MarkRead.mockResolvedValue(undefined)
   ToggleStar.mockResolvedValue(undefined)
   BatchMarkRead.mockResolvedValue(undefined)
@@ -66,16 +72,16 @@ beforeEach(() => {
 describe('ArticleStore', () => {
   it('load(feed) 按源拉取并清空已选', async () => {
     useArticleStore.setState({ selectedItemId: 9 })
-    ListItems.mockResolvedValue([item(1)])
+    ListItemsLight.mockResolvedValue([item(1)])
     await useArticleStore.getState().load({ kind: 'feed', id: 5 })
-    expect(ListItems).toHaveBeenCalledWith(5, 2000, 0)
+    expect(ListItemsLight).toHaveBeenCalledWith(5, 2000, 0)
     expect(useArticleStore.getState().items).toHaveLength(1)
     expect(useArticleStore.getState().selectedItemId).toBeNull()
   })
 
   it('load(all) 用 feedID=0 拉取全部', async () => {
     await useArticleStore.getState().load({ kind: 'all' })
-    expect(ListItems).toHaveBeenCalledWith(0, 2000, 0)
+    expect(ListItemsLight).toHaveBeenCalledWith(0, 2000, 0)
   })
 
   it('setFilter / setSort 更新状态', () => {

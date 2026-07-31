@@ -9,5 +9,6 @@ export {
     Feed,
     FeedWithUnread,
     Item,
+    ItemLight,
     Settings
 } from "./models.js";

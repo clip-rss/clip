@@ -24,14 +24,32 @@ func (s *ItemService) ListItems(feedID int64, limit, offset int) ([]store.Item, 
 	return s.store.ListAllItems(limit, offset)
 }
 
+// ListItemsLight 列出文章（轻量版本，不含 content）：feedID > 0 时按源过滤，否则返回全部。
+func (s *ItemService) ListItemsLight(feedID int64, limit, offset int) ([]store.ItemLight, error) {
+	if feedID > 0 {
+		return s.store.ListItemsByFeedLight(feedID, limit, offset)
+	}
+	return s.store.ListAllItemsLight(limit, offset)
+}
+
 // ListUnreadItems 列出未读文章。
 func (s *ItemService) ListUnreadItems(limit, offset int) ([]store.Item, error) {
 	return s.store.ListUnreadItems(limit, offset)
 }
 
+// ListUnreadItemsLight 列出未读文章（轻量版本）。
+func (s *ItemService) ListUnreadItemsLight(limit, offset int) ([]store.ItemLight, error) {
+	return s.store.ListUnreadItemsLight(limit, offset)
+}
+
 // ListStarredItems 列出星标文章。
 func (s *ItemService) ListStarredItems(limit, offset int) ([]store.Item, error) {
 	return s.store.ListStarredItems(limit, offset)
+}
+
+// ListStarredItemsLight 列出星标文章（轻量版本）。
+func (s *ItemService) ListStarredItemsLight(limit, offset int) ([]store.ItemLight, error) {
+	return s.store.ListStarredItemsLight(limit, offset)
 }
 
 // GetItem 按 ID 获取文章。

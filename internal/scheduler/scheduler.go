@@ -110,10 +110,11 @@ type Scheduler struct {
 	// now 提供当前时间，测试中可替换以控制退避判定。
 	now func() time.Time
 
-	mu      sync.Mutex
-	running bool
-	cancel  context.CancelFunc
-	wg      sync.WaitGroup
+	mu          sync.Mutex
+	running     bool
+	offlineMode bool // 离线模式：为 true 时 tick 被跳过，不发起任何网络请求
+	cancel      context.CancelFunc
+	wg          sync.WaitGroup
 }
 
 // Option 配置 Scheduler。
@@ -208,6 +209,18 @@ func (s *Scheduler) SetDefaultInterval(d time.Duration) {
 	}
 }
 
+// SetOfflineMode 设置离线模式：离线时暂停所有网络请求，在线时恢复正常调度。
+func (s *Scheduler) SetOfflineMode(offline bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.offlineMode = offline
+	if offline {
+		log.Println("scheduler: entering offline mode, pausing updates")
+	} else {
+		log.Println("scheduler: exiting offline mode, resuming updates")
+	}
+}
+
 // tickSafe 调用 Tick 并捕获 panic，防止单次异常导致调度器静默退出。
 func (s *Scheduler) tickSafe(ctx context.Context) {
 	defer func() {
@@ -215,6 +228,13 @@ func (s *Scheduler) tickSafe(ctx context.Context) {
 			log.Printf("scheduler: panic recovered in Tick: %v", r)
 		}
 	}()
+	// 离线模式下跳过 tick，不发起网络请求
+	s.mu.Lock()
+	offline := s.offlineMode
+	s.mu.Unlock()
+	if offline {
+		return
+	}
 	s.Tick(ctx)
 }
 

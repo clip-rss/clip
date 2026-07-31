@@ -115,6 +115,7 @@
     },
     "backgroundDesc": "Independent reading background, separate from global theme",
     "empty": "Select an article to read",
+    "loadingContent": "Loading content…",
     "endOfContent": "End of content"
   },
   "focus": {
@@ -346,5 +347,8 @@
     "installUpdate": "Install Update",
     "restartApply": "Restart & Apply",
     "tryAgain": "Try Again"
+  },
+  "offline": {
+    "banner": "Offline Mode – Automatic updates paused"
   }
 }
