@@ -28,6 +28,8 @@ const defaults: Settings = {
   windowHeight: 800,
   proxyHost: '',
   proxyPort: 0,
+  reduceMotion: false,
+  showFocusIndicator: true,
 }
 
 beforeEach(() => {

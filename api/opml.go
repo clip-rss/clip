@@ -2,10 +2,12 @@ package api
 
 import (
 	"errors"
+	"os"
 	"strings"
 
 	"github.com/clip-rss/clip/internal/opml"
 	"github.com/clip-rss/clip/internal/store"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 // OPMLService OPML 导入导出相关的绑定方法。
@@ -82,8 +84,36 @@ func (s *OPMLService) importOutlines(outlines []opml.Outline, parentID *int64, s
 	return nil
 }
 
-// ExportOPML 将当前全部分类与订阅源导出为 OPML 文本。
-func (s *OPMLService) ExportOPML() (string, error) {
+// ExportOPML 将当前全部分类与订阅源导出为 OPML：弹出系统保存对话框选择位置后写盘。
+// 用户取消返回 (false, nil)；成功返回 (true, nil)。
+func (s *OPMLService) ExportOPML() (bool, error) {
+	out, err := s.buildOPML()
+	if err != nil {
+		return false, err
+	}
+	app := application.Get()
+	if app == nil {
+		return false, errors.New("application not available")
+	}
+	dest, err := app.Dialog.SaveFile().
+		SetMessage("导出订阅").
+		SetFilename("clip-feeds.opml").
+		AddFilter("OPML 文件", "*.opml").
+		PromptForSingleSelection()
+	if err != nil {
+		return false, err
+	}
+	if dest == "" {
+		return false, nil // 用户取消
+	}
+	if err := os.WriteFile(dest, []byte(out), 0o644); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// buildOPML 生成当前订阅的 OPML 文本。
+func (s *OPMLService) buildOPML() (string, error) {
 	cats, err := s.store.ListCategories()
 	if err != nil {
 		return "", err

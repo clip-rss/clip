@@ -247,6 +247,7 @@
       "importSuccess": "导入完成：新增 {{feeds}} 个订阅源，跳过 {{skipped}} 个重复，新建 {{categories}} 个文件夹。",
       "importError": "OPML 导入失败",
       "exportSuccess": "已导出 OPML 订阅文件。",
+      "exportCancelled": "已取消导出。",
       "exportError": "OPML 导出失败",
       "backup": "备份数据库",
       "backupDesc": "备份或恢复完整数据库（含文章、笔记、已读状态）",

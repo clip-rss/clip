@@ -399,8 +399,12 @@ export function DataSection(): JSX.Element {
 
   async function handleExportOpml(): Promise<void> {
     try {
-      await exportOpmlToFile()
-      notify(t('settings.data.exportSuccess'))
+      const ok = await exportOpmlToFile()
+      notify(
+        ok
+          ? t('settings.data.exportSuccess')
+          : t('settings.data.exportCancelled'),
+      )
     } catch (err) {
       notify(`${t('settings.data.exportError')}：${toApiError(err)}`, true)
     }

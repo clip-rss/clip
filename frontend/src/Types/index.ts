@@ -6,6 +6,7 @@ export type {
   Feed,
   FeedWithUnread,
   Item,
+  ItemLight,
   Category,
   CategoryWithFeeds,
   Settings,

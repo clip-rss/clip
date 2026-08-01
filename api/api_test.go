@@ -462,9 +462,9 @@ func TestOPMLImportExportRoundTrip(t *testing.T) {
 	}
 
 	// 导出后应能被重新解析，且包含两个源。
-	out, err := svc.ExportOPML()
+	out, err := svc.buildOPML()
 	if err != nil {
-		t.Fatalf("ExportOPML: %v", err)
+		t.Fatalf("buildOPML: %v", err)
 	}
 	reimport := NewOPMLService(newTestStore(t))
 	back, err := reimport.ImportOPML(out)

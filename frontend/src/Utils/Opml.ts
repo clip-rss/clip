@@ -9,16 +9,7 @@ export async function importOpmlFromFile(file: File): Promise<ImportResult> {
   return OPMLService.ImportOPML(content)
 }
 
-/** 导出全部订阅为 OPML 并触发浏览器下载（文件名 clip-feeds.opml）。 */
-export async function exportOpmlToFile(): Promise<void> {
-  const content = await OPMLService.ExportOPML()
-  const blob = new Blob([content], { type: 'text/xml;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'clip-feeds.opml'
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(url)
+/** 导出全部订阅为 OPML：弹出系统保存对话框写盘，成功返回 true，取消返回 false。 */
+export async function exportOpmlToFile(): Promise<boolean> {
+  return OPMLService.ExportOPML()
 }
