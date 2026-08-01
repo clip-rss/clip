@@ -11,10 +11,97 @@
 - [x] 自建 Software Update 子窗口 — `softwareUpdateWindow`，每轮 `rebuild` 新建（详见 memory: project-updater-byowindow）
 - [x] 交互式更新流程「先展示、后决定」— `updateController`：点检查只 `Check`（不下载），窗口展示 release notes + 更新/稍后/跳过/关闭；仅点「更新」才 `DownloadAndInstall`。`Config.Window = updater.WindowNone`，UI 自驱
 - [x] Software Update 窗口 i18n — **单一数据源**：Go 启动时取 `frontend/src/I18n/locales/{en,zh}.json` 的 `updater` 段，建窗时连同当前语言注入 window.html 的占位符（`__CLIP_I18N_DICT__`/`__CLIP_I18N_LANG__`）。语言现读 `store.Settings.Language`；因窗口每轮 rebuild，下次打开即用最新语言（弹窗开着时切语言不实时生效，可接受）。有回归测试 `TestUpdaterI18nInjection`
-- [ ] **临时目录孤儿更新包兜底清理**（见下方「待做」）
-- [ ] 更新失败错误消息本地化（错误文本由 Updater 产生，多为英文；窗口仅翻译了无消息时的兜底文案）
+- [x] **临时目录孤儿更新包兜底清理**（见下方「已完成」）
+- [x] **更新失败错误消息本地化**（见下方「已完成」）
 
-## 待做：临时目录孤儿更新包兜底清理
+## 验收标准
+- [x] 菜单可触发检查更新
+- [x] 更新窗口展示版本信息与 release notes
+- [x] 用户可选择安装或跳过更新
+- [x] 下载进度实时显示
+- [x] 更新完成后可重启应用
+- [x] 临时文件自动清理
+- [x] 错误消息本地化显示
+
+## 已完成：临时目录孤儿更新包兜底清理
+
+**实现方案**：App 启动时自动扫描并清理系统临时目录下遗留的更新包。
+
+**清理策略**：
+- 启动时调用 `cleanOrphanedUpdateDirs()` 扫描 `os.TempDir()` 下的 `wails-update-*` 目录
+- 保留最新 1 份（按修改时间）+ 24 小时内的所有目录（可能是其他实例正在下载）
+- 删除超过 24 小时且非最新的孤儿目录
+
+**并发安全**：
+- 通过时间戳过滤（保留 24h 内）避免删除其他 Clip 实例正在使用的目录
+- 始终保留最新 1 份，即使它超过 24h（避免误删唯一的缓存）
+
+**测试覆盖**：
+- `TestCleanOrphanedUpdateDirs`：验证清理逻辑（保留最新+24h内，删除超时旧目录）
+- `TestCleanOrphanedUpdateDirs_NoDirectories`：验证空目录时不报错
+- `TestCleanOrphanedUpdateDirs_OnlyNewest`：验证单个超时目录作为最新也会保留
+
+**相关代码**：
+- `main.go:cleanOrphanedUpdateDirs()`：启动入口
+- `main.go:cleanOrphanedUpdateDirsIn(dir)`：可测试的内部实现
+- `main.go:main()`：启动时调用清理函数
+- `main_test.go`：完整测试用例
+
+## 已完成：更新失败错误消息本地化
+
+**实现方案**：通过模式匹配将 Go Updater 产生的英文错误消息映射到本地化文案。
+
+**错误匹配策略**：
+- 窗口 JS 的 `renderError()` 函数对 Updater 返回的错误消息进行关键词匹配
+- 匹配常见错误模式（网络、下载、校验、权限、磁盘空间等）
+- 无法匹配时保留原始英文消息（保证信息完整性）
+
+**本地化内容**：
+- **错误类型**（`errors` 段）：
+  - `networkError`：网络连接失败
+  - `downloadFailed`：下载失败
+  - `checksumMismatch`：校验失败/文件损坏
+  - `invalidRelease`：版本信息无效
+  - `noAssets`：无适配平台的更新包
+  - `permissionDenied`：权限不足
+  - `diskFull`：磁盘空间不足
+  - `timeout`：操作超时
+
+- **阶段标识**（`stages` 段）：
+  - `check`：检查更新
+  - `download`：下载
+  - `verify`：验证
+  - `install`：安装
+
+- **错误格式模板**：`errorDuring`（"{{stage}}时出错：{{message}}"）
+
+**关键词匹配表**：
+```javascript
+network|connection|timeout|dns         → networkError
+download.*fail|fetch.*fail            → downloadFailed
+checksum|hash|verify|mismatch|corrupt → checksumMismatch
+invalid.*release|malformed            → invalidRelease
+no.*asset|not.*found|unsupported      → noAssets
+permission|access.*denied|forbidden   → permissionDenied
+disk.*full|no.*space|insufficient     → diskFull
+timeout|timed out                     → timeout
+```
+
+**测试覆盖**：
+- `TestUpdaterI18nInjection` 扩展支持嵌套 JSON 结构验证
+- 递归比较 en/zh 两份 locale 的 key 一致性（包括 `errors.*` 和 `stages.*`）
+
+**相关代码**：
+- `frontend/src/I18n/locales/{en,zh}.json`：错误消息与阶段的本地化文案
+- `build/updater/window.html:renderError()`：错误匹配与本地化逻辑
+- `main_test.go:TestUpdaterI18nInjection`：嵌套结构的 i18n 一致性测试
+
+**局限性**：
+- 依赖关键词匹配，无法覆盖所有可能的错误文案
+- Updater 内部产生的新错误类型需要更新匹配规则
+- 匹配失败时回退到英文原文（保证不丢失错误信息）
+
+## 未验证项
 
 **问题**（读 `wails/v3@v3.0.0-alpha.98/pkg/updater` 源码得出的静态结论，未实机观测）：
 

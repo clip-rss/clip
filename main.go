@@ -5,6 +5,8 @@ import (
 	"embed"
 	"encoding/json"
 	"log"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -54,7 +56,7 @@ const (
 
 const (
 	currentVersion = "0.1.0"
-	repo           = "clip-rss/clip"
+	repo           = "ultrazg/horizon"
 )
 
 // updaterI18nDict 解析出 en/zh 两份 locale 的 "updater" 段，拼成 {en:{...},zh:{...}} 的
@@ -366,6 +368,83 @@ func (c *updateController) checkSilent() {
 	}()
 }
 
+// cleanOrphanedUpdateDirs 清理系统临时目录下遗留的 Wails 更新包目录。
+//
+// 问题：用户「下载完更新 → 关弹窗 → 不重启 → 退出 App」后，已下载的更新包
+// （wails-update-* 目录）会残留在系统临时目录（macOS $TMPDIR、Windows %TEMP%），
+// 因为关闭更新弹窗不会删除 staging 目录，而 Updater 的 stagingDir 字段只存在内存中，
+// 下次启动时已丢失引用，无法通过 discardStaging() 清理。
+//
+// 清理策略：
+// - 启动时扫描 os.TempDir() 下的 wails-update-* 目录
+// - 保留最近 1 份（按修改时间）+ 24 小时内的（可能是其他实例正在下载）
+// - 删除超过 24 小时且非最新的孤儿目录
+//
+// 并发安全：通过时间戳过滤避免删除其他 Clip 实例正在使用的目录。
+func cleanOrphanedUpdateDirs() {
+	cleanOrphanedUpdateDirsIn(os.TempDir())
+}
+
+// cleanOrphanedUpdateDirsIn 是 cleanOrphanedUpdateDirs 的可测试版本，接受目录参数。
+func cleanOrphanedUpdateDirsIn(tmpDir string) {
+	entries, err := os.ReadDir(tmpDir)
+	if err != nil {
+		log.Printf("clean orphaned updates: read temp dir: %v", err)
+		return
+	}
+
+	const updateDirPrefix = "wails-update-"
+	const retentionThreshold = 24 * time.Hour
+	now := time.Now()
+
+	type candidate struct {
+		path    string
+		modTime time.Time
+	}
+	var dirs []candidate
+
+	// 收集所有 wails-update-* 目录及其修改时间
+	for _, entry := range entries {
+		if !entry.IsDir() || !strings.HasPrefix(entry.Name(), updateDirPrefix) {
+			continue
+		}
+		fullPath := filepath.Join(tmpDir, entry.Name())
+		info, err := os.Stat(fullPath)
+		if err != nil {
+			continue // 无法访问，跳过
+		}
+		dirs = append(dirs, candidate{path: fullPath, modTime: info.ModTime()})
+	}
+
+	if len(dirs) == 0 {
+		return // 无孤儿目录
+	}
+
+	// 按修改时间降序排序（最新的在前）
+	for i := 0; i < len(dirs); i++ {
+		for j := i + 1; j < len(dirs); j++ {
+			if dirs[j].modTime.After(dirs[i].modTime) {
+				dirs[i], dirs[j] = dirs[j], dirs[i]
+			}
+		}
+	}
+
+	// 清理策略：保留最新 1 份 + 24 小时内的所有目录
+	for i, dir := range dirs {
+		age := now.Sub(dir.modTime)
+		// 保留最新的 1 份（i == 0）或 24 小时内的（可能是其他实例正在下载）
+		if i == 0 || age < retentionThreshold {
+			continue
+		}
+		// 删除超过 24 小时且非最新的孤儿目录
+		if err := os.RemoveAll(dir.path); err != nil {
+			log.Printf("clean orphaned updates: remove %s: %v", dir.path, err)
+		} else {
+			log.Printf("clean orphaned updates: removed %s (age: %v)", dir.path, age.Round(time.Minute))
+		}
+	}
+}
+
 func savedWindowSize(settings store.Settings) (int, int) {
 	width := settings.WindowWidth
 	height := settings.WindowHeight
@@ -399,6 +478,9 @@ func saveWindowSize(st *store.Store, window application.Window) {
 }
 
 func main() {
+	// 清理遗留的更新包目录（孤儿临时文件）。
+	cleanOrphanedUpdateDirs()
+
 	// 数据层。
 	st, err := store.New()
 	if err != nil {

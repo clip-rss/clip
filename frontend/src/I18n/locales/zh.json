@@ -350,7 +350,24 @@
     "close": "关闭",
     "installUpdate": "安装更新",
     "restartApply": "重启并应用",
-    "tryAgain": "重试"
+    "tryAgain": "重试",
+    "errorDuring": "{{stage}}时出错：{{message}}",
+    "errors": {
+      "networkError": "网络连接失败，请检查您的网络连接。",
+      "downloadFailed": "下载更新包失败。",
+      "checksumMismatch": "更新包校验失败，文件可能已损坏。",
+      "invalidRelease": "从服务器收到的版本信息无效。",
+      "noAssets": "未找到适用于您平台的更新包。",
+      "permissionDenied": "权限不足，请检查文件访问权限。",
+      "diskFull": "磁盘空间不足，无法下载更新。",
+      "timeout": "操作超时，请稍后重试。"
+    },
+    "stages": {
+      "check": "检查更新",
+      "download": "下载",
+      "verify": "验证",
+      "install": "安装"
+    }
   },
   "offline": {
     "banner": "离线模式 – 订阅更新已暂停"

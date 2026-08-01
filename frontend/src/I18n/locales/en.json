@@ -351,7 +351,24 @@
     "close": "Close",
     "installUpdate": "Install Update",
     "restartApply": "Restart & Apply",
-    "tryAgain": "Try Again"
+    "tryAgain": "Try Again",
+    "errorDuring": "During {{stage}}: {{message}}",
+    "errors": {
+      "networkError": "Network connection failed. Please check your internet connection.",
+      "downloadFailed": "Failed to download update package.",
+      "checksumMismatch": "Update package verification failed. The file may be corrupted.",
+      "invalidRelease": "Invalid release information received from server.",
+      "noAssets": "No compatible update package found for your platform.",
+      "permissionDenied": "Permission denied. Please check file access permissions.",
+      "diskFull": "Insufficient disk space to download update.",
+      "timeout": "Operation timed out. Please try again later."
+    },
+    "stages": {
+      "check": "checking for updates",
+      "download": "downloading",
+      "verify": "verifying",
+      "install": "installing"
+    }
   },
   "offline": {
     "banner": "Offline Mode – Automatic updates paused"

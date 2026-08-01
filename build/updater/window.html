@@ -701,9 +701,49 @@ body {
 
   function renderError() {
     var info = view.errorRaw;
-    // 错误消息文本由 Go 侧（Updater）产生，通常为英文；这里只翻译无消息时的兜底。
-    var msg = (info && info.message) ? info.message : t("errorOccurred");
-    if (info && info.stage) msg = "During " + info.stage + ": " + msg;
+    var msg = "";
+
+    // 尝试匹配常见错误模式并本地化
+    if (info && info.message) {
+      var rawMsg = info.message.toLowerCase();
+
+      // 匹配常见错误关键词
+      if (/network|connection|timeout|dns/.test(rawMsg)) {
+        msg = t("errors.networkError");
+      } else if (/download.*fail|fetch.*fail/.test(rawMsg)) {
+        msg = t("errors.downloadFailed");
+      } else if (/checksum|hash|verify|mismatch|corrupt/.test(rawMsg)) {
+        msg = t("errors.checksumMismatch");
+      } else if (/invalid.*release|malformed/.test(rawMsg)) {
+        msg = t("errors.invalidRelease");
+      } else if (/no.*asset|not.*found|unsupported.*platform/.test(rawMsg)) {
+        msg = t("errors.noAssets");
+      } else if (/permission|access.*denied|forbidden/.test(rawMsg)) {
+        msg = t("errors.permissionDenied");
+      } else if (/disk.*full|no.*space|insufficient.*space/.test(rawMsg)) {
+        msg = t("errors.diskFull");
+      } else if (/timeout|timed out/.test(rawMsg)) {
+        msg = t("errors.timeout");
+      } else {
+        // 无法匹配，使用原始消息
+        msg = info.message;
+      }
+    } else {
+      // 无消息时使用兜底文案
+      msg = t("errorOccurred");
+    }
+
+    // 本地化 stage 并组合消息
+    if (info && info.stage) {
+      var stage = info.stage.toLowerCase();
+      var localizedStage = t("stages." + stage);
+      // 如果找不到翻译，使用原始 stage
+      if (localizedStage === "stages." + stage) {
+        localizedStage = info.stage;
+      }
+      msg = t("errorDuring", { stage: localizedStage, message: msg });
+    }
+
     els.error.textContent = msg;
   }
 
