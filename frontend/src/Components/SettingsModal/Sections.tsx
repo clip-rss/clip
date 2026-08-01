@@ -561,9 +561,12 @@ export function DataSection(): JSX.Element {
 
 /* ============================ 代理 ============================ */
 
+import { ChangelogModal } from '../ChangelogModal/ChangelogModal'
+
 export function AboutSection(): JSX.Element {
   const { t } = useTranslation()
   const [version, setVersion] = useState('')
+  const [changelogOpen, setChangelogOpen] = useState(false)
   const updateAvailable = useUpdateStore((s) => s.updateAvailable)
 
   useEffect(() => {
@@ -585,7 +588,10 @@ export function AboutSection(): JSX.Element {
   const links: { key: string; url?: string }[] = [
     { key: 'sourceCode', url: 'https://github.com/clip-rss/clip' },
     { key: 'reportBug', url: 'https://github.com/clip-rss/clip/issues' },
-    { key: 'license' },
+    {
+      key: 'license',
+      url: 'https://github.com/clip-rss/clip/blob/main/LICENSE',
+    },
     { key: 'changelog' },
   ]
 
@@ -626,7 +632,13 @@ export function AboutSection(): JSX.Element {
             {link.url ? (
               <button
                 className={styles.aboutLink}
-                onClick={() => openURL(link.url!)}
+                onClick={() => {
+                  if (link.key === 'changelog') {
+                    setChangelogOpen(true)
+                  } else {
+                    openURL(link.url!)
+                  }
+                }}
                 type="button"
               >
                 {t(`settings.about.links.${link.key}`)}
@@ -641,6 +653,7 @@ export function AboutSection(): JSX.Element {
           </span>
         ))}
       </div>
+      <ChangelogModal open={changelogOpen} onOpenChange={setChangelogOpen} />
     </div>
   )
 }

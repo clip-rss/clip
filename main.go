@@ -57,6 +57,7 @@ const (
 const (
 	currentVersion = "0.1.0"
 	repo           = "clip-rss/clip"
+	changelogURL   = "https://raw.githubusercontent.com/clip-rss/clip/main/CHANGELOG.md"
 )
 
 // updaterI18nDict 解析出 en/zh 两份 locale 的 "updater" 段，拼成 {en:{...},zh:{...}} 的
@@ -511,7 +512,7 @@ func main() {
 	)
 
 	// 绑定服务（暴露给前端）。
-	sysSvc := &api.SystemService{AppVersion: currentVersion}
+	sysSvc := &api.SystemService{AppVersion: currentVersion, ChangelogURL: changelogURL}
 	app := application.New(application.Options{
 		Name:        "clip",
 		Description: "简单好用的跨平台 RSS 阅读器",

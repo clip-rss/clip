@@ -30,6 +30,14 @@ export function CheckForUpdatesSilent() {
 }
 
 /**
+ * FetchChangelog 从 ChangelogURL 拉取原始 Markdown 文本返回给前端渲染。
+ * @returns {$CancellablePromise<string>}
+ */
+export function FetchChangelog() {
+    return $Call.ByID(3553216659);
+}
+
+/**
  * IsOnline 探测网络连通性，返回 true 表示在线，false 表示离线。
  * 
  * 实现方式：尝试连接 Google Public DNS (8.8.8.8:53)，超时 2 秒。

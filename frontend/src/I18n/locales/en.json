@@ -267,6 +267,7 @@
       "version": "Version {{version}}",
       "desc": "A simple cross-platform RSS reader",
       "updateAvailable": "New Version Available",
+      "changelogError": "Failed to load changelog",
       "links": {
         "sourceCode": "Source Code (Github)",
         "reportBug": "Report Bug",

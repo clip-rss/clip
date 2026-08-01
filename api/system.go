@@ -1,7 +1,10 @@
 package api
 
 import (
+	"fmt"
+	"io"
 	"net"
+	"net/http"
 	"runtime"
 	"time"
 
@@ -22,6 +25,9 @@ type SystemService struct {
 
 	// AppVersion 由 main.go 注入当前应用版本号（与更新检查使用的版本一致）。
 	AppVersion string
+
+	// ChangelogURL 由 main.go 注入，指向 CHANGELOG.md 的 raw 地址。
+	ChangelogURL string
 }
 
 // Platform 返回当前运行的操作系统标识。
@@ -55,6 +61,27 @@ func (s *SystemService) CheckForUpdatesSilent() {
 	if s.CheckSilentFn != nil {
 		s.CheckSilentFn()
 	}
+}
+
+// FetchChangelog 从 ChangelogURL 拉取原始 Markdown 文本返回给前端渲染。
+func (s *SystemService) FetchChangelog() (string, error) {
+	if s.ChangelogURL == "" {
+		return "", fmt.Errorf("changelog url not configured")
+	}
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(s.ChangelogURL)
+	if err != nil {
+		return "", fmt.Errorf("fetch changelog: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("fetch changelog: HTTP %d", resp.StatusCode)
+	}
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 512<<10)) // 512 KB cap
+	if err != nil {
+		return "", fmt.Errorf("read changelog: %w", err)
+	}
+	return string(body), nil
 }
 
 // IsOnline 探测网络连通性，返回 true 表示在线，false 表示离线。

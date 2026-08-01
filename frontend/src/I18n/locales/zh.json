@@ -267,6 +267,7 @@
       "version": "版本 {{version}}",
       "desc": "简单好用的跨平台 RSS 阅读器",
       "updateAvailable": "新版本可用",
+      "changelogError": "更新日志加载失败",
       "links": {
         "sourceCode": "Source Code (Github)",
         "reportBug": "Report Bug",

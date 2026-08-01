@@ -3,6 +3,9 @@
 .Thumbs.db
 .idea
 .vscode
+.claude
+CLAUDE.md
+AGENT.md
 bin
 frontend/dist
 frontend/node_modules
