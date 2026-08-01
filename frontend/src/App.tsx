@@ -54,6 +54,46 @@ function App() {
     }
   }, [])
 
+  // 应用 reduce-motion 设置
+  useEffect(() => {
+    const settings = useSettingsStore.getState().settings
+    if (settings?.reduceMotion) {
+      document.documentElement.classList.add('reduce-motion')
+    } else {
+      document.documentElement.classList.remove('reduce-motion')
+    }
+
+    const unsubscribe = useSettingsStore.subscribe((state) => {
+      if (state.settings?.reduceMotion) {
+        document.documentElement.classList.add('reduce-motion')
+      } else {
+        document.documentElement.classList.remove('reduce-motion')
+      }
+    })
+
+    return unsubscribe
+  }, [])
+
+  // 应用焦点指示器设置
+  useEffect(() => {
+    const settings = useSettingsStore.getState().settings
+    if (settings?.showFocusIndicator === false) {
+      document.documentElement.classList.add('hide-focus-indicator')
+    } else {
+      document.documentElement.classList.remove('hide-focus-indicator')
+    }
+
+    const unsubscribe = useSettingsStore.subscribe((state) => {
+      if (state.settings?.showFocusIndicator === false) {
+        document.documentElement.classList.add('hide-focus-indicator')
+      } else {
+        document.documentElement.classList.remove('hide-focus-indicator')
+      }
+    })
+
+    return unsubscribe
+  }, [])
+
   return (
     <>
       <Layout

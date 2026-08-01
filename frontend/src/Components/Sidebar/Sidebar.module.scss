@@ -154,6 +154,13 @@
   opacity: 0.7;
 }
 
+.errorMark {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--danger);
+  line-height: 1;
+}
+
 .badge {
   flex-shrink: 0;
   min-width: 20px;

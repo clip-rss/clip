@@ -37,6 +37,7 @@
       "expand": "展开",
       "collapse": "折叠"
     },
+    "feedError": "订阅源获取失败",
     "refresh": "手动更新 (R)",
     "addMenu": "添加菜单"
   },
@@ -149,6 +150,10 @@
       "itemsUnit": "篇",
       "launchMinimized": "启动时最小化",
       "launchMinimizedDesc": "重启应用后生效",
+      "reduceMotion": "减弱动画效果",
+      "reduceMotionDesc": "关闭界面动画和过渡效果，提升无障碍体验",
+      "showFocusIndicator": "显示焦点指示器",
+      "showFocusIndicatorDesc": "键盘导航时显示焦点边框，帮助识别当前聚焦的元素",
       "language": "语言",
       "languageDesc": "界面显示语言"
     },

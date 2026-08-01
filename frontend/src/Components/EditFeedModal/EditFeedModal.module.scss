@@ -3,9 +3,19 @@
   to { opacity: 1; }
 }
 
+@keyframes overlayOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 @keyframes contentIn {
   from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
   to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes contentOut {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
 }
 
 .overlay {
@@ -14,6 +24,10 @@
   background-color: rgba(0, 0, 0, 0.4);
   z-index: 100;
   animation: overlayIn 0.15s ease;
+
+  &[data-state='closed'] {
+    animation: overlayOut 0.15s ease;
+  }
 }
 
 .content {
@@ -28,6 +42,28 @@
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
   z-index: 101;
   animation: contentIn 0.15s ease;
+
+  &[data-state='closed'] {
+    animation: contentOut 0.15s ease;
+  }
+}
+
+/* 减弱动画模式 */
+@media (prefers-reduced-motion: reduce) {
+  .overlay {
+    animation: none;
+  }
+  .content {
+    animation: none;
+  }
+}
+
+.reduce-motion .overlay {
+  animation: none;
+}
+
+.reduce-motion .content {
+  animation: none;
 }
 
 .header {

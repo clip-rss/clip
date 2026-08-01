@@ -2,7 +2,13 @@ import { create } from 'zustand'
 import { ItemService, toApiError } from '../Utils'
 import { useSidebarStore } from './SidebarStore'
 import { useSettingsStore } from './SettingsStore'
-import type { ArticleFilter, ArticleSort, Item, ItemLight, Selection } from '../Types'
+import type {
+  ArticleFilter,
+  ArticleSort,
+  Item,
+  ItemLight,
+  Selection,
+} from '../Types'
 
 /** 单次拉取上限：客户端筛选/排序 + 虚拟滚动，足够覆盖常规留存量。 */
 const LOAD_LIMIT = 2000

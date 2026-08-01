@@ -82,7 +82,11 @@ function Sidebar(props: SidebarProps): JSX.Element {
   }
 
   return (
-    <div className={styles.sidebar}>
+    <div
+      className={styles.sidebar}
+      role="navigation"
+      aria-label={t('sidebar.title')}
+    >
       <header className={styles.header}>
         <span className={styles.headerTitle}>{t('sidebar.title')}</span>
         <AddMenu
@@ -91,7 +95,7 @@ function Sidebar(props: SidebarProps): JSX.Element {
         />
       </header>
 
-      <div className={styles.tree} role="tree">
+      <div className={styles.tree} role="tree" aria-label={t('sidebar.title')}>
         <div
           className={clsx(
             styles.row,
@@ -100,8 +104,16 @@ function Sidebar(props: SidebarProps): JSX.Element {
           )}
           style={{ paddingLeft: rowPaddingLeft(0) }}
           onClick={() => select({ kind: 'all' })}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              select({ kind: 'all' })
+            }
+          }}
           role="treeitem"
           aria-selected={allSelected}
+          aria-label={t('sidebar.allArticles')}
+          tabIndex={0}
         >
           <span className={styles.chevronSlot} />
           <InboxIcon size={16} className={styles.feedIcon} />

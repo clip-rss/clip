@@ -105,6 +105,28 @@ export function GeneralSection(): JSX.Element {
           label={t('settings.general.launchMinimized')}
         />
       </SettingRow>
+
+      <SettingRow
+        label={t('settings.general.reduceMotion')}
+        description={t('settings.general.reduceMotionDesc')}
+      >
+        <Toggle
+          checked={settings?.reduceMotion ?? false}
+          onChange={(v) => update({ reduceMotion: v })}
+          label={t('settings.general.reduceMotion')}
+        />
+      </SettingRow>
+
+      <SettingRow
+        label={t('settings.general.showFocusIndicator')}
+        description={t('settings.general.showFocusIndicatorDesc')}
+      >
+        <Toggle
+          checked={settings?.showFocusIndicator ?? true}
+          onChange={(v) => update({ showFocusIndicator: v })}
+          label={t('settings.general.showFocusIndicator')}
+        />
+      </SettingRow>
     </div>
   )
 }

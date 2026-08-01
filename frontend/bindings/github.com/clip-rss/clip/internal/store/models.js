@@ -823,6 +823,22 @@ export class Settings {
              */
             this["launchMinimized"] = false;
         }
+        if (!("reduceMotion" in $$source)) {
+            /**
+             * 减弱动画效果（无障碍）
+             * @member
+             * @type {boolean}
+             */
+            this["reduceMotion"] = false;
+        }
+        if (!("showFocusIndicator" in $$source)) {
+            /**
+             * 显示焦点指示器（无障碍）
+             * @member
+             * @type {boolean}
+             */
+            this["showFocusIndicator"] = false;
+        }
         if (!("windowWidth" in $$source)) {
             /**
              * 主窗口上次关闭时的宽度

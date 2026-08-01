@@ -37,6 +37,7 @@
       "expand": "Expand",
       "collapse": "Collapse"
     },
+    "feedError": "Failed to fetch feed",
     "refresh": "Refresh (R)",
     "addMenu": "Add menu"
   },
@@ -149,6 +150,10 @@
       "itemsUnit": "items",
       "launchMinimized": "Launch minimized",
       "launchMinimizedDesc": "Takes effect after restart",
+      "reduceMotion": "Reduce motion",
+      "reduceMotionDesc": "Disable animations and transitions for better accessibility",
+      "showFocusIndicator": "Show focus indicator",
+      "showFocusIndicatorDesc": "Display focus outline when navigating with keyboard",
       "language": "Language",
       "languageDesc": "Interface display language"
     },

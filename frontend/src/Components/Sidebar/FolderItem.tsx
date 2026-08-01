@@ -70,13 +70,27 @@ function FolderItem(props: FolderItemProps): JSX.Element {
             )}
             style={{ paddingLeft: rowPaddingLeft(depth) }}
             onClick={() => select({ kind: 'category', id: category.id })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                select({ kind: 'category', id: category.id })
+              } else if (e.key === 'ArrowLeft' && expanded) {
+                e.preventDefault()
+                toggleExpand(category.id)
+              } else if (e.key === 'ArrowRight' && !expanded) {
+                e.preventDefault()
+                toggleExpand(category.id)
+              }
+            }}
             onDragOver={handleDragOver}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             role="treeitem"
             aria-expanded={expanded}
             aria-selected={selected}
+            aria-label={category.name}
             title={category.name}
+            tabIndex={0}
           >
             <button
               type="button"

@@ -7,143 +7,222 @@
 
 /* ===== 亮色主题（默认） ===== */
 :root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f3f4f6;
-  --bg-tertiary: #e5e7eb;
-  --text-primary: #111827;
-  --text-secondary: #586372;
-  --accent: #2563eb;
-  --star: #d97706;
-  --danger: #b91c1c;
-  --border: #e5e7eb;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --bg-primary: #ffffff;
+    --bg-secondary: #f3f4f6;
+    --bg-tertiary: #e5e7eb;
+    --text-primary: #111827;
+    --text-secondary: #586372;
+    --accent: #2563eb;
+    --star: #d97706;
+    --danger: #b91c1c;
+    --border: #e5e7eb;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
-  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     sans-serif;
-  --font-size-base: 14px;
-  --font-size-small: 12px;
-  --font-size-title: 16px;
-  --radius-card: 6px;
-  --radius-button: 4px;
+    --font-size-base: 14px;
+    --font-size-small: 12px;
+    --font-size-title: 16px;
+    --radius-card: 8px;
+    --radius-button: 8px;
 }
 
 /* ===== 亮色主题（显式类，用于阅读区独立背景在暗色应用下重置 token） ===== */
 /* 注意：主题类统一加 theme- 前缀，避免与 Tailwind 内置滤镜工具类（如 .sepia）同名，
    否则 --tw-sepia 会级联到整棵子树，给图片等叠加真实的 sepia 滤镜。 */
 .theme-light {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f3f4f6;
-  --bg-tertiary: #e5e7eb;
-  --text-primary: #111827;
-  --text-secondary: #586372;
-  --accent: #2563eb;
-  --star: #d97706;
-  --danger: #b91c1c;
-  --border: #e5e7eb;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --bg-primary: #ffffff;
+    --bg-secondary: #f3f4f6;
+    --bg-tertiary: #e5e7eb;
+    --text-primary: #111827;
+    --text-secondary: #586372;
+    --accent: #2563eb;
+    --star: #d97706;
+    --danger: #b91c1c;
+    --border: #e5e7eb;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 /* ===== 暗色主题 ===== */
 .theme-dark {
-  --bg-primary: #1e1e1e;
-  --bg-secondary: #252526;
-  --bg-tertiary: #333333;
-  --text-primary: #e5e7eb;
-  --text-secondary: #9ca3af;
-  --accent: #60a5fa;
-  --star: #fbbf24;
-  --danger: #f87171;
-  --border: #3a3a3c;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #252526;
+    --bg-tertiary: #333333;
+    --text-primary: #e5e7eb;
+    --text-secondary: #9ca3af;
+    --accent: #60a5fa;
+    --star: #fbbf24;
+    --danger: #f87171;
+    --border: #3a3a3c;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 /* ===== Sepia 护眼主题 ===== */
 .theme-sepia {
-  --bg-primary: #f5ecd7;
-  --bg-secondary: #ede0c8;
-  --bg-tertiary: #e2d3b8;
-  --text-primary: #3b2e1e;
-  --text-secondary: #6b5a42;
-  --accent: #7c5c2e;
-  --star: #a9701c;
-  --danger: #a83232;
-  --border: #d6c4a0;
-  --shadow: 0 2px 8px rgba(59, 46, 30, 0.12);
+    --bg-primary: #f5ecd7;
+    --bg-secondary: #ede0c8;
+    --bg-tertiary: #e2d3b8;
+    --text-primary: #3b2e1e;
+    --text-secondary: #6b5a42;
+    --accent: #7c5c2e;
+    --star: #a9701c;
+    --danger: #a83232;
+    --border: #d6c4a0;
+    --shadow: 0 2px 8px rgba(59, 46, 30, 0.12);
 }
 
 /* ===== Tailwind v4 主题映射 ===== */
 @theme {
-  --color-bg-primary: var(--bg-primary);
-  --color-bg-secondary: var(--bg-secondary);
-  --color-bg-tertiary: var(--bg-tertiary);
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-accent: var(--accent);
-  --color-star: var(--star);
-  --color-danger: var(--danger);
-  --color-border: var(--border);
+    --color-bg-primary: var(--bg-primary);
+    --color-bg-secondary: var(--bg-secondary);
+    --color-bg-tertiary: var(--bg-tertiary);
+    --color-text-primary: var(--text-primary);
+    --color-text-secondary: var(--text-secondary);
+    --color-accent: var(--accent);
+    --color-star: var(--star);
+    --color-danger: var(--danger);
+    --color-border: var(--border);
 }
 
 /* ===== 全局基础样式 ===== */
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 html,
 body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  font-family: var(--font-family);
-  font-size: var(--font-size-base);
-  color: var(--text-primary);
-  background-color: var(--bg-primary);
-  cursor: default;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 a[href] {
-  cursor: pointer;
+    cursor: pointer;
 }
 
 input,
 textarea,
 [contenteditable="true"] {
-  cursor: text;
-  user-select: text;
+    cursor: text;
+    user-select: text;
 }
 
 .selectable {
-  user-select: text;
+    user-select: text;
 }
 
 #root {
-  width: 100%;
-  height: 100%;
+    width: 100%;
+    height: 100%;
 }
 
 /* ===== 滚动条统一样式 ===== */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+    width: 4px;
+    height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--border);
-  border-radius: 2px;
+    background-color: var(--border);
+    border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--text-secondary);
+    background-color: var(--text-secondary);
+}
+
+/* ===== 焦点指示器（无障碍） ===== */
+/* 亮色主题：深色边框 */
+:root {
+    --focus-ring: 2px solid #2563eb;
+    --focus-ring-offset: 2px;
+}
+
+/* 暗色主题：浅色边框 */
+.theme-dark {
+    --focus-ring: 2px solid #60a5fa;
+}
+
+/* Sepia 主题：适配护眼色 */
+.theme-sepia {
+    --focus-ring: 2px solid #7c5c2e;
+}
+
+/* 为所有可交互元素添加焦点样式 */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible,
+[role="button"]:focus-visible,
+[role="link"]:focus-visible,
+[role="menuitem"]:focus-visible,
+[role="tab"]:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: var(--focus-ring-offset);
+}
+
+/* 移除默认焦点样式（仅当使用 focus-visible 时） */
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+[tabindex]:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* 用户手动关闭焦点指示器 */
+.hide-focus-indicator button:focus-visible,
+.hide-focus-indicator a:focus-visible,
+.hide-focus-indicator input:focus-visible,
+.hide-focus-indicator textarea:focus-visible,
+.hide-focus-indicator select:focus-visible,
+.hide-focus-indicator [tabindex]:focus-visible,
+.hide-focus-indicator [role="button"]:focus-visible,
+.hide-focus-indicator [role="link"]:focus-visible,
+.hide-focus-indicator [role="menuitem"]:focus-visible,
+.hide-focus-indicator [role="tab"]:focus-visible {
+    outline: none;
+}
+
+/* ===== 减弱动画支持（无障碍） ===== */
+/* 用户系统偏好：减少动画 */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* 用户手动关闭动画（通过设置面板） */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
 }

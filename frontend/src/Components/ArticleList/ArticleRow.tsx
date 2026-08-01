@@ -43,9 +43,17 @@ function ArticleRow(props: ArticleRowProps): JSX.Element {
     <div
       className={clsx(styles.row, selected && styles.rowSelected)}
       onClick={() => onSelect(item.id)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelect(item.id)
+        }
+      }}
       role="option"
       aria-selected={selected}
+      aria-label={item.title}
       title={item.title}
+      tabIndex={0}
     >
       <span
         className={clsx(styles.dot, item.isRead && styles.dotRead)}

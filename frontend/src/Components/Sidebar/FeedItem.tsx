@@ -36,6 +36,8 @@ function FeedItem(props: FeedItemProps): JSX.Element {
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const paused = feed.status === 'paused'
+  const hasError =
+    feed.status === 'error' || (feed.errorCount > 0 && feed.lastError)
 
   function handleDragStart(e: React.DragEvent): void {
     e.dataTransfer.setData(FEED_DRAG_TYPE, String(feed.id))
@@ -56,9 +58,17 @@ function FeedItem(props: FeedItemProps): JSX.Element {
             draggable={!editing}
             onDragStart={handleDragStart}
             onClick={() => select({ kind: 'feed', id: feed.id })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                select({ kind: 'feed', id: feed.id })
+              }
+            }}
             role="treeitem"
             aria-selected={selected}
+            aria-label={feed.title}
             title={feed.title}
+            tabIndex={0}
           >
             <span className={styles.chevronSlot} />
             <FeedFavicon icon={feed.icon} title={feed.title} />
@@ -76,6 +86,15 @@ function FeedItem(props: FeedItemProps): JSX.Element {
             )}
             {paused ? (
               <PauseIcon size={12} className={styles.pausedMark} />
+            ) : null}
+            {hasError ? (
+              <span
+                className={styles.errorMark}
+                title={feed.lastError || t('sidebar.feedError')}
+                aria-label={t('sidebar.feedError')}
+              >
+                ⚠
+              </span>
             ) : null}
             {!editing ? <UnreadBadge count={feed.unreadCount} /> : null}
           </div>

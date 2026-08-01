@@ -7,6 +7,15 @@
   }
 }
 
+@keyframes overlayOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 @keyframes contentIn {
   from {
     opacity: 0;
@@ -15,6 +24,17 @@
   to {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes contentOut {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
   }
 }
 
@@ -35,6 +55,10 @@
   background-color: rgba(0, 0, 0, 0.4);
   z-index: 100;
   animation: overlayIn 0.15s ease;
+
+  &[data-state='closed'] {
+    animation: overlayOut 0.15s ease;
+  }
 }
 
 .content {
@@ -54,6 +78,28 @@
   z-index: 101;
   overflow: hidden;
   animation: contentIn 0.15s ease;
+
+  &[data-state='closed'] {
+    animation: contentOut 0.15s ease;
+  }
+}
+
+/* 减弱动画模式 */
+@media (prefers-reduced-motion: reduce) {
+  .overlay {
+    animation: none;
+  }
+  .content {
+    animation: none;
+  }
+}
+
+.reduce-motion .overlay {
+  animation: none;
+}
+
+.reduce-motion .content {
+  animation: none;
 }
 
 /* ===== 头部 ===== */
@@ -83,9 +129,8 @@
   border-radius: var(--radius-button);
   background: transparent;
   color: var(--text-secondary);
-  transition:
-    background-color 0.15s,
-    color 0.15s;
+  transition: background-color 0.15s,
+  color 0.15s;
 
   &:hover {
     background-color: var(--bg-secondary);
@@ -122,10 +167,9 @@
   color: var(--text-secondary);
   font-size: 14px;
   text-align: left;
-  transition:
-    background-color 0.15s,
-    color 0.15s,
-    box-shadow 0.15s;
+  transition: background-color 0.15s,
+  color 0.15s,
+  box-shadow 0.15s;
 
   &:hover {
     background-color: var(--bg-tertiary);
@@ -230,10 +274,9 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
   pointer-events: none;
   transform: translateX(var(--seg-indicator-offset));
-  transition:
-    transform 0.2s cubic-bezier(0.2, 0, 0.2, 1),
-    background-color 0.15s,
-    box-shadow 0.15s;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1),
+  background-color 0.15s,
+  box-shadow 0.15s;
   z-index: 0;
 }
 
@@ -250,9 +293,8 @@
   background: transparent;
   color: var(--text-secondary);
   font-size: 13px;
-  transition:
-    background-color 0.15s,
-    color 0.15s;
+  transition: background-color 0.15s,
+  color 0.15s;
 
   &:hover {
     color: var(--text-primary);
@@ -279,6 +321,8 @@
 
 /* ===== 下拉选择 ===== */
 .select {
+  //appearance: none;
+  //-webkit-appearance: none;
   height: 34px;
   min-width: 120px;
   padding: 0 10px;
@@ -522,6 +566,7 @@
   /* 隐藏数字输入框的箭头 */
   &[type='number'] {
     appearance: textfield;
+
     &::-webkit-inner-spin-button,
     &::-webkit-outer-spin-button {
       appearance: none;

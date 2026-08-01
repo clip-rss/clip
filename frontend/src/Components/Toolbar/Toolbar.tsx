@@ -137,7 +137,9 @@ function Toolbar(props: ToolbarProps): JSX.Element {
           aria-label={t('toolbar.settings')}
           style={updateAvailable ? { position: 'relative' } : undefined}
         >
-          <SettingsIcon className={updateAvailable ? styles.settingsSpinning : undefined} />
+          <SettingsIcon
+            className={updateAvailable ? styles.settingsSpinning : undefined}
+          />
           {updateAvailable && <span className={styles.updateBadge} />}
         </button>
       </div>

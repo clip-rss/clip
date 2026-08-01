@@ -6,6 +6,7 @@ import { onItemsUpdated } from '../../Utils'
 import ListHeader from './ListHeader'
 import ArticleRow from './ArticleRow'
 import EmptyState from './EmptyState'
+import ArticleListSkeleton from './ArticleListSkeleton'
 import styles from './ArticleList.module.scss'
 
 const ROW_HEIGHT = 88
@@ -69,6 +70,7 @@ function ArticleList(): JSX.Element {
 
   const busy = loading || (searchActive && searching)
   const showEmpty = !busy && visibleItems.length === 0
+  const showSkeleton = busy && visibleItems.length === 0
 
   return (
     <div className={styles.list}>
@@ -83,7 +85,9 @@ function ArticleList(): JSX.Element {
         resultCount={visibleItems.length}
       />
 
-      {showEmpty ? (
+      {showSkeleton ? (
+        <ArticleListSkeleton />
+      ) : showEmpty ? (
         <EmptyState
           filter={filter}
           searchQuery={searchActive ? searchQuery : undefined}
