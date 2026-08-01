@@ -5,11 +5,11 @@
 	"info": {
 		"0000": {
 			"ProductVersion": "0.1.0",
-			"CompanyName": "My Company",
-			"FileDescription": "A clip application",
-			"LegalCopyright": "© 2026, My Company",
-			"ProductName": "My Product",
-			"Comments": "This is a comment"
+			"CompanyName": "Clip RSS",
+			"FileDescription": "A simple cross-platform RSS reader",
+			"LegalCopyright": "© 2026 Clip RSS",
+			"ProductName": "Clip",
+			"Comments": "A simple cross-platform RSS reader"
 		}
 	}
 }

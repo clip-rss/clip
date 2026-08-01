@@ -56,7 +56,7 @@ const (
 
 const (
 	currentVersion = "0.1.0"
-	repo           = "ultrazg/horizon"
+	repo           = "clip-rss/clip"
 )
 
 // updaterI18nDict 解析出 en/zh 两份 locale 的 "updater" 段，拼成 {en:{...},zh:{...}} 的

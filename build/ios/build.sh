@@ -3,7 +3,7 @@ set -e
 
 # Build configuration
 APP_NAME="clip"
-BUNDLE_ID="com.example.clip"
+BUNDLE_ID="io.github.cliprss.clip"
 VERSION="0.1.0"
 BUILD_NUMBER="0.1.0"
 BUILD_DIR="build/ios"
