@@ -137,8 +137,8 @@
     },
     "general": {
       "title": "General",
-      "updateInterval": "Default update interval",
-      "updateIntervalDesc": "Auto-refresh interval for new feeds; select \"Manual\" to disable",
+      "updateInterval": "Global update interval",
+      "updateIntervalDesc": "Set the auto-refresh interval for all feeds; select \"Manual\" to disable all automatic refreshes",
       "updateIntervalOptions": {
         "15m": "15 min",
         "30m": "30 min",

@@ -512,7 +512,11 @@ func main() {
 	)
 
 	// 绑定服务（暴露给前端）。
-	sysSvc := &api.SystemService{AppVersion: currentVersion, ChangelogURL: changelogURL}
+	sysSvc := &api.SystemService{
+		AppVersion:      currentVersion,
+		ChangelogURL:    changelogURL,
+		OnlineChangedFn: func(online bool) { sch.SetOfflineMode(!online) },
+	}
 	app := application.New(application.Options{
 		Name:        "clip",
 		Description: "简单好用的跨平台 RSS 阅读器",
@@ -619,10 +623,19 @@ func main() {
 
 	// macOS：应用启动完毕后请求通知权限（用户授权后通知才能弹出）。
 	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(event *application.ApplicationEvent) {
-		notifSvc.RequestNotificationAuthorization()
+		granted, err := notifSvc.RequestNotificationAuthorization()
+		if err != nil {
+			log.Printf("notification authorization failed: %v", err)
+			return
+		}
+		if !granted {
+			log.Printf("notification authorization was not granted")
+		}
 	})
 
 	// 启动后台调度（此时 application.Get() 已可用于事件推送）。
+	// WebView 尚未上报 navigator.onLine 前按离线处理，避免断网启动时先发出一轮请求。
+	sch.SetOfflineMode(true)
 	sch.Start(context.Background())
 
 	// 退出时优雅停机：先停调度，再关数据库。

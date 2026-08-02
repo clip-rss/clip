@@ -7,6 +7,7 @@ package notify
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/clip-rss/clip/internal/scheduler"
 	"github.com/clip-rss/clip/internal/store"
@@ -102,23 +103,33 @@ func joinFirst(ss []string, sep string) string {
 
 // Service 通知服务：读取设置并根据计划发送。
 type Service struct {
-	settings SettingsProvider
-	sender   Sender
+	settings    SettingsProvider
+	sender      Sender
+	reportError func(error)
 }
 
 // NewService 创建通知服务。
 func NewService(sp SettingsProvider, sd Sender) *Service {
-	return &Service{settings: sp, sender: sd}
+	return &Service{
+		settings: sp,
+		sender:   sd,
+		reportError: func(err error) {
+			log.Printf("notification: %v", err)
+		},
+	}
 }
 
 // Notify 实现 scheduler.Notifier 接口。
 func (s *Service) Notify(ctx context.Context, feed store.Feed, items []scheduler.NewItem) {
 	cfg, err := s.settings.GetSettings()
 	if err != nil {
+		s.reportError(fmt.Errorf("load settings: %w", err))
 		return
 	}
 	msgs := Plan(cfg.NotificationMode, feed.Title, items)
 	for _, msg := range msgs {
-		_ = s.sender.Send(msg)
+		if err := s.sender.Send(msg); err != nil {
+			s.reportError(fmt.Errorf("send %s: %w", msg.ID, err))
+		}
 	}
 }

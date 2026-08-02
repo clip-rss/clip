@@ -207,7 +207,7 @@ func (s *Store) GetCategoryWithFeeds(categoryID int64) (*CategoryWithFeeds, erro
 
 	query := `
 		SELECT f.id, f.url, f.title, f.description, f.link, f.icon, f.category_id,
-		       f.update_interval, f.max_items, f.last_updated, f.error_count, f.last_error,
+		       f.update_interval, f.max_items, f.last_updated, f.last_attempted, f.error_count, f.last_error,
 		       f.status, f.created_at, f.updated_at,
 		       COALESCE(COUNT(CASE WHEN i.is_read = 0 THEN 1 END), 0) as unread_count
 		FROM feeds f
@@ -236,6 +236,7 @@ func (s *Store) GetCategoryWithFeeds(categoryID int64) (*CategoryWithFeeds, erro
 			&fwu.UpdateInterval,
 			&fwu.MaxItems,
 			&fwu.LastUpdated,
+			&fwu.LastAttempted,
 			&fwu.ErrorCount,
 			&fwu.LastError,
 			&fwu.Status,
@@ -263,7 +264,7 @@ func (s *Store) GetCategoryWithFeeds(categoryID int64) (*CategoryWithFeeds, erro
 func (s *Store) GetUncategorizedFeeds() ([]FeedWithUnread, error) {
 	query := `
 		SELECT f.id, f.url, f.title, f.description, f.link, f.icon, f.category_id,
-		       f.update_interval, f.max_items, f.last_updated, f.error_count, f.last_error,
+		       f.update_interval, f.max_items, f.last_updated, f.last_attempted, f.error_count, f.last_error,
 		       f.status, f.created_at, f.updated_at,
 		       COALESCE(COUNT(CASE WHEN i.is_read = 0 THEN 1 END), 0) as unread_count
 		FROM feeds f
@@ -292,6 +293,7 @@ func (s *Store) GetUncategorizedFeeds() ([]FeedWithUnread, error) {
 			&fwu.UpdateInterval,
 			&fwu.MaxItems,
 			&fwu.LastUpdated,
+			&fwu.LastAttempted,
 			&fwu.ErrorCount,
 			&fwu.LastError,
 			&fwu.Status,

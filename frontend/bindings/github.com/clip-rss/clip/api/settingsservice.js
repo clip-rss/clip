@@ -81,7 +81,7 @@ export function TestProxy(host, port) {
 }
 
 /**
- * UpdateSettings 保存全局设置并同步调度器与代理配置。
+ * UpdateSettings 保存全局设置；间隔变化时同步应用到全部现有订阅源和调度器。
  * @param {store$0.Settings} settings
  * @returns {$CancellablePromise<void>}
  */

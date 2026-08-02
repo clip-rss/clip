@@ -1,11 +1,28 @@
 package notify
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
 	"github.com/clip-rss/clip/internal/scheduler"
+	"github.com/clip-rss/clip/internal/store"
 )
+
+type fakeSettingsProvider struct {
+	settings store.Settings
+	err      error
+}
+
+func (p fakeSettingsProvider) GetSettings() (store.Settings, error) {
+	return p.settings, p.err
+}
+
+type fakeSender struct {
+	err error
+}
+
+func (s fakeSender) Send(Message) error { return s.err }
 
 func items(n int) []scheduler.NewItem {
 	out := make([]scheduler.NewItem, n)
@@ -82,4 +99,35 @@ func TestJoinTitles(t *testing.T) {
 	if strings.Contains(short, "等") {
 		t.Errorf("should not truncate 2 items, got %q", short)
 	}
+}
+
+func TestServiceReportsSettingsAndSendErrors(t *testing.T) {
+	t.Run("settings", func(t *testing.T) {
+		want := errors.New("settings unavailable")
+		svc := NewService(fakeSettingsProvider{err: want}, fakeSender{})
+		var got error
+		svc.reportError = func(err error) { got = err }
+
+		svc.Notify(t.Context(), store.Feed{Title: "feed"}, items(1))
+
+		if !errors.Is(got, want) {
+			t.Fatalf("reported error = %v, want settings error", got)
+		}
+	})
+
+	t.Run("send", func(t *testing.T) {
+		want := errors.New("notification rejected")
+		svc := NewService(
+			fakeSettingsProvider{settings: store.Settings{NotificationMode: ModeEach}},
+			fakeSender{err: want},
+		)
+		var got error
+		svc.reportError = func(err error) { got = err }
+
+		svc.Notify(t.Context(), store.Feed{Title: "feed"}, items(1))
+
+		if !errors.Is(got, want) {
+			t.Fatalf("reported error = %v, want send error", got)
+		}
+	})
 }

@@ -84,10 +84,9 @@ func (f *Fetcher) fetch(ctx context.Context, feedURL string, cond ConditionalHea
 		return nil, nil, err
 	}
 
-	// 记录新的缓存校验头，供下次条件 GET 使用。
-	f.setCond(feedURL, ConditionalHeaders{ETag: result.ETag, LastModified: result.LastModified})
-
 	if result.NotModified {
+		// 304 沿用已验证内容对应的校验头；响应可能补充新的 validator。
+		f.setCond(feedURL, ConditionalHeaders{ETag: result.ETag, LastModified: result.LastModified})
 		return nil, result, nil
 	}
 
@@ -98,6 +97,8 @@ func (f *Fetcher) fetch(ctx context.Context, feedURL string, cond ConditionalHea
 
 	CleanFeed(feed)
 	feed.Items = Dedup(feed.Items)
+	// 仅在内容成功解析后更新 validator，避免损坏响应的 ETag 导致下次 304 被误判为成功。
+	f.setCond(feedURL, ConditionalHeaders{ETag: result.ETag, LastModified: result.LastModified})
 	return feed, result, nil
 }
 

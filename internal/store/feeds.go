@@ -40,7 +40,7 @@ func (s *Store) CreateFeed(feed *Feed) error {
 func (s *Store) GetFeed(id int64) (*Feed, error) {
 	query := `
 		SELECT id, url, title, description, link, icon, category_id, update_interval, max_items,
-		       last_updated, error_count, last_error, status, created_at, updated_at
+		       last_updated, last_attempted, error_count, last_error, status, created_at, updated_at
 		FROM feeds WHERE id = ?
 	`
 	feed := &Feed{}
@@ -55,6 +55,7 @@ func (s *Store) GetFeed(id int64) (*Feed, error) {
 		&feed.UpdateInterval,
 		&feed.MaxItems,
 		&feed.LastUpdated,
+		&feed.LastAttempted,
 		&feed.ErrorCount,
 		&feed.LastError,
 		&feed.Status,
@@ -74,7 +75,7 @@ func (s *Store) GetFeed(id int64) (*Feed, error) {
 func (s *Store) GetFeedByURL(url string) (*Feed, error) {
 	query := `
 		SELECT id, url, title, description, link, icon, category_id, update_interval, max_items,
-		       last_updated, error_count, last_error, status, created_at, updated_at
+		       last_updated, last_attempted, error_count, last_error, status, created_at, updated_at
 		FROM feeds WHERE url = ?
 	`
 	feed := &Feed{}
@@ -89,6 +90,7 @@ func (s *Store) GetFeedByURL(url string) (*Feed, error) {
 		&feed.UpdateInterval,
 		&feed.MaxItems,
 		&feed.LastUpdated,
+		&feed.LastAttempted,
 		&feed.ErrorCount,
 		&feed.LastError,
 		&feed.Status,
@@ -108,7 +110,7 @@ func (s *Store) GetFeedByURL(url string) (*Feed, error) {
 func (s *Store) ListFeeds() ([]Feed, error) {
 	query := `
 		SELECT id, url, title, description, link, icon, category_id, update_interval, max_items,
-		       last_updated, error_count, last_error, status, created_at, updated_at
+		       last_updated, last_attempted, error_count, last_error, status, created_at, updated_at
 		FROM feeds ORDER BY created_at DESC
 	`
 	rows, err := s.db.Query(query)
@@ -131,6 +133,7 @@ func (s *Store) ListFeeds() ([]Feed, error) {
 			&feed.UpdateInterval,
 			&feed.MaxItems,
 			&feed.LastUpdated,
+			&feed.LastAttempted,
 			&feed.ErrorCount,
 			&feed.LastError,
 			&feed.Status,
@@ -149,7 +152,7 @@ func (s *Store) ListFeeds() ([]Feed, error) {
 func (s *Store) ListFeedsWithUnread() ([]FeedWithUnread, error) {
 	query := `
 		SELECT f.id, f.url, f.title, f.description, f.link, f.icon, f.category_id,
-		       f.update_interval, f.max_items, f.last_updated, f.error_count, f.last_error,
+		       f.update_interval, f.max_items, f.last_updated, f.last_attempted, f.error_count, f.last_error,
 		       f.status, f.created_at, f.updated_at,
 		       COALESCE(COUNT(CASE WHEN i.is_read = 0 THEN 1 END), 0) as unread_count
 		FROM feeds f
@@ -177,6 +180,7 @@ func (s *Store) ListFeedsWithUnread() ([]FeedWithUnread, error) {
 			&fwu.UpdateInterval,
 			&fwu.MaxItems,
 			&fwu.LastUpdated,
+			&fwu.LastAttempted,
 			&fwu.ErrorCount,
 			&fwu.LastError,
 			&fwu.Status,
@@ -307,15 +311,14 @@ func (s *Store) UpdateFeedLastUpdated(id int64, t time.Time) error {
 	return nil
 }
 
-// GetFeedsForUpdate 获取需要更新的订阅源（根据 update_interval）
-func (s *Store) GetFeedsForUpdate() ([]Feed, error) {
+// ListActiveFeeds 获取全部活跃订阅源；具体间隔与退避判定由调度器统一完成。
+func (s *Store) ListActiveFeeds() ([]Feed, error) {
 	query := `
-		SELECT id, url, title, description, link, icon, category_id, update_interval, max_items,
-		       last_updated, error_count, last_error, status, created_at, updated_at
-		FROM feeds
-		WHERE status = 'active'
-		  AND (last_updated IS NULL OR datetime(last_updated, '+' || update_interval || ' minutes') <= datetime('now'))
-		ORDER BY last_updated ASC NULLS FIRST
+			SELECT id, url, title, description, link, icon, category_id, update_interval, max_items,
+			       last_updated, last_attempted, error_count, last_error, status, created_at, updated_at
+			FROM feeds
+			WHERE status = 'active'
+			ORDER BY last_attempted ASC NULLS FIRST
 	`
 	rows, err := s.db.Query(query)
 	if err != nil {
@@ -337,6 +340,7 @@ func (s *Store) GetFeedsForUpdate() ([]Feed, error) {
 			&feed.UpdateInterval,
 			&feed.MaxItems,
 			&feed.LastUpdated,
+			&feed.LastAttempted,
 			&feed.ErrorCount,
 			&feed.LastError,
 			&feed.Status,

@@ -170,7 +170,13 @@ tasks:
         fi
       - cp "{{.BIN_DIR}}/{{.APP_NAME}}" "{{.BIN_DIR}}/{{.APP_NAME}}.dev.app/Contents/MacOS"
       - cp "build/darwin/Info.dev.plist" "{{.BIN_DIR}}/{{.APP_NAME}}.dev.app/Contents/Info.plist"
-      - codesign --force --deep --sign - "{{.BIN_DIR}}/{{.APP_NAME}}.dev.app"
+      - |
+        if [ -n "{{.SIGN_IDENTITY}}" ]; then
+          codesign --force --deep --sign "{{.SIGN_IDENTITY}}" "{{.BIN_DIR}}/{{.APP_NAME}}.dev.app"
+        else
+          echo "Warning: using ad-hoc signing; macOS system notifications require SIGN_IDENTITY"
+          codesign --force --deep --sign - "{{.BIN_DIR}}/{{.APP_NAME}}.dev.app"
+        fi
       - '"{{.BIN_DIR}}/{{.APP_NAME}}.dev.app/Contents/MacOS/{{.APP_NAME}}"'
 
   sign:

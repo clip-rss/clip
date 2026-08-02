@@ -28,6 +28,9 @@ type SystemService struct {
 
 	// ChangelogURL 由 main.go 注入，指向 CHANGELOG.md 的 raw 地址。
 	ChangelogURL string
+
+	// OnlineChangedFn 由 main 注入，把 WebView 的在线状态同步给后台调度器。
+	OnlineChangedFn func(online bool)
 }
 
 // Platform 返回当前运行的操作系统标识。
@@ -95,4 +98,11 @@ func (s *SystemService) IsOnline() bool {
 	}
 	defer conn.Close()
 	return true
+}
+
+// SetOnline 接收前端 navigator.onLine 变化并同步后台网络模式。
+func (s *SystemService) SetOnline(online bool) {
+	if s.OnlineChangedFn != nil {
+		s.OnlineChangedFn(online)
+	}
 }

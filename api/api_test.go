@@ -413,6 +413,13 @@ func TestCategoryServiceCRUDAndMove(t *testing.T) {
 func TestSettingsService(t *testing.T) {
 	st := newTestStore(t)
 	svc := NewSettingsService(st, nil, nil)
+	feedA := &store.Feed{URL: "https://a.example/feed", Title: "A", Status: "active", UpdateInterval: 30, MaxItems: 100}
+	feedB := &store.Feed{URL: "https://b.example/feed", Title: "B", Status: "active", UpdateInterval: 60, MaxItems: 100}
+	for _, feed := range []*store.Feed{feedA, feedB} {
+		if err := st.CreateFeed(feed); err != nil {
+			t.Fatalf("CreateFeed: %v", err)
+		}
+	}
 
 	got, err := svc.GetSettings()
 	if err != nil {
@@ -430,6 +437,42 @@ func TestSettingsService(t *testing.T) {
 	after, _ := svc.GetSettings()
 	if after.Theme != "dark" || after.DefaultUpdateInterval != 15 {
 		t.Errorf("settings not persisted: %+v", after)
+	}
+	feeds, err := st.ListFeeds()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, feed := range feeds {
+		if feed.UpdateInterval != 15 {
+			t.Errorf("feed %d interval = %d, want global interval 15", feed.ID, feed.UpdateInterval)
+		}
+	}
+
+	// 单源可在全局应用后覆盖；修改其它设置时不应重置该覆盖值。
+	feedA, _ = st.GetFeed(feedA.ID)
+	feedA.UpdateInterval = 60
+	if err := st.UpdateFeed(feedA); err != nil {
+		t.Fatal(err)
+	}
+	after.Language = "en"
+	if err := svc.UpdateSettings(after); err != nil {
+		t.Fatal(err)
+	}
+	feedA, _ = st.GetFeed(feedA.ID)
+	if feedA.UpdateInterval != 60 {
+		t.Errorf("unchanged global interval reset per-feed override to %d", feedA.UpdateInterval)
+	}
+
+	// 再次修改全局值时，所有现有源（包括单源覆盖）都应统一更新。
+	after.DefaultUpdateInterval = 0
+	if err := svc.UpdateSettings(after); err != nil {
+		t.Fatal(err)
+	}
+	feeds, _ = st.ListFeeds()
+	for _, feed := range feeds {
+		if feed.UpdateInterval != 0 {
+			t.Errorf("feed %d interval = %d, want global manual mode 0", feed.ID, feed.UpdateInterval)
+		}
 	}
 }
 
@@ -477,5 +520,18 @@ func TestOPMLImportExportRoundTrip(t *testing.T) {
 
 	if _, err := svc.ImportOPML("   "); err == nil {
 		t.Error("expected empty content error")
+	}
+}
+
+func TestSystemServiceSetOnline(t *testing.T) {
+	var got bool
+	called := false
+	svc := &SystemService{OnlineChangedFn: func(online bool) {
+		called = true
+		got = online
+	}}
+	svc.SetOnline(false)
+	if !called || got {
+		t.Fatalf("online callback called=%v value=%v, want called with false", called, got)
 	}
 }

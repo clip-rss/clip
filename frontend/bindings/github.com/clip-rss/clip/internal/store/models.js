@@ -777,7 +777,7 @@ export class Settings {
         }
         if (!("defaultUpdateInterval" in $$source)) {
             /**
-             * 默认更新间隔（分钟）
+             * 全局更新间隔（分钟；字段名为兼容旧设置保留）
              * @member
              * @type {number}
              */

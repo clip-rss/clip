@@ -193,9 +193,10 @@ CREATE TABLE IF NOT EXISTS feeds (
 	icon TEXT,
 	category_id INTEGER,
 	update_interval INTEGER NOT NULL DEFAULT 30,
-	max_items INTEGER NOT NULL DEFAULT 100,
-	last_updated DATETIME,
-	error_count INTEGER NOT NULL DEFAULT 0,
+		max_items INTEGER NOT NULL DEFAULT 100,
+		last_updated DATETIME,
+		last_attempted DATETIME,
+		error_count INTEGER NOT NULL DEFAULT 0,
 	last_error TEXT,
 	status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'paused', 'error')),
 	created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -233,6 +234,15 @@ CREATE INDEX IF NOT EXISTS idx_items_feed ON items(feed_id);
 CREATE INDEX IF NOT EXISTS idx_items_published ON items(published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_items_read ON items(is_read);
 CREATE INDEX IF NOT EXISTS idx_items_starred ON items(is_starred);
+
+-- 永久记录已见过的文章标识；文章因 max_items 被清理后也不会再次被当作新文章。
+CREATE TABLE IF NOT EXISTS seen_items (
+	feed_id INTEGER NOT NULL,
+	item_key TEXT NOT NULL,
+	seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (feed_id, item_key),
+	FOREIGN KEY (feed_id) REFERENCES feeds(id) ON DELETE CASCADE
+);
 
 -- FTS5 全文搜索索引（文章标题、摘要、笔记）
 -- 使用 trigram 分词器：英文不区分大小写，且支持中文子串匹配（≥3 字符）；
@@ -278,7 +288,60 @@ CREATE TABLE IF NOT EXISTS settings (
 		return err
 	}
 
+	if err := s.migrateSchedulingMetadata(); err != nil {
+		return err
+	}
 	return s.migrateFTSTokenizer()
+}
+
+// migrateSchedulingMetadata 为旧数据库补充抓取尝试时间与已见文章表。
+// 不使用 user_version 门控，避免与独立的 FTS 迁移相互耦合。
+func (s *Store) migrateSchedulingMetadata() error {
+	rows, err := s.db.Query(`PRAGMA table_info(feeds)`)
+	if err != nil {
+		return fmt.Errorf("failed to inspect feeds schema: %w", err)
+	}
+	hasLastAttempted := false
+	for rows.Next() {
+		var cid, notNull, pk int
+		var name, columnType string
+		var defaultValue any
+		if err := rows.Scan(&cid, &name, &columnType, &notNull, &defaultValue, &pk); err != nil {
+			rows.Close()
+			return fmt.Errorf("failed to scan feeds schema: %w", err)
+		}
+		if name == "last_attempted" {
+			hasLastAttempted = true
+		}
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
+	if !hasLastAttempted {
+		if _, err := s.db.Exec(`ALTER TABLE feeds ADD COLUMN last_attempted DATETIME`); err != nil {
+			return fmt.Errorf("failed to add feeds.last_attempted: %w", err)
+		}
+	}
+
+	stmts := []string{
+		`CREATE TABLE IF NOT EXISTS seen_items (
+			feed_id INTEGER NOT NULL,
+			item_key TEXT NOT NULL,
+			seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (feed_id, item_key),
+			FOREIGN KEY (feed_id) REFERENCES feeds(id) ON DELETE CASCADE
+		)`,
+		`UPDATE feeds SET last_attempted = last_updated
+		 WHERE last_attempted IS NULL AND last_updated IS NOT NULL`,
+		`INSERT OR IGNORE INTO seen_items (feed_id, item_key)
+		 SELECT feed_id, 'url:' || url FROM items`,
+	}
+	for _, stmt := range stmts {
+		if _, err := s.db.Exec(stmt); err != nil {
+			return fmt.Errorf("failed to migrate scheduling metadata: %w", err)
+		}
+	}
+	return nil
 }
 
 // migrateFTSTokenizer 将既有用户库的 FTS 索引从旧分词器（porter unicode61）

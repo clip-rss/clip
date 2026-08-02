@@ -21,7 +21,7 @@ const (
 type Settings struct {
 	Theme                 string `json:"theme"`                 // system / light / dark
 	Language              string `json:"language"`              // zh / en
-	DefaultUpdateInterval int    `json:"defaultUpdateInterval"` // 默认更新间隔（分钟）
+	DefaultUpdateInterval int    `json:"defaultUpdateInterval"` // 全局更新间隔（分钟；字段名为兼容旧设置保留）
 	DefaultMaxItems       int    `json:"defaultMaxItems"`       // 默认每源最大保留条目数
 	NotificationMode      string `json:"notificationMode"`      // each / summary / off
 	ShowUnreadBadge       bool   `json:"showUnreadBadge"`       // 是否展示未读角标：macOS 在 Dock 显示数字，Windows 在任务栏显示红点
@@ -52,6 +52,15 @@ func DefaultSettings() Settings {
 	}
 }
 
+func validGlobalUpdateInterval(interval int) bool {
+	switch interval {
+	case 0, 15, 30, 60:
+		return true
+	default:
+		return false
+	}
+}
+
 // GetSettings 读取全局设置，未持久化或解析失败时回退到默认值。
 // 以默认值为基底反序列化，保证新增字段对旧数据有合理缺省。
 func (s *Store) GetSettings() (Settings, error) {
@@ -72,11 +81,20 @@ func (s *Store) GetSettings() (Settings, error) {
 	if err := json.Unmarshal([]byte(value), &out); err != nil {
 		return DefaultSettings(), nil
 	}
+	if !validGlobalUpdateInterval(out.DefaultUpdateInterval) {
+		out.DefaultUpdateInterval = DefaultSettings().DefaultUpdateInterval
+		if err := s.UpdateSettingsAndFeedIntervals(out); err != nil {
+			return Settings{}, fmt.Errorf("failed to migrate global update interval: %w", err)
+		}
+	}
 	return out, nil
 }
 
 // UpdateSettings 持久化全局设置（整体覆盖写入单行）。
 func (s *Store) UpdateSettings(settings Settings) error {
+	if !validGlobalUpdateInterval(settings.DefaultUpdateInterval) {
+		return fmt.Errorf("unsupported global update interval: %d", settings.DefaultUpdateInterval)
+	}
 	b, err := json.Marshal(settings)
 	if err != nil {
 		return fmt.Errorf("failed to encode settings: %w", err)
@@ -92,9 +110,43 @@ func (s *Store) UpdateSettings(settings Settings) error {
 	return nil
 }
 
+// UpdateSettingsAndFeedIntervals 在同一事务中保存设置，并把全局更新间隔应用到全部订阅源。
+func (s *Store) UpdateSettingsAndFeedIntervals(settings Settings) error {
+	if !validGlobalUpdateInterval(settings.DefaultUpdateInterval) {
+		return fmt.Errorf("unsupported global update interval: %d", settings.DefaultUpdateInterval)
+	}
+	b, err := json.Marshal(settings)
+	if err != nil {
+		return fmt.Errorf("failed to encode settings: %w", err)
+	}
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin global interval update: %w", err)
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec(`
+		INSERT INTO settings (key, value, updated_at)
+		VALUES (?, ?, CURRENT_TIMESTAMP)
+		ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
+	`, settingsKey, string(b)); err != nil {
+		return fmt.Errorf("failed to update settings: %w", err)
+	}
+	if _, err := tx.Exec(`
+		UPDATE feeds
+		SET update_interval = ?, updated_at = CURRENT_TIMESTAMP
+	`, settings.DefaultUpdateInterval); err != nil {
+		return fmt.Errorf("failed to apply global feed interval: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit global interval update: %w", err)
+	}
+	return nil
+}
+
 // CacheStats 缓存统计：可清理的文章条数及预计可释放空间（字节）。
 type CacheStats struct {
-	CacheCount  int64 `json:"cacheCount"`  // 可清理文章数（已读且未星标）
+	CacheCount     int64 `json:"cacheCount"`     // 可清理文章数（已读且未星标）
 	EstimatedBytes int64 `json:"estimatedBytes"` // 预计可释放字节数
 }
 

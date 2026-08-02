@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -24,13 +25,16 @@ type fakeStore struct {
 	items    []store.Item
 	existing map[string]bool
 
-	errorUpdates  map[int64]int
-	resets        map[int64]int
-	lastUpdated   map[int64]time.Time
-	cleanups      map[int64]int
+	errorUpdates   map[int64]int
+	resets         map[int64]int
+	lastUpdated    map[int64]time.Time
+	cleanups       map[int64]int
 	statusUpdates  map[int64]string
 	listCalls      int32
 	listFeedsCalls int32
+	applyErr       error
+	markErr        error
+	recordErr      error
 }
 
 func newFakeStore() *fakeStore {
@@ -49,12 +53,18 @@ func (f *fakeStore) addFeed(feed store.Feed) {
 	f.feeds[feed.ID] = &feed
 }
 
-func (f *fakeStore) GetFeedsForUpdate() ([]store.Feed, error) {
+func (f *fakeStore) ListActiveFeeds() ([]store.Feed, error) {
 	atomic.AddInt32(&f.listCalls, 1)
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := make([]store.Feed, len(f.forUpdate))
-	copy(out, f.forUpdate)
+	out := make([]store.Feed, 0, len(f.forUpdate))
+	for _, candidate := range f.forUpdate {
+		if current := f.feeds[candidate.ID]; current != nil {
+			out = append(out, *current)
+		} else {
+			out = append(out, candidate)
+		}
+	}
 	return out, nil
 }
 
@@ -80,43 +90,73 @@ func (f *fakeStore) GetFeed(id int64) (*store.Feed, error) {
 	return &cp, nil
 }
 
-func (f *fakeStore) CreateItemIfNotExists(item *store.Item) (bool, error) {
+func (f *fakeStore) RecordFeedFailure(id int64, attemptedAt time.Time, msg string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	key := keyOf(item.FeedID, item.URL)
-	if f.existing[key] {
-		return false, nil
+	if f.recordErr != nil {
+		return f.recordErr
 	}
-	f.existing[key] = true
-	f.items = append(f.items, *item)
-	return true, nil
-}
-
-func (f *fakeStore) UpdateFeedLastUpdated(id int64, t time.Time) error {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.lastUpdated[id] = t
-	return nil
-}
-
-func (f *fakeStore) UpdateFeedError(id int64, msg string) error {
-	f.mu.Lock()
-	defer f.mu.Unlock()
 	f.errorUpdates[id]++
 	if fd := f.feeds[id]; fd != nil {
 		fd.ErrorCount++
+		fd.LastAttempted = &attemptedAt
 	}
 	return nil
 }
 
-func (f *fakeStore) ResetFeedError(id int64) error {
+func (f *fakeStore) MarkFeedNotModified(id int64, checkedAt time.Time) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if f.markErr != nil {
+		return f.markErr
+	}
+	f.resets[id]++
+	f.lastUpdated[id] = checkedAt
+	if fd := f.feeds[id]; fd != nil {
+		fd.ErrorCount = 0
+		fd.LastUpdated = &checkedAt
+		fd.LastAttempted = &checkedAt
+	}
+	return nil
+}
+
+func (f *fakeStore) ApplyFeedRefresh(
+	id int64,
+	checkedAt time.Time,
+	items []store.RefreshItem,
+	maxItems int,
+) ([]store.Item, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.applyErr != nil {
+		return nil, f.applyErr
+	}
+	created := make([]store.Item, 0, len(items))
+	for _, candidate := range items {
+		if candidate.Item == nil {
+			continue
+		}
+		item := candidate.Item
+		key := keyOf(item.FeedID, item.URL)
+		if f.existing[key] {
+			continue
+		}
+		f.existing[key] = true
+		item.ID = int64(len(f.items) + 1)
+		f.items = append(f.items, *item)
+		created = append(created, *item)
+	}
+	if maxItems > 0 {
+		f.cleanups[id]++
+	}
+	f.lastUpdated[id] = checkedAt
 	f.resets[id]++
 	if fd := f.feeds[id]; fd != nil {
 		fd.ErrorCount = 0
+		fd.LastUpdated = &checkedAt
+		fd.LastAttempted = &checkedAt
 	}
-	return nil
+	return created, nil
 }
 
 func (f *fakeStore) UpdateFeedStatus(id int64, status string) error {
@@ -126,13 +166,6 @@ func (f *fakeStore) UpdateFeedStatus(id int64, status string) error {
 	if fd := f.feeds[id]; fd != nil {
 		fd.Status = status
 	}
-	return nil
-}
-
-func (f *fakeStore) CleanupOldItems(feedID int64, maxItems int) error {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.cleanups[feedID]++
 	return nil
 }
 
@@ -209,6 +242,24 @@ func (f *fakeFetcher) common(url string) (*fetcher.ParsedFeed, *fetcher.FetchRes
 type fakeEmitter struct {
 	mu     sync.Mutex
 	events []emitted
+}
+
+type fakeNotifier struct {
+	mu    sync.Mutex
+	calls [][]NewItem
+}
+
+func (n *fakeNotifier) Notify(_ context.Context, _ store.Feed, items []NewItem) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	cp := append([]NewItem(nil), items...)
+	n.calls = append(n.calls, cp)
+}
+
+func (n *fakeNotifier) notifications() [][]NewItem {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	return append([][]NewItem(nil), n.calls...)
 }
 
 type emitted struct {
@@ -341,10 +392,10 @@ func TestTickFiltersBackoffAndFallsBackToDefault(t *testing.T) {
 
 	st := newFakeStore()
 	st.forUpdate = []store.Feed{
-		{ID: 1, URL: "u1", UpdateInterval: 30, ErrorCount: 0},                       // 到期
-		{ID: 2, URL: "u2", UpdateInterval: 0},                                       // 回退到 DefaultInterval(30m) -> 到期
-		{ID: 3, URL: "u3", UpdateInterval: 30, ErrorCount: 5, LastUpdated: &recent}, // 退避中 -> 跳过
-		{ID: 4, URL: "u4", UpdateInterval: 30, ErrorCount: 2, LastUpdated: &old},    // 退避已过 -> 到期
+		{ID: 1, URL: "u1", UpdateInterval: 30, ErrorCount: 0},                         // 到期
+		{ID: 2, URL: "u2", UpdateInterval: 0},                                         // 回退到 DefaultInterval(30m) -> 到期
+		{ID: 3, URL: "u3", UpdateInterval: 30, ErrorCount: 5, LastAttempted: &recent}, // 退避中 -> 跳过
+		{ID: 4, URL: "u4", UpdateInterval: 30, ErrorCount: 2, LastAttempted: &old},    // 退避已过 -> 到期
 	}
 	for _, fd := range st.forUpdate {
 		st.addFeed(fd)
@@ -396,6 +447,26 @@ func TestTickManualWhenDefaultIsZero(t *testing.T) {
 
 	if len(results) != 0 {
 		t.Fatalf("due feeds = %d, want 0 (manual) (%+v)", len(results), results)
+	}
+}
+
+func TestIsDueUsesLastAttemptedForBackoffAndDefaultInterval(t *testing.T) {
+	fixed := time.Date(2026, 6, 14, 12, 0, 0, 0, time.UTC)
+	recent := fixed.Add(-time.Minute)
+	s := New(newFakeStore(), newFakeFetcher(),
+		withClock(func() time.Time { return fixed }),
+		WithConfig(Config{DefaultInterval: 30 * time.Minute}),
+	)
+
+	if s.isDue(store.Feed{UpdateInterval: 30, ErrorCount: 1, LastAttempted: &recent}) {
+		t.Fatal("a never-successful feed must back off from its latest attempt")
+	}
+	if s.isDue(store.Feed{UpdateInterval: 0, LastAttempted: &recent}) {
+		t.Fatal("a feed using the global interval must not refresh every poll")
+	}
+	s.SetDefaultInterval(0)
+	if s.isDue(store.Feed{UpdateInterval: 0}) {
+		t.Fatal("setting the global interval to zero must enable manual mode immediately")
 	}
 }
 
@@ -482,23 +553,260 @@ func TestConcurrencyLimit(t *testing.T) {
 	}
 }
 
+func TestConcurrencyLimitIsSharedAcrossRefreshBatches(t *testing.T) {
+	st := newFakeStore()
+	ft := newFakeFetcher()
+	ft.delay = 20 * time.Millisecond
+	for i := 1; i <= 8; i++ {
+		id := int64(i)
+		url := fmt.Sprintf("u%d", i)
+		st.addFeed(store.Feed{ID: id, URL: url, Status: "active", UpdateInterval: 30})
+		ft.feeds[url] = &fetcher.ParsedFeed{}
+	}
+
+	s := New(st, ft, WithConfig(Config{Concurrency: 3}))
+	var wg sync.WaitGroup
+	for range 2 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_, _ = s.RefreshAll(context.Background())
+		}()
+	}
+	wg.Wait()
+	if max := atomic.LoadInt32(&ft.maxConcurr); max > 3 {
+		t.Fatalf("shared max concurrency = %d, want <= 3", max)
+	}
+}
+
+func TestSameFeedRefreshesAreSerialized(t *testing.T) {
+	st := newFakeStore()
+	st.addFeed(store.Feed{ID: 1, URL: "u1", Status: "active", UpdateInterval: 30})
+	ft := newFakeFetcher()
+	ft.delay = 20 * time.Millisecond
+	ft.feeds["u1"] = &fetcher.ParsedFeed{}
+	s := New(st, ft, WithConfig(Config{Concurrency: 5}))
+
+	var wg sync.WaitGroup
+	for range 2 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_, _ = s.RefreshFeed(context.Background(), 1)
+		}()
+	}
+	wg.Wait()
+	if max := atomic.LoadInt32(&ft.maxConcurr); max != 1 {
+		t.Fatalf("same-feed max concurrency = %d, want 1", max)
+	}
+}
+
+func TestPersistenceFailureIsReported(t *testing.T) {
+	st := newFakeStore()
+	st.applyErr = errors.New("disk full")
+	st.addFeed(store.Feed{ID: 1, URL: "u1", Status: "active", UpdateInterval: 30})
+	ft := newFakeFetcher()
+	ft.feeds["u1"] = &fetcher.ParsedFeed{Items: []fetcher.ParsedItem{{GUID: "g1", Link: "https://x/1"}}}
+	em := &fakeEmitter{}
+	s := New(st, ft, WithEmitter(em))
+
+	result, _ := s.RefreshFeed(context.Background(), 1)
+	if result.Err == nil || !errors.Is(result.Err, st.applyErr) {
+		t.Fatalf("persistence error was hidden: %+v", result)
+	}
+	if st.errorUpdates[1] != 1 {
+		t.Fatalf("persistence failure attempts = %d, want 1", st.errorUpdates[1])
+	}
+	if em.count() != 1 || em.events[0].name != FeedErrorEvent {
+		t.Fatalf("expected persistence failure event, got %+v", em.events)
+	}
+}
+
+func TestNotModifiedStateFailureIsReported(t *testing.T) {
+	st := newFakeStore()
+	st.markErr = errors.New("database unavailable")
+	st.addFeed(store.Feed{ID: 1, URL: "u1", Status: "active", UpdateInterval: 30})
+	ft := newFakeFetcher()
+	ft.notModified["u1"] = true
+	s := New(st, ft)
+
+	result, _ := s.RefreshFeed(context.Background(), 1)
+	if result.Err == nil || !errors.Is(result.Err, st.markErr) {
+		t.Fatalf("304 state error was hidden: %+v", result)
+	}
+	if st.errorUpdates[1] != 1 {
+		t.Fatalf("304 state failure attempts = %d, want 1", st.errorUpdates[1])
+	}
+}
+
+func TestFailureRecordingErrorIsJoined(t *testing.T) {
+	st := newFakeStore()
+	st.recordErr = errors.New("cannot record attempt")
+	st.addFeed(store.Feed{ID: 1, URL: "u1", Status: "active", UpdateInterval: 30})
+	fetchErr := errors.New("network down")
+	ft := newFakeFetcher()
+	ft.errs["u1"] = fetchErr
+	s := New(st, ft)
+
+	result, _ := s.RefreshFeed(context.Background(), 1)
+	if !errors.Is(result.Err, fetchErr) || !errors.Is(result.Err, st.recordErr) {
+		t.Fatalf("joined refresh error = %v, want fetch and persistence causes", result.Err)
+	}
+}
+
+func TestOfflineModeBlocksNetworkRequests(t *testing.T) {
+	st := newFakeStore()
+	feed := store.Feed{ID: 1, URL: "u1", Status: "active", UpdateInterval: 30}
+	st.addFeed(feed)
+	st.forUpdate = []store.Feed{feed}
+	ft := newFakeFetcher()
+	ft.feeds["u1"] = &fetcher.ParsedFeed{}
+	s := New(st, ft)
+	s.SetOfflineMode(true)
+
+	if results := s.Tick(context.Background()); len(results) != 0 {
+		t.Fatalf("offline tick returned %+v", results)
+	}
+	result, _ := s.RefreshFeed(context.Background(), 1)
+	if !errors.Is(result.Err, ErrOffline) {
+		t.Fatalf("offline refresh error = %v, want %v", result.Err, ErrOffline)
+	}
+	if calls := atomic.LoadInt32(&ft.condCalls); calls != 0 {
+		t.Fatalf("offline fetch calls = %d, want 0", calls)
+	}
+}
+
+func TestReturningOnlineTriggersImmediateDueScan(t *testing.T) {
+	st := newFakeStore()
+	feed := store.Feed{ID: 1, URL: "u1", Status: "active", UpdateInterval: 30}
+	st.addFeed(feed)
+	st.forUpdate = []store.Feed{feed}
+	ft := newFakeFetcher()
+	ft.feeds["u1"] = &fetcher.ParsedFeed{}
+	s := New(st, ft, WithConfig(Config{PollInterval: time.Hour}))
+	s.SetOfflineMode(true)
+	s.Start(context.Background())
+	t.Cleanup(s.Stop)
+
+	s.SetOfflineMode(false)
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) && atomic.LoadInt32(&ft.condCalls) == 0 {
+		time.Sleep(5 * time.Millisecond)
+	}
+	if calls := atomic.LoadInt32(&ft.condCalls); calls != 1 {
+		t.Fatalf("online resume fetch calls = %d, want 1", calls)
+	}
+}
+
+func TestGoingOfflineStopsQueuedFetches(t *testing.T) {
+	st := newFakeStore()
+	ft := newFakeFetcher()
+	ft.delay = 100 * time.Millisecond
+	for i := 1; i <= 2; i++ {
+		id := int64(i)
+		url := fmt.Sprintf("u%d", i)
+		st.addFeed(store.Feed{ID: id, URL: url, Status: "active", UpdateInterval: 30})
+		ft.feeds[url] = &fetcher.ParsedFeed{}
+	}
+	s := New(st, ft, WithConfig(Config{Concurrency: 1}))
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_, _ = s.RefreshAll(context.Background())
+	}()
+
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) && atomic.LoadInt32(&ft.current) == 0 {
+		time.Sleep(time.Millisecond)
+	}
+	s.SetOfflineMode(true)
+	<-done
+	if calls := atomic.LoadInt32(&ft.condCalls); calls != 1 {
+		t.Fatalf("fetches started after going offline = %d, want only the in-flight request", calls)
+	}
+}
+
 func TestStartStopRunsStartupRefresh(t *testing.T) {
-	st := newFakeStore() // no feeds → startup refresh does no fetching but calls ListFeeds
+	st := newFakeStore() // no feeds → startup due scan does no fetching
 	s := New(st, newFakeFetcher(), WithConfig(Config{PollInterval: time.Hour}))
 
 	s.Start(context.Background())
-	// 启动会立即触发全量刷新（ListFeeds）；等待其执行。
+	// 启动会立即触发到期扫描；等待其执行。
 	deadline := time.Now().Add(time.Second)
-	for time.Now().Before(deadline) && atomic.LoadInt32(&st.listFeedsCalls) == 0 {
+	for time.Now().Before(deadline) && atomic.LoadInt32(&st.listCalls) == 0 {
 		time.Sleep(5 * time.Millisecond)
 	}
 	s.Stop()
 
-	if atomic.LoadInt32(&st.listFeedsCalls) == 0 {
-		t.Error("expected at least one startup refresh (ListFeeds call)")
+	if atomic.LoadInt32(&st.listCalls) == 0 {
+		t.Error("expected at least one startup due scan")
 	}
 	// 重复 Stop 不应 panic。
 	s.Stop()
+}
+
+func TestStartupScanRespectsManualMode(t *testing.T) {
+	st := newFakeStore()
+	feed := store.Feed{ID: 1, URL: "u1", Status: "active", UpdateInterval: 0}
+	st.addFeed(feed)
+	st.forUpdate = []store.Feed{feed}
+	ft := newFakeFetcher()
+	ft.feeds["u1"] = &fetcher.ParsedFeed{}
+	s := New(st, ft, WithConfig(Config{PollInterval: time.Hour, DefaultInterval: 0}))
+
+	s.Start(context.Background())
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) && atomic.LoadInt32(&st.listCalls) == 0 {
+		time.Sleep(5 * time.Millisecond)
+	}
+	s.Stop()
+	if calls := atomic.LoadInt32(&ft.condCalls); calls != 0 {
+		t.Fatalf("manual-mode startup fetch calls = %d, want 0", calls)
+	}
+}
+
+func TestPrunedItemsAreNotReportedAsNewAgain(t *testing.T) {
+	st, err := store.NewWithPath(filepath.Join(t.TempDir(), "clip.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	feed := &store.Feed{URL: "u1", Title: "feed", Status: "active", UpdateInterval: 30, MaxItems: 2}
+	if err := st.CreateFeed(feed); err != nil {
+		t.Fatal(err)
+	}
+
+	base := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	ft := newFakeFetcher()
+	ft.feeds["u1"] = &fetcher.ParsedFeed{Items: []fetcher.ParsedItem{
+		{GUID: "g3", Title: "three", Link: "https://x/3", Published: base.Add(3 * time.Hour)},
+		{GUID: "g2", Title: "two", Link: "https://x/2", Published: base.Add(2 * time.Hour)},
+		{GUID: "g1", Title: "one", Link: "https://x/1", Published: base.Add(time.Hour)},
+	}}
+	notifier := &fakeNotifier{}
+	s := New(st, ft, WithNotifier(notifier))
+	first, _ := s.RefreshFeed(context.Background(), feed.ID)
+	if first.Err != nil || first.NewItems != 2 {
+		t.Fatalf("first refresh = %+v, want two retained new items", first)
+	}
+
+	second, _ := s.RefreshFeed(context.Background(), feed.ID)
+	if second.Err != nil || second.NewItems != 0 {
+		t.Fatalf("second refresh = %+v, pruned history must not reappear", second)
+	}
+
+	ft.feeds["u1"] = &fetcher.ParsedFeed{Items: append(
+		[]fetcher.ParsedItem{{GUID: "g4", Title: "four", Link: "https://x/4", Published: base.Add(4 * time.Hour)}},
+		ft.feeds["u1"].Items...,
+	)}
+	third, _ := s.RefreshFeed(context.Background(), feed.ID)
+	if third.Err != nil || third.NewItems != 1 {
+		t.Fatalf("third refresh = %+v, want only the genuinely new item", third)
+	}
+	notifications := notifier.notifications()
+	if len(notifications) != 1 || len(notifications[0]) != 1 || notifications[0][0].Title != "four" {
+		t.Fatalf("notifications = %+v, want only the genuinely new item", notifications)
+	}
 }
 
 func TestToStoreItemMapping(t *testing.T) {

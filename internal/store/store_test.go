@@ -685,3 +685,87 @@ func TestStageRestoreRejectsInvalid(t *testing.T) {
 		t.Error("no pending file should be staged on invalid input")
 	}
 }
+
+func TestSchedulingMetadataMigrationFromExistingDatabase(t *testing.T) {
+	st := setupTestDB(t)
+	feed := &Feed{URL: "https://example.com/feed", Title: "feed", UpdateInterval: 30, MaxItems: 100, Status: "active"}
+	if err := st.CreateFeed(feed); err != nil {
+		t.Fatal(err)
+	}
+	checkedAt := time.Date(2026, 8, 2, 12, 0, 0, 0, time.UTC)
+	if err := st.UpdateFeedLastUpdated(feed.ID, checkedAt); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.CreateItem(&Item{
+		FeedID: feed.ID, Title: "item", URL: "https://example.com/1", PublishedAt: checkedAt,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := st.db.Exec(`DROP TABLE seen_items`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.db.Exec(`ALTER TABLE feeds DROP COLUMN last_attempted`); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.migrateSchedulingMetadata(); err != nil {
+		t.Fatalf("migrateSchedulingMetadata: %v", err)
+	}
+
+	got, err := st.GetFeed(feed.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.LastAttempted == nil || !got.LastAttempted.Equal(checkedAt) {
+		t.Fatalf("lastAttempted = %v, want %v", got.LastAttempted, checkedAt)
+	}
+	var seen int
+	if err := st.db.QueryRow(
+		`SELECT COUNT(*) FROM seen_items WHERE feed_id = ? AND item_key = ?`,
+		feed.ID,
+		"url:https://example.com/1",
+	).Scan(&seen); err != nil {
+		t.Fatal(err)
+	}
+	if seen != 1 {
+		t.Fatalf("backfilled seen rows = %d, want 1", seen)
+	}
+}
+
+func TestApplyFeedRefreshRollsBackOnWriteFailure(t *testing.T) {
+	st := setupTestDB(t)
+	feed := &Feed{URL: "https://example.com/feed", Title: "feed", UpdateInterval: 30, MaxItems: 100, Status: "active"}
+	if err := st.CreateFeed(feed); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.db.Exec(`
+		CREATE TRIGGER reject_refreshed_item BEFORE INSERT ON items BEGIN
+			SELECT RAISE(ABORT, 'simulated write failure');
+		END
+	`); err != nil {
+		t.Fatal(err)
+	}
+	checkedAt := time.Date(2026, 8, 2, 12, 0, 0, 0, time.UTC)
+	_, err := st.ApplyFeedRefresh(feed.ID, checkedAt, []RefreshItem{{
+		Item: &Item{FeedID: feed.ID, Title: "item", URL: "https://example.com/1", PublishedAt: checkedAt},
+		Keys: []string{"guid:item-1", "url:https://example.com/1"},
+	}}, 100)
+	if err == nil {
+		t.Fatal("ApplyFeedRefresh should report the write failure")
+	}
+
+	got, err := st.GetFeed(feed.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.LastUpdated != nil || got.LastAttempted != nil {
+		t.Fatalf("failed transaction advanced feed timestamps: %+v", got)
+	}
+	var seen int
+	if err := st.db.QueryRow(`SELECT COUNT(*) FROM seen_items WHERE feed_id = ?`, feed.ID).Scan(&seen); err != nil {
+		t.Fatal(err)
+	}
+	if seen != 0 {
+		t.Fatalf("failed transaction retained %d seen keys", seen)
+	}
+}

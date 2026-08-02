@@ -30,12 +30,22 @@ func (s *SettingsService) GetSettings() (store.Settings, error) {
 	return s.store.GetSettings()
 }
 
-// UpdateSettings 保存全局设置并同步调度器与代理配置。
+// UpdateSettings 保存全局设置；间隔变化时同步应用到全部现有订阅源和调度器。
 func (s *SettingsService) UpdateSettings(settings store.Settings) error {
-	if err := s.store.UpdateSettings(settings); err != nil {
+	current, err := s.store.GetSettings()
+	if err != nil {
 		return err
 	}
-	if s.sched != nil && settings.DefaultUpdateInterval > 0 {
+	intervalChanged := current.DefaultUpdateInterval != settings.DefaultUpdateInterval
+	if intervalChanged {
+		err = s.store.UpdateSettingsAndFeedIntervals(settings)
+	} else {
+		err = s.store.UpdateSettings(settings)
+	}
+	if err != nil {
+		return err
+	}
+	if s.sched != nil && settings.DefaultUpdateInterval >= 0 {
 		s.sched.SetDefaultInterval(time.Duration(settings.DefaultUpdateInterval) * time.Minute)
 	}
 	if s.httpClient != nil {

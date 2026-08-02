@@ -144,3 +144,24 @@ func TestCleanFeedResolvesRelativeLinks(t *testing.T) {
 		t.Errorf("relative enclosure not resolved: %q", feed.Items[0].Enclosure)
 	}
 }
+
+func TestParseFailureDoesNotCacheConditionalHeaders(t *testing.T) {
+	const etag = `"broken-v1"`
+	requests := make([]string, 0, 2)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests = append(requests, r.Header.Get("If-None-Match"))
+		w.Header().Set("ETag", etag)
+		_, _ = w.Write([]byte("this is not a feed"))
+	}))
+	defer srv.Close()
+
+	f := New()
+	for range 2 {
+		if _, _, err := f.FetchFeed(context.Background(), srv.URL); err == nil {
+			t.Fatal("malformed feed should fail parsing")
+		}
+	}
+	if len(requests) != 2 || requests[0] != "" || requests[1] != "" {
+		t.Fatalf("conditional headers after parse failure = %#v, want two empty values", requests)
+	}
+}

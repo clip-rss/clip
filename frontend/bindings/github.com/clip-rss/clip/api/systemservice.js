@@ -61,6 +61,15 @@ export function Platform() {
 }
 
 /**
+ * SetOnline 接收前端 navigator.onLine 变化并同步后台网络模式。
+ * @param {boolean} online
+ * @returns {$CancellablePromise<void>}
+ */
+export function SetOnline(online) {
+    return $Call.ByID(243765160, online);
+}
+
+/**
  * SetTheme 在非 Windows 平台上是空操作。
  * 
  * macOS 使用隐藏式标题栏（MacTitleBarHiddenInset），无需切换原生主题。

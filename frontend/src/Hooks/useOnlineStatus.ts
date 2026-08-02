@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { SystemService } from '../Utils/Api'
 
 /**
  * 监听浏览器在线/离线状态（基于 navigator.onLine + online/offline 事件）。
@@ -10,6 +11,12 @@ import { useEffect, useState } from 'react'
  */
 export function useOnlineStatus(): boolean {
   const [online, setOnline] = useState(() => navigator.onLine)
+
+  useEffect(() => {
+    SystemService.SetOnline(online).catch(() => {
+      // 浏览器预览或应用退出过程中绑定可能不可用；UI 状态仍可独立工作。
+    })
+  }, [online])
 
   useEffect(() => {
     function handleOnline(): void {

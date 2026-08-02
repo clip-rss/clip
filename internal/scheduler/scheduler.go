@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,17 +28,18 @@ const (
 	defaultConcurrency  = 5
 )
 
+// ErrOffline 表示调度器已进入离线模式，当前不应发起网络请求。
+var ErrOffline = errors.New("scheduler: offline")
+
 // FeedStore 调度器所需的数据库能力（便于测试替换）。
 type FeedStore interface {
-	GetFeedsForUpdate() ([]store.Feed, error)
+	ListActiveFeeds() ([]store.Feed, error)
 	ListFeeds() ([]store.Feed, error)
 	GetFeed(id int64) (*store.Feed, error)
-	CreateItemIfNotExists(item *store.Item) (bool, error)
-	UpdateFeedLastUpdated(id int64, t time.Time) error
-	UpdateFeedError(id int64, errMsg string) error
-	ResetFeedError(id int64) error
+	RecordFeedFailure(id int64, attemptedAt time.Time, errMsg string) error
+	MarkFeedNotModified(id int64, checkedAt time.Time) error
+	ApplyFeedRefresh(id int64, checkedAt time.Time, items []store.RefreshItem, maxItems int) ([]store.Item, error)
 	UpdateFeedStatus(id int64, status string) error
-	CleanupOldItems(feedID int64, maxItems int) error
 }
 
 // FeedFetcher 调度器所需的抓取能力（便于测试替换）。
@@ -115,6 +117,9 @@ type Scheduler struct {
 	offlineMode bool // 离线模式：为 true 时 tick 被跳过，不发起任何网络请求
 	cancel      context.CancelFunc
 	wg          sync.WaitGroup
+	slots       chan struct{}           // 所有入口共享的全局抓取并发额度
+	feedLocks   map[int64]chan struct{} // 按 Feed 串行化后台与手动刷新
+	wake        chan struct{}           // 恢复在线时立即触发到期扫描
 }
 
 // Option 配置 Scheduler。
@@ -155,16 +160,19 @@ func withClock(now func() time.Time) Option {
 // New 创建调度器。
 func New(st FeedStore, ft FeedFetcher, opts ...Option) *Scheduler {
 	s := &Scheduler{
-		store:    st,
-		fetcher:  ft,
-		emitter:  nopEmitter{},
-		notifier: nopNotifier{},
-		cfg:      Config{}.withDefaults(),
-		now:      time.Now,
+		store:     st,
+		fetcher:   ft,
+		emitter:   nopEmitter{},
+		notifier:  nopNotifier{},
+		cfg:       Config{DefaultInterval: defaultInterval}.withDefaults(),
+		now:       time.Now,
+		feedLocks: make(map[int64]chan struct{}),
+		wake:      make(chan struct{}, 1),
 	}
 	for _, opt := range opts {
 		opt(s)
 	}
+	s.slots = make(chan struct{}, s.cfg.Concurrency)
 	return s
 }
 
@@ -204,7 +212,7 @@ func (s *Scheduler) Stop() {
 func (s *Scheduler) SetDefaultInterval(d time.Duration) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if d > 0 {
+	if d >= 0 {
 		s.cfg.DefaultInterval = d
 	}
 }
@@ -212,12 +220,20 @@ func (s *Scheduler) SetDefaultInterval(d time.Duration) {
 // SetOfflineMode 设置离线模式：离线时暂停所有网络请求，在线时恢复正常调度。
 func (s *Scheduler) SetOfflineMode(offline bool) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	if s.offlineMode == offline {
+		s.mu.Unlock()
+		return
+	}
 	s.offlineMode = offline
+	s.mu.Unlock()
 	if offline {
 		log.Println("scheduler: entering offline mode, pausing updates")
 	} else {
 		log.Println("scheduler: exiting offline mode, resuming updates")
+		select {
+		case s.wake <- struct{}{}:
+		default:
+		}
 	}
 }
 
@@ -238,39 +254,33 @@ func (s *Scheduler) tickSafe(ctx context.Context) {
 	s.Tick(ctx)
 }
 
-// loop 周期性触发到期源更新。启动时先全量刷新一次所有活跃订阅源。
+// loop 周期性触发到期源更新，启动时也仅执行一次常规到期扫描。
 func (s *Scheduler) loop(ctx context.Context) {
 	defer s.wg.Done()
 
 	ticker := time.NewTicker(s.cfg.PollInterval)
 	defer ticker.Stop()
 
-	// 启动后立即全量刷新所有活跃订阅源（条件 GET，304 无开销）。
-	s.startupRefresh(ctx)
+	// 启动时仅刷新真正到期的源，遵守手动模式、更新间隔、退避和离线状态。
+	s.tickSafe(ctx)
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
 			s.tickSafe(ctx)
+		case <-s.wake:
+			s.tickSafe(ctx)
 		}
 	}
 }
 
-// startupRefresh 应用启动时的全量刷新，与常规 Tick 不同：
-// 忽略更新间隔与退避，对所有非暂停订阅源执行条件 GET。
-func (s *Scheduler) startupRefresh(ctx context.Context) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("scheduler: panic recovered in startupRefresh: %v", r)
-		}
-	}()
-	_, _ = s.refreshAll(ctx, false)
-}
-
 // Tick 扫描并刷新所有到期（且未处于退避期）的订阅源。
 func (s *Scheduler) Tick(ctx context.Context) []RefreshResult {
-	feeds, err := s.store.GetFeedsForUpdate()
+	if s.isOffline() {
+		return nil
+	}
+	feeds, err := s.store.ListActiveFeeds()
 	if err != nil {
 		return nil
 	}
@@ -284,24 +294,31 @@ func (s *Scheduler) Tick(ctx context.Context) []RefreshResult {
 	return s.refreshConcurrently(ctx, due, false)
 }
 
-// isDue 在 store 的间隔判定之上叠加退避判定。
+// isDue 统一判定单源间隔、全局回退间隔与失败退避。
 //   - update_interval <= 0 时回退到全局默认间隔；
 //   - 连续失败时，需等待退避窗口结束才再次尝试。
 func (s *Scheduler) isDue(f store.Feed) bool {
 	interval := time.Duration(f.UpdateInterval) * time.Minute
 	if interval <= 0 {
+		s.mu.Lock()
 		interval = s.cfg.DefaultInterval
+		s.mu.Unlock()
 		if interval <= 0 {
 			return false
 		}
 	}
-	if f.ErrorCount > 0 && f.LastUpdated != nil {
-		next := f.LastUpdated.Add(fetcher.Backoff(f.ErrorCount, interval))
-		if s.now().Before(next) {
-			return false
-		}
+	anchor := f.LastAttempted
+	if anchor == nil {
+		anchor = f.LastUpdated // 兼容尚未迁移或测试构造的 Feed
 	}
-	return true
+	if anchor == nil {
+		return true
+	}
+	wait := interval
+	if f.ErrorCount > 0 {
+		wait = fetcher.Backoff(f.ErrorCount, interval)
+	}
+	return !s.now().Before(anchor.Add(wait))
 }
 
 // RefreshFeed 手动刷新单个订阅源（条件 GET）。
@@ -333,6 +350,9 @@ func (s *Scheduler) ForceRefreshAll(ctx context.Context) ([]RefreshResult, error
 }
 
 func (s *Scheduler) refreshAll(ctx context.Context, force bool) ([]RefreshResult, error) {
+	if s.isOffline() {
+		return nil, ErrOffline
+	}
 	feeds, err := s.store.ListFeeds()
 	if err != nil {
 		return nil, err
@@ -363,19 +383,11 @@ func (s *Scheduler) refreshConcurrently(ctx context.Context, feeds []store.Feed,
 		return results
 	}
 
-	sem := make(chan struct{}, s.cfg.Concurrency)
 	var wg sync.WaitGroup
 	for i, f := range feeds {
 		wg.Add(1)
 		go func(i int, f store.Feed) {
 			defer wg.Done()
-			select {
-			case sem <- struct{}{}:
-			case <-ctx.Done():
-				results[i] = RefreshResult{FeedID: f.ID, Err: ctx.Err()}
-				return
-			}
-			defer func() { <-sem }()
 			results[i] = s.refreshFeed(ctx, f, force)
 		}(i, f)
 	}
@@ -386,69 +398,91 @@ func (s *Scheduler) refreshConcurrently(ctx context.Context, feeds []store.Feed,
 // refreshFeed 抓取并持久化单个订阅源，更新其状态与退避计数。
 func (s *Scheduler) refreshFeed(ctx context.Context, feed store.Feed, force bool) RefreshResult {
 	res := RefreshResult{FeedID: feed.ID}
+	releaseFeed, err := s.acquireFeed(ctx, feed.ID)
+	if err != nil {
+		res.Err = err
+		return res
+	}
+	defer releaseFeed()
+	if s.isOffline() {
+		res.Err = ErrOffline
+		return res
+	}
+	releaseSlot, err := s.acquireSlot(ctx)
+	if err != nil {
+		res.Err = err
+		return res
+	}
+	slotReleased := false
+	defer func() {
+		if !slotReleased {
+			releaseSlot()
+		}
+	}()
+	// 任务等待全局额度期间可能刚刚切换为离线；额度到手后必须再次确认。
+	if s.isOffline() {
+		releaseSlot()
+		slotReleased = true
+		res.Err = ErrOffline
+		return res
+	}
 
 	var parsed *fetcher.ParsedFeed
 	var fetchRes *fetcher.FetchResult
-	var err error
 	if force {
 		parsed, fetchRes, err = s.fetcher.FetchFeedForce(ctx, feed.URL)
 	} else {
 		parsed, fetchRes, err = s.fetcher.FetchFeed(ctx, feed.URL)
 	}
+	releaseSlot()
+	slotReleased = true
+	checkedAt := s.now()
 
 	if err != nil {
-		res.Err = err
-		_ = s.store.UpdateFeedError(feed.ID, err.Error())
-		s.emitter.Emit(FeedErrorEvent, map[string]any{
-			"feedId": feed.ID,
-			"error":  err.Error(),
-		})
-		return res
+		if errors.Is(err, context.Canceled) {
+			res.Err = err
+			return res
+		}
+		return s.recordFailure(feed.ID, checkedAt, err)
 	}
-
-	now := s.now()
 
 	// 304：内容未变化，仅刷新检查时间并重置退避。
 	if fetchRes != nil && fetchRes.NotModified {
 		res.NotModified = true
-		_ = s.store.UpdateFeedLastUpdated(feed.ID, now)
-		_ = s.store.ResetFeedError(feed.ID)
+		if err := s.store.MarkFeedNotModified(feed.ID, checkedAt); err != nil {
+			return s.recordFailure(feed.ID, checkedAt, err)
+		}
 		return res
 	}
 	if parsed == nil {
-		res.Err = errors.New("scheduler: empty feed response")
-		_ = s.store.UpdateFeedError(feed.ID, res.Err.Error())
-		return res
+		return s.recordFailure(feed.ID, checkedAt, errors.New("scheduler: empty feed response"))
 	}
 
-	newItems := 0
-	var createdItems []NewItem
+	refreshItems := make([]store.RefreshItem, 0, len(parsed.Items))
 	for _, p := range parsed.Items {
-		item := toStoreItem(feed.ID, p, now)
+		item := toStoreItem(feed.ID, p, checkedAt)
 		if item.URL == "" {
 			continue // 无可用标识，跳过
 		}
-		created, e := s.store.CreateItemIfNotExists(item)
-		if e != nil {
-			continue
-		}
-		if created {
-			newItems++
-			createdItems = append(createdItems, NewItem{ID: item.ID, Title: item.Title})
-		}
+		refreshItems = append(refreshItems, store.RefreshItem{
+			Item: item,
+			Keys: itemKeys(p, item.URL),
+		})
 	}
 
-	if feed.MaxItems > 0 {
-		_ = s.store.CleanupOldItems(feed.ID, feed.MaxItems)
+	created, err := s.store.ApplyFeedRefresh(feed.ID, checkedAt, refreshItems, feed.MaxItems)
+	if err != nil {
+		return s.recordFailure(feed.ID, checkedAt, err)
 	}
-	_ = s.store.UpdateFeedLastUpdated(feed.ID, now)
-	_ = s.store.ResetFeedError(feed.ID)
-
-	res.NewItems = newItems
-	if newItems > 0 {
+	createdItems := make([]NewItem, len(created))
+	for i, item := range created {
+		createdItems[i] = NewItem{ID: item.ID, Title: item.Title}
+	}
+	res.NewItems = len(createdItems)
+	if res.NewItems > 0 {
 		s.emitter.Emit(ItemsUpdatedEvent, map[string]any{
 			"feedId":   feed.ID,
-			"newItems": newItems,
+			"newItems": res.NewItems,
 		})
 		// 首次抓取（last_updated 为空）不通知，避免订阅时刷屏。
 		if feed.LastUpdated != nil {
@@ -456,6 +490,56 @@ func (s *Scheduler) refreshFeed(ctx context.Context, feed store.Feed, force bool
 		}
 	}
 	return res
+}
+
+func (s *Scheduler) recordFailure(feedID int64, attemptedAt time.Time, cause error) RefreshResult {
+	if err := s.store.RecordFeedFailure(feedID, attemptedAt, cause.Error()); err != nil {
+		cause = errors.Join(cause, err)
+	}
+	s.emitter.Emit(FeedErrorEvent, map[string]any{
+		"feedId": feedID,
+		"error":  cause.Error(),
+	})
+	return RefreshResult{FeedID: feedID, Err: cause}
+}
+
+func (s *Scheduler) acquireSlot(ctx context.Context) (func(), error) {
+	select {
+	case s.slots <- struct{}{}:
+		return func() { <-s.slots }, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+func (s *Scheduler) acquireFeed(ctx context.Context, feedID int64) (func(), error) {
+	s.mu.Lock()
+	lock := s.feedLocks[feedID]
+	if lock == nil {
+		lock = make(chan struct{}, 1)
+		s.feedLocks[feedID] = lock
+	}
+	s.mu.Unlock()
+	select {
+	case lock <- struct{}{}:
+		return func() { <-lock }, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+func (s *Scheduler) isOffline() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.offlineMode
+}
+
+func itemKeys(item fetcher.ParsedItem, itemURL string) []string {
+	keys := []string{"url:" + strings.TrimSpace(itemURL)}
+	if fingerprint := fetcher.Fingerprint(item); fingerprint != "" {
+		keys = append(keys, "source:"+fingerprint)
+	}
+	return keys
 }
 
 // toStoreItem 将解析后的条目映射为数据库条目。

@@ -95,6 +95,83 @@ func TestSettingsRoundTrip(t *testing.T) {
 	}
 }
 
+func TestGlobalIntervalUpdateIsAtomic(t *testing.T) {
+	st := setupTestDB(t)
+	before, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	feed := &Feed{URL: "https://atomic.example/feed", Title: "A", UpdateInterval: 30, MaxItems: 100, Status: "active"}
+	if err := st.CreateFeed(feed); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.db.Exec(`
+		CREATE TRIGGER reject_global_interval BEFORE UPDATE OF update_interval ON feeds BEGIN
+			SELECT RAISE(ABORT, 'simulated interval failure');
+		END
+	`); err != nil {
+		t.Fatal(err)
+	}
+
+	after := before
+	after.DefaultUpdateInterval = 15
+	if err := st.UpdateSettingsAndFeedIntervals(after); err == nil {
+		t.Fatal("global interval update should fail")
+	}
+	persisted, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if persisted.DefaultUpdateInterval != before.DefaultUpdateInterval {
+		t.Fatalf("settings interval = %d after rollback, want %d", persisted.DefaultUpdateInterval, before.DefaultUpdateInterval)
+	}
+	persistedFeed, err := st.GetFeed(feed.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if persistedFeed.UpdateInterval != 30 {
+		t.Fatalf("feed interval = %d after rollback, want 30", persistedFeed.UpdateInterval)
+	}
+}
+
+func TestUnsupportedGlobalIntervalMigratesToDefault(t *testing.T) {
+	st := setupTestDB(t)
+	feed := &Feed{URL: "https://legacy.example/feed", Title: "Legacy", UpdateInterval: 5, MaxItems: 100, Status: "active"}
+	if err := st.CreateFeed(feed); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.db.Exec(
+		`INSERT INTO settings (key, value) VALUES (?, ?)`,
+		settingsKey, `{"defaultUpdateInterval":5}`,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.DefaultUpdateInterval != DefaultSettings().DefaultUpdateInterval {
+		t.Fatalf("migrated interval = %d, want default %d", got.DefaultUpdateInterval, DefaultSettings().DefaultUpdateInterval)
+	}
+	persistedFeed, err := st.GetFeed(feed.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if persistedFeed.UpdateInterval != DefaultSettings().DefaultUpdateInterval {
+		t.Fatalf("feed interval = %d after migration, want default %d", persistedFeed.UpdateInterval, DefaultSettings().DefaultUpdateInterval)
+	}
+}
+
+func TestUpdateSettingsRejectsUnsupportedGlobalInterval(t *testing.T) {
+	st := setupTestDB(t)
+	settings := DefaultSettings()
+	settings.DefaultUpdateInterval = 5
+	if err := st.UpdateSettings(settings); err == nil {
+		t.Fatal("unsupported global interval should be rejected")
+	}
+}
+
 // TestSettingsPartialMergeKeepsDefaults 验证旧数据缺失字段时回退默认值。
 func TestSettingsPartialMergeKeepsDefaults(t *testing.T) {
 	restore := stubSystemLocale(t, "en-US")

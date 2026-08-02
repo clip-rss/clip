@@ -14,11 +14,19 @@ type Feed struct {
 	UpdateInterval int        `json:"updateInterval"` // 更新间隔（分钟）
 	MaxItems       int        `json:"maxItems"`       // 最大保留条目数
 	LastUpdated    *time.Time `json:"lastUpdated"`    // 可为 NULL
+	LastAttempted  *time.Time `json:"-"`              // 最近一次抓取尝试时间（成功或失败）
 	ErrorCount     int        `json:"errorCount"`     // 连续错误次数
 	LastError      *string    `json:"lastError"`      // 可为 NULL
 	Status         string     `json:"status"`         // active/paused/error
 	CreatedAt      time.Time  `json:"createdAt"`
 	UpdatedAt      time.Time  `json:"updatedAt"`
+}
+
+// RefreshItem 是一次 Feed 刷新准备写入的文章及其稳定去重键。
+// Keys 同时包含源提供的 GUID 指纹和 URL 别名，用于避免已清理旧文被再次视为新文。
+type RefreshItem struct {
+	Item *Item
+	Keys []string
 }
 
 // Item RSS 文章条目
@@ -28,16 +36,16 @@ type Item struct {
 	Title       string     `json:"title"`
 	Author      string     `json:"author"`
 	PublishedAt time.Time  `json:"publishedAt"`
-	UpdatedAt   *time.Time `json:"updatedAt"`   // 可为 NULL
+	UpdatedAt   *time.Time `json:"updatedAt"` // 可为 NULL
 	URL         string     `json:"url"`
-	Content     string     `json:"content"`     // 完整内容
-	Summary     string     `json:"summary"`     // 摘要
-	Enclosure   string     `json:"enclosure"`   // 附件 URL（音频/视频）
-	Categories  string     `json:"categories"`  // JSON 数组字符串
+	Content     string     `json:"content"`    // 完整内容
+	Summary     string     `json:"summary"`    // 摘要
+	Enclosure   string     `json:"enclosure"`  // 附件 URL（音频/视频）
+	Categories  string     `json:"categories"` // JSON 数组字符串
 	IsRead      bool       `json:"isRead"`
 	IsStarred   bool       `json:"isStarred"`
-	ReadAt      *time.Time `json:"readAt"`      // 可为 NULL
-	Note        string     `json:"note"`        // 用户笔记
+	ReadAt      *time.Time `json:"readAt"` // 可为 NULL
+	Note        string     `json:"note"`   // 用户笔记
 	CreatedAt   time.Time  `json:"createdAt"`
 }
 
@@ -45,7 +53,7 @@ type Item struct {
 type Category struct {
 	ID        int64     `json:"id"`
 	Name      string    `json:"name"`
-	ParentID  *int64    `json:"parentId"` // null 表示根分类
+	ParentID  *int64    `json:"parentId"`  // null 表示根分类
 	SortOrder int       `json:"sortOrder"` // 排序权重
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
