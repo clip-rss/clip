@@ -4,8 +4,9 @@
 .idea
 .vscode
 .claude
+.agents
 CLAUDE.md
-AGENT.md
+AGENTS.md
 bin
 frontend/dist
 frontend/node_modules
