@@ -18,8 +18,11 @@ const (
 )
 
 // Settings 应用全局设置。
+//
+// ⚠️ 所有字段必须是标量类型：本结构体依赖 Go 的可比较性（测试与变更检测均用 ==
+// 直接比较整个结构体）。加入 slice / map / 函数字段会使其不可比较，编译期即失败。
 type Settings struct {
-	Theme                 string `json:"theme"`                 // system / light / dark
+	Theme                 string `json:"theme"`                 // system / light / dark / sepia
 	Language              string `json:"language"`              // zh / en
 	DefaultUpdateInterval int    `json:"defaultUpdateInterval"` // 全局更新间隔（分钟；字段名为兼容旧设置保留）
 	DefaultMaxItems       int    `json:"defaultMaxItems"`       // 默认每源最大保留条目数
@@ -33,6 +36,14 @@ type Settings struct {
 	WindowHeight          int    `json:"windowHeight"`          // 主窗口上次关闭时的高度
 	ProxyHost             string `json:"proxyHost"`             // HTTP 代理 IP / 主机名
 	ProxyPort             int    `json:"proxyPort"`             // HTTP 代理端口
+
+	// 阅读视图排版偏好。原先存于前端 localStorage（clip-reader），
+	// 收归后端以便随配置一起备份同步。
+	ReaderFontFamily string  `json:"readerFontFamily"` // sans / serif / mono
+	ReaderFontSize   int     `json:"readerFontSize"`   // 14 / 16 / 18
+	ReaderLineHeight float64 `json:"readerLineHeight"` // 1.5 / 1.8 / 2.0
+	ReaderWidth      string  `json:"readerWidth"`      // 640 / 800 / full
+	ReaderBackground string  `json:"readerBackground"` // default / light / sepia / dark
 }
 
 // DefaultSettings 返回出厂默认设置。
@@ -49,6 +60,11 @@ func DefaultSettings() Settings {
 		ShowFocusIndicator:    true,
 		WindowWidth:           1200,
 		WindowHeight:          800,
+		ReaderFontFamily:      "sans",
+		ReaderFontSize:        16,
+		ReaderLineHeight:      1.8,
+		ReaderWidth:           "640",
+		ReaderBackground:      "default",
 	}
 }
 

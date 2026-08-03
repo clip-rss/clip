@@ -9,6 +9,7 @@ export {
 } from './LayoutStore'
 export { useSidebarStore } from './SidebarStore'
 export { useArticleStore } from './ArticleStore'
-export { useReaderStore } from './ReaderStore'
+export { useReaderStore, DEFAULT_READER_PREFS } from './ReaderStore'
 export { useSettingsStore } from './SettingsStore'
+export { migrateLegacyPrefs } from './LegacyPrefs'
 export { useUpdateStore } from './UpdateStore'

@@ -12,7 +12,7 @@ import {
 import { useAppHotkeys, useDockBadge, useNotificationNavigation } from './Hooks'
 import './I18n'
 import i18next from 'i18next'
-import { useSettingsStore, useUpdateStore } from './Stores'
+import { migrateLegacyPrefs, useSettingsStore, useUpdateStore } from './Stores'
 import { CheckForUpdatesSilent } from '../bindings/github.com/clip-rss/clip/api/systemservice'
 import { Events } from '@wailsio/runtime'
 
@@ -33,11 +33,14 @@ function App() {
   useDockBadge()
 
   useEffect(() => {
-    const store = useSettingsStore.getState()
-    store.load().then(() => {
+    void (async () => {
+      await useSettingsStore.getState().load()
+      // 主题与阅读排版原存于 localStorage，收归后端后搬一次。
+      // 必须在 load() 之后：迁移是把本地旧值覆盖到后端基线上。
+      await migrateLegacyPrefs()
       const lang = useSettingsStore.getState().settings?.language
       if (lang) i18next.changeLanguage(lang)
-    })
+    })()
 
     // 监听更新可用事件
     const unsubscribe = Events.On('clip:update:available', () => {

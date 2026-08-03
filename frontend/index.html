@@ -6,19 +6,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Clip</title>
     <script>
-      // 防闪烁：在 React 渲染前同步应用主题 class
+      // 防闪烁：在 React 渲染前同步应用主题 class。
+      //
+      // 主题真源在后端 settings，但后端读取是异步的（Wails 调用），赶不上首帧。
+      // 故 ThemeStore 每次切换主题都会把偏好写一份到 localStorage 'clip-theme'
+      // 作为纯首帧缓存，这里同步读取它。
+      //
+      // 缓存格式：{v:2, preference}。旧版由 zustand persist 写入，形如
+      // {state:{preference},version:0}，一并兼容——用户升级后首帧仍不闪。
       ;(function () {
         try {
           var stored = JSON.parse(localStorage.getItem('clip-theme') || '{}')
-          var pref = (stored.state && stored.state.preference) || 'system'
+          var pref =
+            stored.preference ||
+            (stored.state && stored.state.preference) ||
+            'system'
           var mode = pref
           if (pref === 'system') {
             mode = window.matchMedia('(prefers-color-scheme: dark)').matches
               ? 'dark'
               : 'light'
           }
-          if (mode === 'dark') document.documentElement.classList.add('dark')
-          else if (mode === 'sepia') document.documentElement.classList.add('sepia')
+          // 类名必须与 global.css 一致（.theme-dark / .theme-sepia）。
+          // 注意别写成裸 'dark' / 'sepia'：CSS 里没有这两个选择器，加了不生效，
+          // 且它们与 Tailwind 内置滤镜工具类同名，会给整页叠加真实滤镜。
+          if (mode === 'dark')
+            document.documentElement.classList.add('theme-dark')
+          else if (mode === 'sepia')
+            document.documentElement.classList.add('theme-sepia')
         } catch (e) {}
       })()
     </script>

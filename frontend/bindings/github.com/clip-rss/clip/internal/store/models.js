@@ -752,6 +752,9 @@ export class ItemLight {
 
 /**
  * Settings 应用全局设置。
+ * 
+ * ⚠️ 所有字段必须是标量类型：本结构体依赖 Go 的可比较性（测试与变更检测均用 ==
+ * 直接比较整个结构体）。加入 slice / map / 函数字段会使其不可比较，编译期即失败。
  */
 export class Settings {
     /**
@@ -761,7 +764,7 @@ export class Settings {
     constructor($$source = {}) {
         if (!("theme" in $$source)) {
             /**
-             * system / light / dark
+             * system / light / dark / sepia
              * @member
              * @type {string}
              */
@@ -870,6 +873,48 @@ export class Settings {
              * @type {number}
              */
             this["proxyPort"] = 0;
+        }
+        if (!("readerFontFamily" in $$source)) {
+            /**
+             * 阅读视图排版偏好。原先存于前端 localStorage（clip-reader），
+             * 收归后端以便随配置一起备份同步。
+             * sans / serif / mono
+             * @member
+             * @type {string}
+             */
+            this["readerFontFamily"] = "";
+        }
+        if (!("readerFontSize" in $$source)) {
+            /**
+             * 14 / 16 / 18
+             * @member
+             * @type {number}
+             */
+            this["readerFontSize"] = 0;
+        }
+        if (!("readerLineHeight" in $$source)) {
+            /**
+             * 1.5 / 1.8 / 2.0
+             * @member
+             * @type {number}
+             */
+            this["readerLineHeight"] = 0;
+        }
+        if (!("readerWidth" in $$source)) {
+            /**
+             * 640 / 800 / full
+             * @member
+             * @type {string}
+             */
+            this["readerWidth"] = "";
+        }
+        if (!("readerBackground" in $$source)) {
+            /**
+             * default / light / sepia / dark
+             * @member
+             * @type {string}
+             */
+            this["readerBackground"] = "";
         }
 
         Object.assign(this, $$source);

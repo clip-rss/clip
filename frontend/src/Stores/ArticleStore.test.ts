@@ -244,6 +244,11 @@ describe('ArticleStore', () => {
           proxyPort: 0,
           reduceMotion: false,
           showFocusIndicator: true,
+          readerFontFamily: 'sans',
+          readerFontSize: 16,
+          readerLineHeight: 1.8,
+          readerWidth: '640',
+          readerBackground: 'default',
         },
       })
     })

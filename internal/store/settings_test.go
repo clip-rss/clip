@@ -71,6 +71,11 @@ func TestSettingsRoundTrip(t *testing.T) {
 		LaunchMinimized:       true,
 		WindowWidth:           1366,
 		WindowHeight:          768,
+		ReaderFontFamily:      "serif",
+		ReaderFontSize:        18,
+		ReaderLineHeight:      2.0,
+		ReaderWidth:           "full",
+		ReaderBackground:      "sepia",
 	}
 	if err := st.UpdateSettings(want); err != nil {
 		t.Fatalf("UpdateSettings: %v", err)
@@ -196,6 +201,80 @@ func TestSettingsPartialMergeKeepsDefaults(t *testing.T) {
 	}
 	if got.DefaultUpdateInterval != 30 || got.Language != "en" {
 		t.Errorf("missing fields should fall back to defaults, got %+v", got)
+	}
+}
+
+// TestReaderPrefsDefaults 阅读排版默认值需与收归前的前端 ReaderStore 初值一致，
+// 否则老用户升级后排版会被静默改掉。
+func TestReaderPrefsDefaults(t *testing.T) {
+	d := DefaultSettings()
+	if d.ReaderFontFamily != "sans" {
+		t.Errorf("fontFamily = %q, want sans", d.ReaderFontFamily)
+	}
+	if d.ReaderFontSize != 16 {
+		t.Errorf("fontSize = %d, want 16", d.ReaderFontSize)
+	}
+	if d.ReaderLineHeight != 1.8 {
+		t.Errorf("lineHeight = %v, want 1.8", d.ReaderLineHeight)
+	}
+	if d.ReaderWidth != "640" {
+		t.Errorf("width = %q, want 640", d.ReaderWidth)
+	}
+	if d.ReaderBackground != "default" {
+		t.Errorf("background = %q, want default", d.ReaderBackground)
+	}
+}
+
+// TestReaderPrefsFallbackOnLegacyDB 老库的 settings JSON 里没有 reader* 字段，
+// 读出来必须是默认值而不是零值（零值会让字号变 0、行高变 0）。
+func TestReaderPrefsFallbackOnLegacyDB(t *testing.T) {
+	st := setupTestDB(t)
+
+	// 模拟阶段 A 之前的历史数据：完全没有 reader* 字段。
+	if _, err := st.db.Exec(
+		`INSERT INTO settings (key, value) VALUES (?, ?)`,
+		settingsKey, `{"theme":"dark","language":"zh","defaultUpdateInterval":30}`,
+	); err != nil {
+		t.Fatalf("seed legacy settings: %v", err)
+	}
+
+	got, err := st.GetSettings()
+	if err != nil {
+		t.Fatalf("GetSettings: %v", err)
+	}
+	d := DefaultSettings()
+	if got.ReaderFontSize != d.ReaderFontSize || got.ReaderLineHeight != d.ReaderLineHeight {
+		t.Errorf("legacy db reader prefs = size %d / line %v, want size %d / line %v",
+			got.ReaderFontSize, got.ReaderLineHeight, d.ReaderFontSize, d.ReaderLineHeight)
+	}
+	if got.ReaderFontFamily != d.ReaderFontFamily ||
+		got.ReaderWidth != d.ReaderWidth ||
+		got.ReaderBackground != d.ReaderBackground {
+		t.Errorf("legacy db reader prefs fell back wrong: %+v", got)
+	}
+}
+
+// TestReaderLineHeightJSONRoundTrip 行高是唯一的浮点字段，
+// 断言 1.5/1.8/2.0 经 JSON 往返后仍能用 == 精确比较（结构体可比较性依赖此）。
+func TestReaderLineHeightJSONRoundTrip(t *testing.T) {
+	st := setupTestDB(t)
+
+	for _, lh := range []float64{1.5, 1.8, 2.0} {
+		s := DefaultSettings()
+		s.ReaderLineHeight = lh
+		if err := st.UpdateSettings(s); err != nil {
+			t.Fatalf("UpdateSettings(%v): %v", lh, err)
+		}
+		got, err := st.GetSettings()
+		if err != nil {
+			t.Fatalf("GetSettings(%v): %v", lh, err)
+		}
+		if got.ReaderLineHeight != lh {
+			t.Errorf("lineHeight round trip = %v, want %v", got.ReaderLineHeight, lh)
+		}
+		if got != s {
+			t.Errorf("full struct round trip mismatch at lineHeight %v", lh)
+		}
 	}
 }
 
