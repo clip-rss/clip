@@ -19,6 +19,16 @@ const (
 	remoteFile = "clip/settings.json"
 )
 
+// RemoteDir 返回同步目录（相对用户填写的地址）。
+//
+// 导出给 api 层做「测试连接」用：那一步要建目录并写探针文件，位置必须与
+// 真正同步用的目录完全一致 —— 否则测的是另一个地方的写权限，
+// 通过了也不代表同步能用。故只有这一个出口，不在 api 层再抄一遍路径。
+func RemoteDir() string { return remoteDir }
+
+// RemoteFile 返回同步文件的完整相对路径，供设置页向用户交代配置存到了哪里。
+func RemoteFile() string { return remoteFile }
+
 // 触发时机的两个延时常量。有意不提供后台轮询间隔：配置同步没有实时性要求，
 // 轮询只会白耗电量与网盘的请求配额（坚果云对频率有限制）。
 const (

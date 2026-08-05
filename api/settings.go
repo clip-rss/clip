@@ -18,11 +18,42 @@ type SettingsService struct {
 	store      *store.Store
 	sched      *scheduler.Scheduler
 	httpClient *fetcher.Client
+
+	// onChanged 设置变更后的观察者，由 SyncService 注入以触发 debounce 推送。
+	// 为 nil 表示没人关心（未配置同步、或单测里不需要）。
+	//
+	// 用观察者而不是让 SettingsService 直接依赖 SyncService：后者要依赖前者
+	// （拉取得经 UpdateSettings 才能下发间隔到订阅源与调度器），双向依赖会成环。
+	//
+	// ⚠️ 用接口而非 func()：wails3 generate bindings 会扫描 Service 的全部字段，
+	// 遇到函数类型就报「function types are not supported by encoding/json」。
+	// 该字段既不导出也不参与序列化，警告纯属噪音，但会出现在每次生成里。
+	onChanged SettingsObserver
+}
+
+// SettingsObserver 关心设置变更的一方。由 SyncService 实现。
+//
+// 方法有意不导出：同包内未导出方法即可满足接口，而导出方法会被 wails3
+// 生成成前端绑定（见 sync.go 生命周期一节的说明）。
+type SettingsObserver interface {
+	notifySettingsChanged()
 }
 
 // NewSettingsService 创建 SettingsService。
 func NewSettingsService(st *store.Store, sch *scheduler.Scheduler, client *fetcher.Client) *SettingsService {
 	return &SettingsService{store: st, sched: sch, httpClient: client}
+}
+
+// ObserveSettings 把 o 注册为 svc 的设置变更观察者。
+//
+// ⚠️ 写成包级函数而非 SettingsService 的方法，是因为 wails3 会把 Service 上
+// **每一个导出方法**都生成成前端可调用的绑定。这是装配期的接线，只该由 main 调用，
+// 不该出现在前端 API 里（而且它的接口参数也无法序列化，会一直报警告）。
+// 包级函数不参与 Service 绑定，同时仍能访问未导出字段。
+//
+// 只应在应用装配阶段调用，不是线程安全的。
+func ObserveSettings(svc *SettingsService, o SettingsObserver) {
+	svc.onChanged = o
 }
 
 // GetSettings 读取全局设置（未持久化时返回默认值）。
@@ -50,6 +81,10 @@ func (s *SettingsService) UpdateSettings(settings store.Settings) error {
 	}
 	if s.httpClient != nil {
 		s.httpClient.SetProxy(settings.ProxyHost, settings.ProxyPort)
+	}
+	// 放在最后：只有设置确实落库并生效了才通知，否则会推送一份没保存成功的配置。
+	if s.onChanged != nil {
+		s.onChanged.notifySettingsChanged()
 	}
 	return nil
 }

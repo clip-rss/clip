@@ -7,6 +7,66 @@
 import { Create as $Create } from "@wailsio/runtime";
 
 /**
+ * ConnectionTestResult 「测试连接」的逐步结果。
+ * 
+ * 有意用结构体而非 error 返回：Wails 把 error 压成一个字符串，前端无法用
+ * errors.Is 判别，也就没法针对「认证失败」渲染服务商特定建议（如坚果云需用
+ * 应用密码）。把「哪一步失败」与「建议」作为数据回去，前端才能照 errors.Is
+ * 的判别结果那样分支。
+ */
+export class ConnectionTestResult {
+    /**
+     * Creates a new ConnectionTestResult instance.
+     * @param {Partial<ConnectionTestResult>} [$$source = {}] - The source object to create the ConnectionTestResult.
+     */
+    constructor($$source = {}) {
+        if (!("ok" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["ok"] = false;
+        }
+        if (!("step" in $$source)) {
+            /**
+             * Step 失败的步骤：connect / mkcol / write / delete；成功时为空。
+             * @member
+             * @type {string}
+             */
+            this["step"] = "";
+        }
+        if (!("message" in $$source)) {
+            /**
+             * Message 失败原因（面向用户）。
+             * @member
+             * @type {string}
+             */
+            this["message"] = "";
+        }
+        if (!("hint" in $$source)) {
+            /**
+             * Hint 可操作的建议，可能为空。与 Message 分开，便于前端用不同字号展示。
+             * @member
+             * @type {string}
+             */
+            this["hint"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new ConnectionTestResult instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {ConnectionTestResult}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new ConnectionTestResult(/** @type {Partial<ConnectionTestResult>} */($$parsedSource));
+    }
+}
+
+/**
  * FeedPreview 添加订阅前的检测预览信息（不入库）。
  */
 export class FeedPreview {

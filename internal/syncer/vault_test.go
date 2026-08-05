@@ -390,6 +390,135 @@ func TestCredentialsAfterKeyLoss(t *testing.T) {
 	}
 }
 
+/* ---------- CredentialsFor：测试尚未保存的表单 ---------- */
+
+// TestCredentialsForUsesTypedPassword 表单里现输的密码优先，且不必先保存。
+func TestCredentialsForUsesTypedPassword(t *testing.T) {
+	v, _ := newTestVault(t)
+
+	got, err := v.CredentialsFor(WebDAVInput{
+		URL:      "  https://dav.example.com/dav/  ",
+		Username: "  alice  ",
+		Password: "typed-now",
+	})
+	if err != nil {
+		t.Fatalf("CredentialsFor: %v", err)
+	}
+	if got.Password != "typed-now" {
+		t.Errorf("密码 = %q, want typed-now", got.Password)
+	}
+	// 地址与用户名按保存时的同一套规则去空白，否则会出现
+	// 「测试连接通过、保存后连不上」这种最难查的不一致。
+	if got.URL != "https://dav.example.com/dav/" {
+		t.Errorf("URL = %q, 未去空白", got.URL)
+	}
+	if got.Username != "alice" {
+		t.Errorf("用户名 = %q, 未去空白", got.Username)
+	}
+}
+
+// TestCredentialsForFallsBackToStored 表单密码留空时回落到已存密码。
+// 用户只改地址、不重输密码时「测试连接」必须仍然可用
+// —— 前端拿不到现有密码，没法自己补上。
+func TestCredentialsForFallsBackToStored(t *testing.T) {
+	v, _ := newTestVault(t)
+	if err := v.Save(WebDAVInput{
+		Enabled: true, URL: "https://old.example.com/dav/", Username: "alice", Password: "stored-pw",
+	}); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	got, err := v.CredentialsFor(WebDAVInput{
+		URL: "https://new.example.com/dav/", Username: "alice", Password: "",
+	})
+	if err != nil {
+		t.Fatalf("CredentialsFor: %v", err)
+	}
+	if got.Password != "stored-pw" {
+		t.Errorf("密码 = %q, want stored-pw（应回落到已存密码）", got.Password)
+	}
+	// 用的是表单里的新地址，不是库里的旧地址。
+	if got.URL != "https://new.example.com/dav/" {
+		t.Errorf("URL = %q, want 表单里的新地址", got.URL)
+	}
+}
+
+// TestCredentialsForWithoutAnyPassword 表单留空且从未存过密码 → ErrNoPassword。
+func TestCredentialsForWithoutAnyPassword(t *testing.T) {
+	v, _ := newTestVault(t)
+
+	_, err := v.CredentialsFor(WebDAVInput{
+		URL: "https://dav.example.com/dav/", Username: "alice",
+	})
+	if !errors.Is(err, ErrNoPassword) {
+		t.Errorf("err = %v, want ErrNoPassword", err)
+	}
+}
+
+// TestCredentialsForAfterKeyLoss 密钥丢失后「测试连接」也得给出可理解的结果，
+// 而不是拿着解不开的密文去连服务器、报一个 401。
+func TestCredentialsForAfterKeyLoss(t *testing.T) {
+	st := newTestStore(t)
+	keyPath := filepath.Join(filepath.Dir(st.Path()), secret.KeyFileName)
+	cipher, err := secret.NewCipher(keyPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := NewVault(st, cipher)
+	if err := v.Save(WebDAVInput{
+		Enabled: true, URL: "https://a.example/dav/", Username: "alice", Password: "hunter2",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Remove(keyPath); err != nil {
+		t.Fatal(err)
+	}
+	newCipher, err := secret.NewCipher(keyPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = NewVault(st, newCipher).CredentialsFor(WebDAVInput{
+		URL: "https://a.example/dav/", Username: "alice",
+	})
+	if !errors.Is(err, secret.ErrCredentialsLost) {
+		t.Errorf("err = %v, want secret.ErrCredentialsLost", err)
+	}
+}
+
+// TestCredentialsForDoesNotPersist 「测试连接」不得有副作用：
+// 试一个地址不等于保存它，否则测试失败后库里已经是那份坏配置了。
+func TestCredentialsForDoesNotPersist(t *testing.T) {
+	v, _ := newTestVault(t)
+	if err := v.Save(WebDAVInput{
+		Enabled: true, URL: "https://kept.example.com/dav/", Username: "alice", Password: "stored-pw",
+	}); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	if _, err := v.CredentialsFor(WebDAVInput{
+		URL: "https://scratch.example.com/dav/", Username: "bob", Password: "scratch-pw",
+	}); err != nil {
+		t.Fatalf("CredentialsFor: %v", err)
+	}
+
+	view, err := v.View()
+	if err != nil {
+		t.Fatalf("View: %v", err)
+	}
+	if view.URL != "https://kept.example.com/dav/" || view.Username != "alice" {
+		t.Errorf("库里的配置被「测试连接」改掉了: %+v", view)
+	}
+	creds, err := v.Credentials()
+	if err != nil {
+		t.Fatalf("Credentials: %v", err)
+	}
+	if creds.Password != "stored-pw" {
+		t.Error("已存密码被「测试连接」覆盖了")
+	}
+}
+
 /* ---------- 辅助 ---------- */
 
 // loadRawConfig 读出落库的原始配置（含密文），仅测试用。

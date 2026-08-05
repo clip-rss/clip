@@ -159,6 +159,38 @@ func (v *Vault) Credentials() (WebDAVCredentials, error) {
 	}, nil
 }
 
+// CredentialsFor 解析一份**尚未保存**的表单配置，用于「测试连接」。
+//
+// in.Password 为空时回退到已存的密码，语义与 Save 一致：用户只改了地址就点测试
+// 连接，不该被迫重新输入密码（前端也拿不到现有密码，无法自己补上）。
+//
+// 与 Credentials 分开而不是让后者接参数：一个读库、一个读表单，混在一个方法里
+// 会让「这次用的到底是哪份凭据」变得不明显。
+func (v *Vault) CredentialsFor(in WebDAVInput) (WebDAVCredentials, error) {
+	creds := WebDAVCredentials{
+		URL:      strings.TrimSpace(in.URL),
+		Username: strings.TrimSpace(in.Username),
+		Password: in.Password, // 不 Trim：空白可能是密码的一部分
+	}
+	if creds.Password != "" {
+		return creds, nil
+	}
+
+	cfg, err := v.load()
+	if err != nil {
+		return WebDAVCredentials{}, err
+	}
+	if cfg.PasswordCipher == "" {
+		return WebDAVCredentials{}, ErrNoPassword
+	}
+	password, err := v.cipher.Decrypt(cfg.PasswordCipher)
+	if err != nil {
+		return WebDAVCredentials{}, err
+	}
+	creds.Password = password
+	return creds, nil
+}
+
 // Enabled 报告用户是否开启了同步。
 func (v *Vault) Enabled() (bool, error) {
 	cfg, err := v.load()

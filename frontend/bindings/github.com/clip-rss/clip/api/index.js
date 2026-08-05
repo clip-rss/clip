@@ -7,6 +7,7 @@ import * as FeedService from "./feedservice.js";
 import * as ItemService from "./itemservice.js";
 import * as OPMLService from "./opmlservice.js";
 import * as SettingsService from "./settingsservice.js";
+import * as SyncService from "./syncservice.js";
 import * as SystemService from "./systemservice.js";
 export {
     CategoryService,
@@ -14,10 +15,12 @@ export {
     ItemService,
     OPMLService,
     SettingsService,
+    SyncService,
     SystemService
 };
 
 export {
+    ConnectionTestResult,
     FeedPreview,
     ImportResult,
     RefreshOutcome

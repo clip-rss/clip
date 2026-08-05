@@ -16,6 +16,7 @@ import (
 	"github.com/clip-rss/clip/internal/fetcher"
 	"github.com/clip-rss/clip/internal/notify"
 	"github.com/clip-rss/clip/internal/scheduler"
+	"github.com/clip-rss/clip/internal/secret"
 	"github.com/clip-rss/clip/internal/store"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -511,7 +512,25 @@ func main() {
 		}),
 	)
 
+	// 凭据加密器。密钥与数据库同目录（<configDir>/clip/.synckey）。
+	//
+	// 失败不致命：只关掉同步功能，其余功能与它无关。SyncService 收到 nil
+	// 会让涉及凭据的方法返回明确错误，而不是崩在 nil 解引用上。
+	var cipher *secret.Cipher
+	if c, err := secret.NewCipher(filepath.Join(filepath.Dir(st.Path()), secret.KeyFileName)); err != nil {
+		log.Printf("failed to init credential cipher, sync disabled: %v", err)
+	} else {
+		cipher = c
+	}
+
 	// 绑定服务（暴露给前端）。
+	//
+	// settingsSvc 提成变量：syncer 的 SettingsStore 必须是这个实例，
+	// 拉取才会经它把新的更新间隔下发到订阅源与调度器。
+	settingsSvc := api.NewSettingsService(st, sch, ft.Client())
+	syncSvc := api.NewSyncService(st, settingsSvc, cipher)
+	api.ObserveSettings(settingsSvc, syncSvc)
+
 	sysSvc := &api.SystemService{
 		AppVersion:      currentVersion,
 		ChangelogURL:    changelogURL,
@@ -531,7 +550,8 @@ func main() {
 			application.NewService(api.NewFeedService(st, ft, sch)),
 			application.NewService(api.NewItemService(st)),
 			application.NewService(api.NewCategoryService(st)),
-			application.NewService(api.NewSettingsService(st, sch, ft.Client())),
+			application.NewService(settingsSvc),
+			application.NewService(syncSvc),
 			application.NewService(api.NewOPMLService(st)),
 			application.NewService(notifSvc),
 			application.NewService(dockService),
@@ -638,9 +658,14 @@ func main() {
 	sch.SetOfflineMode(true)
 	sch.Start(context.Background())
 
-	// 退出时优雅停机：先停调度，再关数据库。
+	// 配置同步：装好远端并安排启动后的延迟拉取（不阻塞启动）。
+	// 有意不加后台轮询 —— 配置同步没有实时性要求，轮询只白耗网盘的请求配额。
+	api.StartSync(syncSvc)
+
+	// 退出时优雅停机：先停调度与同步，再关数据库。
 	app.OnShutdown(func() {
 		sch.Stop()
+		api.StopSync(syncSvc)
 		_ = st.Close()
 	})
 
