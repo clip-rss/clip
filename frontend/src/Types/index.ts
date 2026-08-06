@@ -15,6 +15,21 @@ export type {
   FeedPreview,
 } from './Models'
 
+// 配置同步
+export type {
+  WebDAVView,
+  WebDAVInput,
+  ConflictInfo,
+  ConnectionTestResult,
+  SyncStatus,
+  SyncResult,
+  SyncAction,
+  CloudBackupConfig,
+  CloudBackupStatus,
+  CloudBackupInfo,
+  CloudRestoreResult,
+} from './Models'
+
 // 事件名与负载
 export {
   ItemsUpdatedEvent,

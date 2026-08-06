@@ -13,6 +13,7 @@ import {
   ShortcutSection,
   ThemeSection,
 } from './Sections'
+import { SyncSection } from './SyncSection'
 import styles from './SettingsModal.module.scss'
 
 interface SettingsModalProps {
@@ -27,6 +28,7 @@ type SectionId =
   | 'notification'
   | 'proxy'
   | 'shortcuts'
+  | 'sync'
   | 'data'
   | 'about'
 
@@ -37,6 +39,7 @@ const NAV_KEYS: { id: SectionId; labelKey: string }[] = [
   { id: 'notification', labelKey: 'settings.tabs.notification' },
   { id: 'proxy', labelKey: 'settings.tabs.proxy' },
   { id: 'shortcuts', labelKey: 'settings.tabs.shortcuts' },
+  { id: 'sync', labelKey: 'settings.tabs.sync' },
   { id: 'data', labelKey: 'settings.tabs.data' },
   { id: 'about', labelKey: 'settings.tabs.about' },
 ]
@@ -103,6 +106,7 @@ function SettingsModal(props: SettingsModalProps): JSX.Element {
                 {active === 'notification' ? <NotificationSection /> : null}
                 {active === 'proxy' ? <ProxySection /> : null}
                 {active === 'shortcuts' ? <ShortcutSection /> : null}
+                {active === 'sync' ? <SyncSection /> : null}
                 {active === 'data' ? <DataSection /> : null}
                 {active === 'about' ? <AboutSection /> : null}
               </div>

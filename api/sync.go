@@ -92,8 +92,25 @@ func (s *SyncService) SaveWebDAVConfig(cfg syncer.WebDAVInput) error {
 	if err := s.vault.Save(cfg); err != nil {
 		return err
 	}
+
 	// 立刻重装远端，让「保存后马上点同步」用的是新配置而不是上一份。
-	return s.refreshRemote()
+	//
+	// 停用时 refreshRemote 必然返回 ErrNotConfigured —— 那是它对「未启用」的
+	// 正常表达，不是保存失败。原样返回会让用户点「停用并保存」后看到
+	// 「尚未配置同步服务器」，以为没保存成功（其实已经存了）。
+	if err := s.refreshRemote(); err != nil {
+		if cfg.Enabled || !errors.Is(err, syncer.ErrNotConfigured) {
+			return err
+		}
+	}
+
+	// 按新的启用状态装卸自动推送。
+	//
+	// 少了这一步，用户在设置页首次开启同步后，本次会话内改任何设置都不会触发
+	// 推送 —— debounce 只在 StartSync（启动时）装，而那时同步还是关的。
+	// 反过来停用后不卸，则每次改设置都会去推一次并失败，白刷日志。
+	s.arm(cfg.Enabled)
+	return nil
 }
 
 // ClearWebDAVConfig 删除全部同步配置（含密码）。
@@ -105,6 +122,7 @@ func (s *SyncService) ClearWebDAVConfig() error {
 		return err
 	}
 	s.engine.SetRemote(nil)
+	s.arm(false)
 	return nil
 }
 
@@ -198,6 +216,15 @@ func (s *SyncService) GetSyncStatus() (syncer.Status, error) {
 	return s.engine.Status()
 }
 
+// RemoteFilePath 返回同步文件相对用户所填地址的路径（如 clip/settings.json）。
+//
+// 给设置页拼完整路径用。之所以从后端要而不在前端写死：clip/ 这一层是我们自己
+// 建的，用户填 …/dav/ 最终会落到 …/dav/clip/settings.json，界面必须把这个
+// 完整位置讲清楚。路径的唯一定义处在 syncer，抄一份到前端就会有漂移的可能。
+func (s *SyncService) RemoteFilePath() string {
+	return syncer.RemoteFile()
+}
+
 /* ---------- 生命周期 ---------- */
 //
 // ⚠️ 这几个方法一律不导出，改由下方的包级函数供 main 调用。
@@ -228,9 +255,7 @@ func (s *SyncService) start() {
 		return
 	}
 
-	s.mu.Lock()
-	s.debounce = syncer.NewDebouncer(syncer.PushDebounce, s.pushNow)
-	s.mu.Unlock()
+	s.arm(true)
 
 	// 延迟拉取：让界面先可用。计时器而非 goroutine+Sleep，便于 Stop 取消。
 	time.AfterFunc(syncer.StartupDelay, func() {
@@ -243,13 +268,28 @@ func (s *SyncService) start() {
 }
 
 // stop 取消尚未执行的推送。
-func (s *SyncService) stop() {
+func (s *SyncService) stop() { s.arm(false) }
+
+// arm 按启用状态装卸自动推送的去抖器。
+//
+// on 为真时装一个新的；已装好则原样保留 —— 换掉会丢弃已在计时的那次推送。
+// on 为假时停掉并置 nil，notifySettingsChanged 据此直接返回。
+//
+// Debouncer.Stop 之后 Trigger 永久失效，故重新启用时必须新建而不能复用。
+func (s *SyncService) arm(on bool) {
 	s.mu.Lock()
-	d := s.debounce
-	s.debounce = nil
+	var stale *syncer.Debouncer
+	switch {
+	case on && s.debounce == nil:
+		s.debounce = syncer.NewDebouncer(syncer.PushDebounce, s.pushNow)
+	case !on:
+		stale, s.debounce = s.debounce, nil
+	}
 	s.mu.Unlock()
-	if d != nil {
-		d.Stop()
+
+	// 在锁外 Stop：Debouncer 有自己的锁，交叉持有两把锁没有必要。
+	if stale != nil {
+		stale.Stop()
 	}
 }
 
@@ -333,17 +373,40 @@ func (s *SyncService) refreshRemote() error {
 
 // newClient 用凭据与当前代理设置构造 WebDAV 客户端。
 func (s *SyncService) newClient(creds syncer.WebDAVCredentials) (*webdav.Client, error) {
+	return s.newClientWithOptions(creds)
+}
+
+func (s *SyncService) newClientWithOptions(
+	creds syncer.WebDAVCredentials,
+	extra ...webdav.Option,
+) (*webdav.Client, error) {
 	opts := []webdav.Option{}
 	// 代理与 RSS 抓取共用同一份设置（Settings.ProxyHost/ProxyPort）。
 	// 读取失败不阻断同步：直连也可能通，让网络层给出可诊断的错误。
 	if cfg, err := s.store.GetSettings(); err == nil && cfg.ProxyHost != "" && cfg.ProxyPort > 0 {
 		opts = append(opts, webdav.WithProxy(cfg.ProxyHost, cfg.ProxyPort))
 	}
+	opts = append(opts, extra...)
 	return webdav.New(webdav.Config{
 		URL:      creds.URL,
 		Username: creds.Username,
 		Password: creds.Password,
 	}, opts...)
+}
+
+// cloudRemote 返回当前 WebDAV 凭据对应的客户端。数据库云备份与配置同步共用
+// 连接配置，但调用方不共享引擎状态，避免一次备份改变配置同步的冲突基线。
+func (s *SyncService) cloudRemote() (*webdav.Client, error) {
+	if s.vault == nil {
+		return nil, errCredentialStoreUnavailable
+	}
+	// 云备份有独立开关；即使用户关闭了“配置同步”，仍可使用已经保存的
+	// WebDAV 地址与密码进行数据库备份。
+	creds, err := s.vault.Credentials()
+	if err != nil {
+		return nil, err
+	}
+	return s.newClientWithOptions(creds, webdav.WithTimeout(cloudBackupTimeout))
 }
 
 // errCredentialStoreUnavailable 凭据加密不可用时的统一错误。

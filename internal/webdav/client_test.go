@@ -1,6 +1,7 @@
 package webdav
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -16,14 +17,17 @@ import (
 
 // recordedRequest 记录一次请求的关键信息，供断言协议细节。
 type recordedRequest struct {
-	Method  string
-	Path    string
-	Depth   string
-	IfMatch string
-	Body    string
-	User    string
-	Pass    string
-	HadAuth bool
+	Method        string
+	Path          string
+	Depth         string
+	IfMatch       string
+	IfNoneMatch   string
+	ContentType   string
+	ContentLength int64
+	Body          string
+	User          string
+	Pass          string
+	HadAuth       bool
 }
 
 // fakeDAV 一个极简 WebDAV 服务器替身。
@@ -46,14 +50,17 @@ func newFakeDAV(t *testing.T) *fakeDAV {
 		body := string(raw)
 		user, pass, hadAuth := r.BasicAuth()
 		f.requests = append(f.requests, recordedRequest{
-			Method:  r.Method,
-			Path:    r.URL.Path,
-			Depth:   r.Header.Get("Depth"),
-			IfMatch: r.Header.Get("If-Match"),
-			Body:    body,
-			User:    user,
-			Pass:    pass,
-			HadAuth: hadAuth,
+			Method:        r.Method,
+			Path:          r.URL.Path,
+			Depth:         r.Header.Get("Depth"),
+			IfMatch:       r.Header.Get("If-Match"),
+			IfNoneMatch:   r.Header.Get("If-None-Match"),
+			ContentType:   r.Header.Get("Content-Type"),
+			ContentLength: r.ContentLength,
+			Body:          body,
+			User:          user,
+			Pass:          pass,
+			HadAuth:       hadAuth,
 		})
 		if f.handler != nil {
 			f.handler(w, r, body)
@@ -193,6 +200,26 @@ func TestResolveRejectsEscapingPath(t *testing.T) {
 	}
 	if len(f.requests) != 0 {
 		t.Errorf("escaping path should not reach the server, got %d requests", len(f.requests))
+	}
+}
+
+func TestWithTimeoutDoesNotMutateInjectedClient(t *testing.T) {
+	f := newFakeDAV(t)
+	injected := f.srv.Client()
+	injected.Timeout = 2 * time.Second
+	c, err := New(
+		Config{URL: f.srv.URL + "/dav/"},
+		WithTimeout(7*time.Minute),
+		WithHTTPClient(injected),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.http.Timeout != 7*time.Minute {
+		t.Errorf("timeout = %v, want 7m", c.http.Timeout)
+	}
+	if injected.Timeout != 2*time.Second {
+		t.Errorf("injected client mutated: %v", injected.Timeout)
 	}
 }
 
@@ -476,6 +503,42 @@ func TestGetTruncatesOversizedResponse(t *testing.T) {
 	}
 }
 
+func TestGetToStreamsLargeResponse(t *testing.T) {
+	f := newFakeDAV(t)
+	c := f.client()
+	want := bytes.Repeat([]byte("database-block"), 120000)
+	f.handler = func(w http.ResponseWriter, r *http.Request, _ string) {
+		w.Header().Set("ETag", `"db-v1"`)
+		_, _ = w.Write(want)
+	}
+
+	var got bytes.Buffer
+	etag, written, err := c.GetTo(context.Background(), "backup.db", &got, int64(len(want)+1))
+	if err != nil {
+		t.Fatalf("GetTo: %v", err)
+	}
+	if etag != "db-v1" || written != int64(len(want)) {
+		t.Errorf("etag/written = %q/%d, want db-v1/%d", etag, written, len(want))
+	}
+	if !bytes.Equal(got.Bytes(), want) {
+		t.Error("streamed body differs")
+	}
+}
+
+func TestGetToRejectsResponseOverLimit(t *testing.T) {
+	f := newFakeDAV(t)
+	c := f.client()
+	f.handler = func(w http.ResponseWriter, r *http.Request, _ string) {
+		_, _ = w.Write(bytes.Repeat([]byte("x"), 2048))
+	}
+
+	var got bytes.Buffer
+	_, _, err := c.GetTo(context.Background(), "backup.db", &got, 1024)
+	if !errors.Is(err, ErrResponseTooLarge) {
+		t.Fatalf("err = %v, want ErrResponseTooLarge", err)
+	}
+}
+
 /* ---------- Put ---------- */
 
 func TestPutSendsBodyAndReturnsETag(t *testing.T) {
@@ -501,6 +564,39 @@ func TestPutSendsBodyAndReturnsETag(t *testing.T) {
 	}
 	if got.IfMatch != "" {
 		t.Errorf("If-Match should be absent when not requested, got %q", got.IfMatch)
+	}
+}
+
+func TestPutStreamSendsFileMetadataAndCreatePrecondition(t *testing.T) {
+	f := newFakeDAV(t)
+	c := f.client()
+	f.handler = func(w http.ResponseWriter, r *http.Request, _ string) {
+		w.Header().Set("ETag", `"db-v1"`)
+		w.WriteHeader(http.StatusCreated)
+	}
+	body := "sqlite-database"
+	etag, err := c.PutStream(
+		context.Background(),
+		"backup.db",
+		strings.NewReader(body),
+		int64(len(body)),
+		PutOptions{ContentType: "application/vnd.sqlite3", IfNoneMatch: true},
+	)
+	if err != nil {
+		t.Fatalf("PutStream: %v", err)
+	}
+	if etag != "db-v1" {
+		t.Errorf("etag = %q, want db-v1", etag)
+	}
+	got := f.last()
+	if got.Body != body || got.ContentLength != int64(len(body)) {
+		t.Errorf("body/length = %q/%d", got.Body, got.ContentLength)
+	}
+	if got.ContentType != "application/vnd.sqlite3" {
+		t.Errorf("content type = %q", got.ContentType)
+	}
+	if got.IfNoneMatch != "*" || got.IfMatch != "" {
+		t.Errorf("conditions = If-None-Match %q, If-Match %q", got.IfNoneMatch, got.IfMatch)
 	}
 }
 

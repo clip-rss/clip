@@ -529,6 +529,7 @@ func main() {
 	// 拉取才会经它把新的更新间隔下发到订阅源与调度器。
 	settingsSvc := api.NewSettingsService(st, sch, ft.Client())
 	syncSvc := api.NewSyncService(st, settingsSvc, cipher)
+	cloudBackupSvc := api.NewCloudBackupService(st, syncSvc)
 	api.ObserveSettings(settingsSvc, syncSvc)
 
 	sysSvc := &api.SystemService{
@@ -552,6 +553,7 @@ func main() {
 			application.NewService(api.NewCategoryService(st)),
 			application.NewService(settingsSvc),
 			application.NewService(syncSvc),
+			application.NewService(cloudBackupSvc),
 			application.NewService(api.NewOPMLService(st)),
 			application.NewService(notifSvc),
 			application.NewService(dockService),
@@ -661,10 +663,12 @@ func main() {
 	// 配置同步：装好远端并安排启动后的延迟拉取（不阻塞启动）。
 	// 有意不加后台轮询 —— 配置同步没有实时性要求，轮询只白耗网盘的请求配额。
 	api.StartSync(syncSvc)
+	api.StartCloudBackup(cloudBackupSvc)
 
 	// 退出时优雅停机：先停调度与同步，再关数据库。
 	app.OnShutdown(func() {
 		sch.Stop()
+		api.StopCloudBackup(cloudBackupSvc)
 		api.StopSync(syncSvc)
 		_ = st.Close()
 	})

@@ -102,19 +102,7 @@ func (s *Store) StageRestore(src string) error {
 
 // validateClipDB 以只读方式打开 path，确认其为含 feeds 表的 SQLite 数据库。
 func validateClipDB(path string) error {
-	db, err := sql.Open("sqlite", "file:"+path+"?mode=ro")
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	var name string
-	err = db.QueryRow(
-		`SELECT name FROM sqlite_master WHERE type='table' AND name='feeds'`,
-	).Scan(&name)
-	if err == sql.ErrNoRows {
-		return fmt.Errorf("not a clip database (missing feeds table)")
-	}
+	_, err := validateClipDBFile(path)
 	return err
 }
 
@@ -286,6 +274,9 @@ CREATE TABLE IF NOT EXISTS settings (
 
 	if _, err := s.db.Exec(schema); err != nil {
 		return err
+	}
+	if _, err := s.db.Exec(`PRAGMA application_id = 1129072976`); err != nil {
+		return fmt.Errorf("failed to set application id: %w", err)
 	}
 
 	if err := s.migrateSchedulingMetadata(); err != nil {

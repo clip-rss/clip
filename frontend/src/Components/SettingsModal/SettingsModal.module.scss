@@ -129,8 +129,9 @@
   border-radius: var(--radius-button);
   background: transparent;
   color: var(--text-secondary);
-  transition: background-color 0.15s,
-  color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 
   &:hover {
     background-color: var(--bg-secondary);
@@ -167,9 +168,10 @@
   color: var(--text-secondary);
   font-size: 14px;
   text-align: left;
-  transition: background-color 0.15s,
-  color 0.15s,
-  box-shadow 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 
   &:hover {
     background-color: var(--bg-tertiary);
@@ -274,9 +276,10 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
   pointer-events: none;
   transform: translateX(var(--seg-indicator-offset));
-  transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1),
-  background-color 0.15s,
-  box-shadow 0.15s;
+  transition:
+    transform 0.2s cubic-bezier(0.2, 0, 0.2, 1),
+    background-color 0.15s,
+    box-shadow 0.15s;
   z-index: 0;
 }
 
@@ -293,8 +296,9 @@
   background: transparent;
   color: var(--text-secondary);
   font-size: 13px;
-  transition: background-color 0.15s,
-  color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 
   &:hover {
     color: var(--text-primary);
@@ -361,7 +365,9 @@
   height: 18px;
   border-radius: 999px;
   background-color: #ffffff;
-  transition: transform 0.2s, width 0.15s;
+  transition:
+    transform 0.2s,
+    width 0.15s;
 }
 
 .toggleKnobOn {
@@ -638,4 +644,194 @@
   font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.4;
+}
+
+/* ===== 配置同步 ===== */
+.sectionIntro {
+  margin: -8px 0 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* 同一面板内的第二个标题（「同步状态」），与上一区拉开距离并加分隔线。 */
+.sectionTitleSpaced {
+  margin: 24px 0 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* 存储边界与同步范围说明。整段而非挂在某一行下，因为它讲的是整块的事。 */
+.syncNote {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.syncStatusValue {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* 可操作建议：与失败原因同段但另起一行，字号一致、颜色更弱。 */
+.feedbackHint {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-secondary);
+}
+
+.conflictBox {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+  border-radius: 8px;
+  background-color: color-mix(in srgb, var(--danger) 6%, transparent);
+}
+
+.conflictTitle {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.conflictDesc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* 两侧摘要并排。等宽两列，让「本机 / 远端」一眼可比。 */
+.conflictSides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.conflictSide {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--bg-primary);
+}
+
+.conflictSideLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.conflictSideMeta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+/* ===== 数据库云备份 ===== */
+.cloudBackupStatus {
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.cloudBackupHistoryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.cloudBackupHistoryTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cloudBackupEmpty {
+  margin: 12px 0 0;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.cloudBackupList {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.cloudBackupItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 58px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.cloudBackupItemText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cloudBackupItemTitle {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cloudBackupItemMeta {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.cloudBackupRestoreConfirm {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: 280px;
+}
+
+.cloudBackupRestoreWarning {
+  color: var(--danger);
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: right;
+}
+
+@media (max-width: 620px) {
+  .cloudBackupItem {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .cloudBackupItem > .btn,
+  .cloudBackupItem > .btnGroup,
+  .cloudBackupRestoreConfirm {
+    justify-self: start;
+    align-items: flex-start;
+  }
+
+  .cloudBackupRestoreWarning {
+    text-align: left;
+  }
 }

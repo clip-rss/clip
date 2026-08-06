@@ -36,6 +36,10 @@ var (
 
 	// ErrBadResponse 响应无法解析（非法 XML、缺必要字段等）。
 	ErrBadResponse = errors.New("webdav: malformed response")
+
+	// ErrResponseTooLarge 下载内容超过调用方给定的上限。大文件下载必须显式给出
+	// 上限，避免错误地址或恶意服务器耗尽磁盘。
+	ErrResponseTooLarge = errors.New("webdav: response too large")
 )
 
 // Error 本包的统一错误类型。

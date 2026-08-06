@@ -57,6 +57,19 @@ function App() {
     }
   }, [])
 
+  // 跟随后端语言设置。
+  //
+  // 上面那次 changeLanguage 只在启动时跑一次，设置页改语言时由 GeneralSection
+  // 自己调一次 —— 两条路都覆盖不到「配置同步把语言拉了下来」。没有这个订阅，
+  // 拉取到的新语言要等下次重启才生效，而主题与排版是立刻变的，
+  // 界面会处于「主题已换、语言没换」的半截状态。
+  useEffect(() => {
+    return useSettingsStore.subscribe((state) => {
+      const lang = state.settings?.language
+      if (lang && lang !== i18next.language) void i18next.changeLanguage(lang)
+    })
+  }, [])
+
   // 应用 reduce-motion 设置
   useEffect(() => {
     const settings = useSettingsStore.getState().settings

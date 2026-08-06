@@ -454,6 +454,116 @@ func TestStopPreventsFurtherPushes(t *testing.T) {
 	}
 }
 
+/* ---------- 设置页开关同步的会话内接线 ---------- */
+//
+// 这三条覆盖的是「阶段 F 的设置页第一次真正走到」的路径。此前 debounce 只在
+// StartSync（应用启动）装一次，而那时同步通常还是关的。
+
+// TestEnablingSyncMidSessionArmsAutoPush 在设置页首次开启同步后，
+// 本次会话内改设置就该能触发推送。
+//
+// 少了 SaveWebDAVConfig 里的 arm，用户开启同步 → 改主题 → 什么都不会上传，
+// 直到下次重启。而这在界面上完全无声：状态区显示「有改动待推送」，
+// 却永远等不到那次推送。
+func TestEnablingSyncMidSessionArmsAutoPush(t *testing.T) {
+	svc, _, _ := newSyncService(t)
+
+	// 启动时同步是关的 —— 绝大多数用户的初始状态。
+	StartSync(svc)
+	svc.mu.Lock()
+	armedAtStart := svc.debounce != nil
+	svc.mu.Unlock()
+	if armedAtStart {
+		t.Fatal("同步未启用时不该装 debounce")
+	}
+
+	// 用户在设置页填好并开启。地址只做解析校验，不发网络请求。
+	if err := svc.SaveWebDAVConfig(syncer.WebDAVInput{
+		Enabled: true, URL: "https://dav.example.com/dav/", Username: "alice", Password: "pw",
+	}); err != nil {
+		t.Fatalf("SaveWebDAVConfig: %v", err)
+	}
+	defer StopSync(svc)
+
+	svc.mu.Lock()
+	armed := svc.debounce != nil
+	svc.mu.Unlock()
+	if !armed {
+		t.Error("设置页开启同步后未装 debounce —— 本次会话内改设置不会推送")
+	}
+}
+
+// TestDisablingSyncDisarmsAutoPush 停用后不该再触发推送。
+//
+// 不卸的后果是每次改设置都去推一次、失败一次，白刷日志与网盘请求配额。
+func TestDisablingSyncDisarmsAutoPush(t *testing.T) {
+	svc, _, _ := newSyncService(t)
+
+	if err := svc.SaveWebDAVConfig(syncer.WebDAVInput{
+		Enabled: true, URL: "https://dav.example.com/dav/", Username: "alice", Password: "pw",
+	}); err != nil {
+		t.Fatalf("开启: %v", err)
+	}
+	if err := svc.SaveWebDAVConfig(syncer.WebDAVInput{
+		Enabled: false, URL: "https://dav.example.com/dav/", Username: "alice",
+	}); err != nil {
+		t.Fatalf("停用: %v", err)
+	}
+
+	svc.mu.Lock()
+	armed := svc.debounce != nil
+	svc.mu.Unlock()
+	if armed {
+		t.Error("停用后 debounce 仍在，改设置会反复推送并失败")
+	}
+}
+
+// TestSaveDisabledConfigSucceeds 「停用并保存」必须是成功的。
+//
+// refreshRemote 对未启用的表达就是 ErrNotConfigured。原样返回会让用户点完
+// 保存看到「尚未配置同步服务器」，以为没保存上 —— 实际已经存了，于是用户
+// 往往会再点几次，或者干脆认为功能坏了。
+func TestSaveDisabledConfigSucceeds(t *testing.T) {
+	svc, _, _ := newSyncService(t)
+
+	if err := svc.SaveWebDAVConfig(syncer.WebDAVInput{
+		Enabled: true, URL: "https://dav.example.com/dav/", Username: "alice", Password: "pw",
+	}); err != nil {
+		t.Fatalf("开启: %v", err)
+	}
+
+	// 停用。密码留空 = 保持原密码，用户重新开启时不必再输一遍。
+	if err := svc.SaveWebDAVConfig(syncer.WebDAVInput{
+		Enabled: false, URL: "https://dav.example.com/dav/", Username: "alice",
+	}); err != nil {
+		t.Fatalf("停用并保存不该报错: %v", err)
+	}
+
+	view, err := svc.GetWebDAVConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if view.Enabled {
+		t.Error("enabled = true, want false")
+	}
+	if view.URL != "https://dav.example.com/dav/" {
+		t.Errorf("url = %q, 停用不该丢地址", view.URL)
+	}
+	if !view.HasPassword {
+		t.Error("停用丢了密码 —— 重新开启时用户得再输一遍")
+	}
+}
+
+// TestRemoteFilePathIsWithinSyncDir 设置页展示的路径必须就是真正同步用的那个。
+//
+// 前端据此拼出完整位置告知用户。在前端写死一份会漂移。
+func TestRemoteFilePathIsWithinSyncDir(t *testing.T) {
+	svc, _, _ := newSyncService(t)
+	if got := svc.RemoteFilePath(); got != syncer.RemoteFile() {
+		t.Errorf("RemoteFilePath() = %q, want %q", got, syncer.RemoteFile())
+	}
+}
+
 // observerSpy 记录通知次数。
 type observerSpy struct {
 	mu sync.Mutex

@@ -14,6 +14,15 @@ interface SettingsState {
   update: (partial: Partial<Settings>) => Promise<void>
   /** 更新通知模式（基于 update 的薄封装）。 */
   setNotificationMode: (mode: NotificationMode) => Promise<void>
+  /**
+   * 接受一份后端已经落库的完整设置，只更新本地状态，**不回写后端**。
+   *
+   * 用于配置同步拉取之后：那份设置正是后端刚写进库的，再走 update 会重新
+   * 调一次 UpdateSettings，触发后端的设置变更回调、安排一次推送 ——
+   * 把刚拉下来的配置又推回远端。后端只对引擎自己的写入路径做了抑制
+   * （api.settingsWriter），拦不住前端发起的这一次。
+   */
+  applyExternal: (settings: Settings) => void
 }
 
 export const useSettingsStore = create<SettingsState>()((set, get) => ({
@@ -47,5 +56,9 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     const prev = get().settings
     if (!prev || prev.notificationMode === mode) return
     await get().update({ notificationMode: mode })
+  },
+
+  applyExternal(settings) {
+    set({ settings, error: null })
   },
 }))

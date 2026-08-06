@@ -48,6 +48,18 @@ export function GetWebDAVConfig() {
 }
 
 /**
+ * RemoteFilePath 返回同步文件相对用户所填地址的路径（如 clip/settings.json）。
+ * 
+ * 给设置页拼完整路径用。之所以从后端要而不在前端写死：clip/ 这一层是我们自己
+ * 建的，用户填 …/dav/ 最终会落到 …/dav/clip/settings.json，界面必须把这个
+ * 完整位置讲清楚。路径的唯一定义处在 syncer，抄一份到前端就会有漂移的可能。
+ * @returns {$CancellablePromise<string>}
+ */
+export function RemoteFilePath() {
+    return $Call.ByID(294433860);
+}
+
+/**
  * ResolveConflict 按用户的选择解决冲突：keepLocal 为真用本地覆盖远端。
  * @param {boolean} keepLocal
  * @returns {$CancellablePromise<syncer$0.Result>}

@@ -12,6 +12,8 @@ export {
   CategoryService,
   SettingsService,
   OPMLService,
+  SyncService,
+  CloudBackupService,
   SystemService,
 } from '../../../bindings/github.com/clip-rss/clip/api'
 

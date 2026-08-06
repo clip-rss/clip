@@ -7,6 +7,8 @@ export {
   CategoryService,
   SettingsService,
   OPMLService,
+  SyncService,
+  CloudBackupService,
   SystemService,
   DockService,
   onItemsUpdated,

@@ -1,5 +1,4 @@
-// Package webdav 提供一个最小 WebDAV 客户端，够用于把单个小配置文件读写到
-// 用户自己的网盘（Nextcloud / 坚果云 / 群晖等）。
+// Package webdav 提供 Clip 同步所需的最小 WebDAV 客户端。
 //
 // 只实现同步所需的动词：PROPFIND / GET / PUT / MKCOL / DELETE，标准库实现，
 // 不引入第三方依赖。不做 LOCK —— 各家支持参差，且配置同步靠 ETag 乐观并发已足够。
@@ -46,7 +45,15 @@ type Client struct {
 
 	// proxy 待应用的代理地址，由 WithProxy 记下，在 New 里所有 Option 跑完后
 	// 才真正套到 http.Client 上。延后应用的原因见 WithProxy 的说明。
-	proxy string
+	proxy   string
+	timeout time.Duration
+}
+
+// PutOptions 控制一次 PUT 的内容类型与并发前置条件。
+type PutOptions struct {
+	ContentType string
+	IfMatch     string
+	IfNoneMatch bool
 }
 
 // Option 可选配置。
@@ -56,6 +63,17 @@ type Option func(*Client)
 // 测试用它接入 httptest.NewTLSServer 的自签证书客户端。
 func WithHTTPClient(h *http.Client) Option {
 	return func(c *Client) { c.http = h }
+}
+
+// WithTimeout 覆盖单次 HTTP 请求超时。数据库快照传输可用更长超时；配置同步
+// 继续使用 DefaultTimeout。延后到全部 Option 执行后应用，使它不受注入客户端
+// 与本选项的先后顺序影响。
+func WithTimeout(timeout time.Duration) Option {
+	return func(c *Client) {
+		if timeout > 0 {
+			c.timeout = timeout
+		}
+	}
 }
 
 // WithProxy 设置 HTTP 代理；host 为空或 port 非正时不启用。
@@ -106,6 +124,15 @@ func (c *Client) applyProxy() {
 	c.http = &dup
 }
 
+func (c *Client) applyTimeout() {
+	if c.timeout <= 0 {
+		return
+	}
+	dup := *c.http
+	dup.Timeout = c.timeout
+	c.http = &dup
+}
+
 // New 校验配置并创建客户端。
 //
 // 强制 https：WebDAV 用 Basic Auth，凭据基本等同明文随每个请求发送，
@@ -143,6 +170,7 @@ func New(cfg Config, opts ...Option) (*Client, error) {
 	for _, opt := range opts {
 		opt(c)
 	}
+	c.applyTimeout()
 	// 全部 Option 跑完后再套代理：此时 http.Client 已定，且不受 Option 顺序影响。
 	c.applyProxy()
 	return c, nil
@@ -259,6 +287,76 @@ func (c *Client) Get(ctx context.Context, path string) ([]byte, string, error) {
 	return body, normalizeETag(header.Get("ETag")), nil
 }
 
+// GetTo 把远端文件流式写入 dst，并返回 ETag 与写入字节数。
+//
+// maxBytes 必须为正。响应超过上限时返回 ErrResponseTooLarge；调用方应丢弃已经
+// 写入的临时文件。与 Get 分开是为了让小配置继续走受 1 MiB 内存上限保护的路径，
+// 大型数据库快照则全程不进入内存。
+func (c *Client) GetTo(
+	ctx context.Context,
+	path string,
+	dst io.Writer,
+	maxBytes int64,
+) (string, int64, error) {
+	if maxBytes <= 0 {
+		return "", 0, configError("下载大小上限必须为正数")
+	}
+	target, err := c.resolve(path)
+	if err != nil {
+		return "", 0, err
+	}
+	req, err := c.newRequest(ctx, http.MethodGet, target, nil)
+	if err != nil {
+		return "", 0, err
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return "", 0, &Error{
+			Op:       "get",
+			Path:     path,
+			Msg:      "无法连接服务器",
+			Err:      err,
+			sentinel: ErrNetwork,
+		}
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, readErr := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes))
+		if readErr != nil {
+			return "", 0, &Error{
+				Op:       "get",
+				Path:     path,
+				Status:   resp.StatusCode,
+				Msg:      "读取响应失败",
+				Err:      readErr,
+				sentinel: ErrNetwork,
+			}
+		}
+		return "", 0, statusError("get", path, resp.StatusCode, body)
+	}
+	if resp.ContentLength > maxBytes {
+		return "", 0, responseTooLargeError(path, resp.ContentLength, maxBytes)
+	}
+
+	written, err := io.Copy(dst, io.LimitReader(resp.Body, maxBytes+1))
+	if err != nil {
+		return "", written, &Error{
+			Op:       "get",
+			Path:     path,
+			Status:   resp.StatusCode,
+			Msg:      "读取响应失败",
+			Err:      err,
+			sentinel: ErrNetwork,
+		}
+	}
+	if written > maxBytes {
+		return "", written, responseTooLargeError(path, written, maxBytes)
+	}
+	return normalizeETag(resp.Header.Get("ETag")), written, nil
+}
+
 // Put 上传文件内容，返回新 ETag。
 //
 // ifMatch 非空时带 If-Match 头做乐观并发：远端在此期间被改过则服务器回 412，
@@ -267,19 +365,46 @@ func (c *Client) Get(ctx context.Context, path string) ([]byte, string, error) {
 // ⚠️ If-Match 并非所有服务器都实现，不能只靠它防冲突 —— 调用方仍须在 Put 前
 // Stat 比对 ETag。它是额外一层保险，用于收窄「Stat 与 Put 之间」的竞态窗口。
 func (c *Client) Put(ctx context.Context, path string, data []byte, ifMatch string) (string, error) {
+	return c.PutStream(ctx, path, bytes.NewReader(data), int64(len(data)), PutOptions{
+		ContentType: "application/json; charset=utf-8",
+		IfMatch:     ifMatch,
+	})
+}
+
+// PutStream 流式上传内容。size 小于零时使用分块传输；数据库快照应传入实际
+// 文件大小，以便服务器提前执行配额与请求体限制检查。
+func (c *Client) PutStream(
+	ctx context.Context,
+	path string,
+	src io.Reader,
+	size int64,
+	opts PutOptions,
+) (string, error) {
+	if opts.IfMatch != "" && opts.IfNoneMatch {
+		return "", configError("If-Match 与 If-None-Match 不能同时使用")
+	}
 	target, err := c.resolve(path)
 	if err != nil {
 		return "", err
 	}
-	req, err := c.newRequest(ctx, http.MethodPut, target, bytes.NewReader(data))
+	req, err := c.newRequest(ctx, http.MethodPut, target, src)
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	req.ContentLength = int64(len(data))
-	if ifMatch != "" {
+	contentType := opts.ContentType
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+	req.Header.Set("Content-Type", contentType)
+	if size >= 0 {
+		req.ContentLength = size
+	}
+	if opts.IfMatch != "" {
 		// 带引号发送：RFC 要求 entity-tag 形式。内部存的是裸值，此处补回。
-		req.Header.Set("If-Match", `"`+ifMatch+`"`)
+		req.Header.Set("If-Match", `"`+opts.IfMatch+`"`)
+	}
+	if opts.IfNoneMatch {
+		req.Header.Set("If-None-Match", "*")
 	}
 
 	status, body, header, err := c.do(req)
@@ -301,6 +426,15 @@ func (c *Client) Put(ctx context.Context, path string, data []byte, ifMatch stri
 		return "", nil
 	}
 	return st.ETag, nil
+}
+
+func responseTooLargeError(path string, got, limit int64) error {
+	return &Error{
+		Op:       "get",
+		Path:     path,
+		Msg:      fmt.Sprintf("下载文件过大（%d 字节，上限 %d 字节）", got, limit),
+		sentinel: ErrResponseTooLarge,
+	}
 }
 
 // Delete 删除资源。资源本就不存在时返回 ErrNotFound。
