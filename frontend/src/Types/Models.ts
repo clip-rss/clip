@@ -16,23 +16,13 @@ export type {
   ImportResult,
   FeedPreview,
   ConnectionTestResult,
-} from '../../bindings/github.com/clip-rss/clip/api'
-
-// 配置同步。Status / Result 在本项目里过于笼统，改名再导出。
-export type {
   WebDAVView,
   WebDAVInput,
-  ConflictInfo,
-  Status as SyncStatus,
-  Result as SyncResult,
-} from '../../bindings/github.com/clip-rss/clip/internal/syncer'
+} from '../../bindings/github.com/clip-rss/clip/api'
 
 export type {
-  Config as CloudBackupConfig,
-  Status as CloudBackupStatus,
-  BackupInfo as CloudBackupInfo,
-  RestoreResult as CloudRestoreResult,
-} from '../../bindings/github.com/clip-rss/clip/internal/cloudbackup'
-
-/** 一次同步的结果动作。与后端 syncer.Action 的四个取值一一对应。 */
-export type SyncAction = 'noop' | 'pushed' | 'pulled' | 'conflict'
+  Config as OPMLBackupConfig,
+  Status as OPMLBackupStatus,
+  BackupInfo as OPMLBackupInfo,
+  ImportResult as OPMLImportResult,
+} from '../../bindings/github.com/clip-rss/clip/internal/opmlbackup'

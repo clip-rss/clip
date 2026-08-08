@@ -106,6 +106,68 @@ func parsePropfind(path string, data []byte) (Stat, error) {
 	return out, nil
 }
 
+// parsePropfindList 从 PROPFIND Depth: 1 响应中解析目录列表。
+// 跳过目录本身，只返回子项。
+func parsePropfindList(path, targetURL string, data []byte) ([]ListEntry, error) {
+	var ms multistatus
+	if err := xml.Unmarshal(data, &ms); err != nil {
+		return nil, &Error{
+			Op:       "list",
+			Path:     path,
+			Msg:      "服务器返回的内容无法解析",
+			Err:      err,
+			sentinel: ErrBadResponse,
+		}
+	}
+
+	var entries []ListEntry
+	for _, resp := range ms.Responses {
+		// 跳过目录本身（href 与请求的 URL 相同）
+		if normalizeHref(resp.Href) == normalizeHref(targetURL) {
+			continue
+		}
+
+		var entry ListEntry
+		entry.Path = extractPath(resp.Href)
+
+		for _, ps := range resp.Propstats {
+			if !isOKStatus(ps.Status) {
+				continue
+			}
+			if ps.Prop.ContentLength != nil {
+				entry.Size = *ps.Prop.ContentLength
+			}
+			if ps.Prop.LastModified != "" {
+				entry.LastModified = parseHTTPTime(ps.Prop.LastModified)
+			}
+			if ps.Prop.ResourceType != nil && ps.Prop.ResourceType.Collection != nil {
+				entry.IsDir = true
+			}
+		}
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+// normalizeHref 归一化 href，移除尾部斜杠以便比较。
+func normalizeHref(href string) string {
+	return strings.TrimRight(href, "/")
+}
+
+// extractPath 从 href 中提取路径部分（移除协议和域名）。
+func extractPath(href string) string {
+	// href 可能是绝对 URL 或相对路径
+	if strings.HasPrefix(href, "http://") || strings.HasPrefix(href, "https://") {
+		// 提取路径部分
+		parts := strings.SplitN(href, "/", 4)
+		if len(parts) >= 4 {
+			return "/" + parts[3]
+		}
+		return "/"
+	}
+	return href
+}
+
 // isOKStatus 判断 propstat 的状态行（形如 "HTTP/1.1 200 OK"）是否为 2xx。
 func isOKStatus(status string) bool {
 	// 无状态行时按成功处理：属性已经在 prop 里给出了，缺状态行属服务器不规范，

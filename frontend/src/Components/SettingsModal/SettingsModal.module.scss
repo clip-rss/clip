@@ -684,97 +684,17 @@
   color: var(--text-secondary);
 }
 
-.conflictBox {
-  margin-top: 16px;
-  padding: 14px 16px;
-  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
-  border-radius: 8px;
-  background-color: color-mix(in srgb, var(--danger) 6%, transparent);
-}
-
-.conflictTitle {
-  margin: 0 0 6px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--danger);
-}
-
-.conflictDesc {
-  margin: 0;
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
-/* 两侧摘要并排。等宽两列，让「本机 / 远端」一眼可比。 */
-.conflictSides {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.conflictSide {
+/* 备份列表与条目 */
+.backupList {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background-color: var(--bg-primary);
-}
-
-.conflictSideLabel {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.conflictSideMeta {
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1.4;
-  word-break: break-all;
-}
-
-/* ===== 数据库云备份 ===== */
-.cloudBackupStatus {
-  margin-top: 16px;
-  border-top: 1px solid var(--border);
-}
-
-.cloudBackupHistoryHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.cloudBackupHistoryTitle {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.cloudBackupEmpty {
-  margin: 12px 0 0;
-  padding: 14px 0;
-  border-top: 1px solid var(--border);
-  color: var(--text-secondary);
-  font-size: 12px;
-}
-
-.cloudBackupList {
+  gap: 0;
   margin-top: 12px;
-  border-top: 1px solid var(--border);
 }
 
-.cloudBackupItem {
+.backupItem {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 16px;
   min-height: 58px;
@@ -782,56 +702,46 @@
   border-bottom: 1px solid var(--border);
 }
 
-.cloudBackupItemText {
+.backupInfo {
   display: flex;
   flex-direction: column;
   gap: 4px;
   min-width: 0;
 }
 
-.cloudBackupItemTitle {
+.backupTime {
   color: var(--text-primary);
   font-size: 13px;
   font-weight: 600;
 }
 
-.cloudBackupItemMeta {
+.backupMeta {
   color: var(--text-secondary);
   font-size: 12px;
   line-height: 1.4;
-  overflow-wrap: anywhere;
 }
 
-.cloudBackupRestoreConfirm {
+.backupActions {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  max-width: 280px;
+  align-items: center;
+  gap: 8px;
 }
 
-.cloudBackupRestoreWarning {
-  color: var(--danger);
-  font-size: 11px;
-  line-height: 1.4;
-  text-align: right;
+.sectionSubtitle {
+  margin: 24px 0 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 @media (max-width: 620px) {
-  .cloudBackupItem {
+  .backupItem {
     grid-template-columns: 1fr;
     align-items: stretch;
     gap: 8px;
   }
 
-  .cloudBackupItem > .btn,
-  .cloudBackupItem > .btnGroup,
-  .cloudBackupRestoreConfirm {
-    justify-self: start;
-    align-items: flex-start;
-  }
-
-  .cloudBackupRestoreWarning {
-    text-align: left;
+  .backupActions {
+    justify-content: flex-start;
   }
 }

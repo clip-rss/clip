@@ -514,23 +514,22 @@ func main() {
 
 	// 凭据加密器。密钥与数据库同目录（<configDir>/clip/.synckey）。
 	//
-	// 失败不致命：只关掉同步功能，其余功能与它无关。SyncService 收到 nil
+	// 失败不致命：只关掉备份功能，其余功能与它无关。WebDAVConfigService 收到 nil
 	// 会让涉及凭据的方法返回明确错误，而不是崩在 nil 解引用上。
 	var cipher *secret.Cipher
 	if c, err := secret.NewCipher(filepath.Join(filepath.Dir(st.Path()), secret.KeyFileName)); err != nil {
-		log.Printf("failed to init credential cipher, sync disabled: %v", err)
+		log.Printf("failed to init credential cipher, backup disabled: %v", err)
 	} else {
 		cipher = c
 	}
 
 	// 绑定服务（暴露给前端）。
 	//
-	// settingsSvc 提成变量：syncer 的 SettingsStore 必须是这个实例，
-	// 拉取才会经它把新的更新间隔下发到订阅源与调度器。
+	// settingsSvc 提成变量：需要它来下发更新间隔到订阅源与调度器。
 	settingsSvc := api.NewSettingsService(st, sch, ft.Client())
-	syncSvc := api.NewSyncService(st, settingsSvc, cipher)
-	cloudBackupSvc := api.NewCloudBackupService(st, syncSvc)
-	api.ObserveSettings(settingsSvc, syncSvc)
+	webdavConfigSvc := api.NewWebDAVConfigService(st, cipher)
+	opmlSvc := api.NewOPMLService(st)
+	opmlBackupSvc := api.NewOPMLBackupService(st, webdavConfigSvc, opmlSvc)
 
 	sysSvc := &api.SystemService{
 		AppVersion:      currentVersion,
@@ -552,9 +551,9 @@ func main() {
 			application.NewService(api.NewItemService(st)),
 			application.NewService(api.NewCategoryService(st)),
 			application.NewService(settingsSvc),
-			application.NewService(syncSvc),
-			application.NewService(cloudBackupSvc),
-			application.NewService(api.NewOPMLService(st)),
+			application.NewService(webdavConfigSvc),
+			application.NewService(opmlSvc),
+			application.NewService(opmlBackupSvc),
 			application.NewService(notifSvc),
 			application.NewService(dockService),
 		},
@@ -660,16 +659,12 @@ func main() {
 	sch.SetOfflineMode(true)
 	sch.Start(context.Background())
 
-	// 配置同步：装好远端并安排启动后的延迟拉取（不阻塞启动）。
-	// 有意不加后台轮询 —— 配置同步没有实时性要求，轮询只白耗网盘的请求配额。
-	api.StartSync(syncSvc)
-	api.StartCloudBackup(cloudBackupSvc)
+	// OPML 云备份为纯手动触发，无后台任务需要启动。
 
-	// 退出时优雅停机：先停调度与同步，再关数据库。
+	// 退出时优雅停机：先停调度，打断可能在进行的手动备份，再关数据库。
 	app.OnShutdown(func() {
 		sch.Stop()
-		api.StopCloudBackup(cloudBackupSvc)
-		api.StopSync(syncSvc)
+		api.StopOPMLBackup(opmlBackupSvc)
 		_ = st.Close()
 	})
 

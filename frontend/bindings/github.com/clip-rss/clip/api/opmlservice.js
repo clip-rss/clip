@@ -16,6 +16,14 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 import * as $models from "./models.js";
 
 /**
+ * BuildOPML 生成当前订阅的 OPML 文本（导出给 opmlbackup 使用）。
+ * @returns {$CancellablePromise<string>}
+ */
+export function BuildOPML() {
+    return $Call.ByID(562154884);
+}
+
+/**
  * ExportOPML 将当前全部分类与订阅源导出为 OPML：弹出系统保存对话框选择位置后写盘。
  * 用户取消返回 (false, nil)；成功返回 (true, nil)。
  * @returns {$CancellablePromise<boolean>}

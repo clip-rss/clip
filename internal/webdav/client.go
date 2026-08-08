@@ -263,6 +263,39 @@ func (c *Client) Stat(ctx context.Context, path string) (Stat, error) {
 	return parsePropfind(path, body)
 }
 
+// ListEntry 目录列表中的单个条目。
+type ListEntry struct {
+	Path         string
+	Size         int64
+	LastModified time.Time
+	IsDir        bool
+}
+
+// List 列出目录下的所有文件（PROPFIND, Depth: 1）。
+// 返回的条目不包含目录本身，只包含其直接子项。
+func (c *Client) List(ctx context.Context, path string) ([]ListEntry, error) {
+	target, err := c.resolve(path)
+	if err != nil {
+		return nil, err
+	}
+	req, err := c.newRequest(ctx, "PROPFIND", target, strings.NewReader(propfindBody))
+	if err != nil {
+		return nil, err
+	}
+	// Depth: 1 表示列出目录及其直接子项
+	req.Header.Set("Depth", "1")
+	req.Header.Set("Content-Type", `application/xml; charset="utf-8"`)
+
+	status, body, _, err := c.do(req)
+	if err != nil {
+		return nil, err
+	}
+	if err := statusError("propfind", path, status, body); err != nil {
+		return nil, err
+	}
+	return parsePropfindList(path, target, body)
+}
+
 // Get 下载文件内容，并返回其（已归一化的）ETag。
 //
 // 文件不存在时返回 ErrNotFound —— 对首次同步而言这是正常状态，调用方应据此

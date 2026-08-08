@@ -5,6 +5,9 @@
 export {
     BackupInfo,
     Config,
-    RestoreResult,
+    ImportResult,
+    OPMLBackupConfig,
+    OPMLBackupStatus,
+    OPMLImportResult,
     Status
 } from "./models.js";

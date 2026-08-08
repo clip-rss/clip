@@ -535,7 +535,7 @@ export function DataSection(): JSX.Element {
             onClick={handleBackup}
             disabled={busy}
           >
-            {t('settings.data.backupBtn')}…
+            {t('settings.data.backupBtn')}
           </button>
           <button
             type="button"
@@ -543,7 +543,7 @@ export function DataSection(): JSX.Element {
             onClick={handleRestore}
             disabled={busy}
           >
-            {t('settings.data.restoreBtn')}…
+            {t('settings.data.restoreBtn')}
           </button>
         </div>
       </SettingRow>

@@ -172,6 +172,11 @@ func (s *OPMLService) buildOPML() (string, error) {
 	return string(out), nil
 }
 
+// BuildOPML 生成当前订阅的 OPML 文本（导出给 opmlbackup 使用）。
+func (s *OPMLService) BuildOPML() (string, error) {
+	return s.buildOPML()
+}
+
 // feedOutline 将订阅源映射为 OPML 大纲节点。
 func feedOutline(f store.Feed) opml.Outline {
 	return opml.Outline{

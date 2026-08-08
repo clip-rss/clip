@@ -8,11 +8,6 @@ import { Create as $Create } from "@wailsio/runtime";
 
 /**
  * ConnectionTestResult 「测试连接」的逐步结果。
- * 
- * 有意用结构体而非 error 返回：Wails 把 error 压成一个字符串，前端无法用
- * errors.Is 判别，也就没法针对「认证失败」渲染服务商特定建议（如坚果云需用
- * 应用密码）。把「哪一步失败」与「建议」作为数据回去，前端才能照 errors.Is
- * 的判别结果那样分支。
  */
 export class ConnectionTestResult {
     /**
@@ -29,7 +24,7 @@ export class ConnectionTestResult {
         }
         if (!("step" in $$source)) {
             /**
-             * Step 失败的步骤：connect / mkcol / write / delete；成功时为空。
+             * Step 失败的步骤：connect / mkcol / write；成功时为空。
              * @member
              * @type {string}
              */
@@ -45,7 +40,7 @@ export class ConnectionTestResult {
         }
         if (!("hint" in $$source)) {
             /**
-             * Hint 可操作的建议，可能为空。与 Message 分开，便于前端用不同字号展示。
+             * Hint 可操作的建议，可能为空。
              * @member
              * @type {string}
              */
@@ -244,5 +239,95 @@ export class RefreshOutcome {
     static createFrom($$source = {}) {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         return new RefreshOutcome(/** @type {Partial<RefreshOutcome>} */($$parsedSource));
+    }
+}
+
+/**
+ * WebDAVInput 前端提交的 WebDAV 配置表单。密码传空串表示保持原密码不变。
+ */
+export class WebDAVInput {
+    /**
+     * Creates a new WebDAVInput instance.
+     * @param {Partial<WebDAVInput>} [$$source = {}] - The source object to create the WebDAVInput.
+     */
+    constructor($$source = {}) {
+        if (!("url" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["url"] = "";
+        }
+        if (!("username" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["username"] = "";
+        }
+        if (!("password" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["password"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new WebDAVInput instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {WebDAVInput}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new WebDAVInput(/** @type {Partial<WebDAVInput>} */($$parsedSource));
+    }
+}
+
+/**
+ * WebDAVView 不含密码的 WebDAV 配置视图，供前端展示。
+ */
+export class WebDAVView {
+    /**
+     * Creates a new WebDAVView instance.
+     * @param {Partial<WebDAVView>} [$$source = {}] - The source object to create the WebDAVView.
+     */
+    constructor($$source = {}) {
+        if (!("url" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["url"] = "";
+        }
+        if (!("username" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["username"] = "";
+        }
+        if (!("hasPassword" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["hasPassword"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new WebDAVView instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {WebDAVView}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new WebDAVView(/** @type {Partial<WebDAVView>} */($$parsedSource));
     }
 }
