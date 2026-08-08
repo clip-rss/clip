@@ -87,9 +87,14 @@ export function BackupSection(): JSX.Element {
   async function handleTestWebDAV(): Promise<void> {
     setWebdavFeedback(null)
     try {
-      const res = await useBackupStore.getState().testWebDAVConnection(webdavFormValues())
+      const res = await useBackupStore
+        .getState()
+        .testWebDAVConnection(webdavFormValues())
       if (res.ok) {
-        setWebdavFeedback({ ok: true, msg: t('settings.backup.webdav.testSuccess') })
+        setWebdavFeedback({
+          ok: true,
+          msg: t('settings.backup.webdav.testSuccess'),
+        })
         return
       }
       const stepName = t(`settings.backup.webdav.steps.${res.step}`, {
@@ -156,7 +161,9 @@ export function BackupSection(): JSX.Element {
       const info = await useBackupStore.getState().backupOPML()
       setOpmlFeedback({
         ok: true,
-        msg: t('settings.backup.opml.backupSuccess', { size: formatSize(info.size) }),
+        msg: t('settings.backup.opml.backupSuccess', {
+          size: formatSize(info.size),
+        }),
       })
     } catch (err) {
       setOpmlFeedback({ ok: false, msg: toApiError(err) })
@@ -192,14 +199,18 @@ export function BackupSection(): JSX.Element {
     }
   }
 
-  const busy = webdavSaving || webdavTesting || opmlSaving || opmlBacking || opmlRestoring
-  const configured = Boolean(webdavConfig?.url) || Boolean(webdavConfig?.hasPassword)
+  const busy =
+    webdavSaving || webdavTesting || opmlSaving || opmlBacking || opmlRestoring
+  const configured =
+    Boolean(webdavConfig?.url) || Boolean(webdavConfig?.hasPassword)
   const lastBackupAt = asTime(opmlStatus?.lastBackupAt)
 
   return (
     <div>
       {/* WebDAV 配置 */}
-      <h3 className={styles.sectionTitle}>{t('settings.backup.webdav.title')}</h3>
+      <h3 className={styles.sectionTitle}>
+        {t('settings.backup.webdav.title')}
+      </h3>
       <p className={styles.sectionIntro}>{t('settings.backup.intro')}</p>
 
       <SettingRow
@@ -375,7 +386,9 @@ export function BackupSection(): JSX.Element {
 
           {opmlStatus?.lastError ? (
             <p className={`${styles.feedback} ${styles.feedbackError}`}>
-              {t('settings.backup.opml.lastError', { message: opmlStatus.lastError })}
+              {t('settings.backup.opml.lastError', {
+                message: opmlStatus.lastError,
+              })}
             </p>
           ) : null}
 
@@ -401,7 +414,9 @@ export function BackupSection(): JSX.Element {
           ) : null}
 
           {/* 备份历史 */}
-          <h4 className={styles.sectionSubtitle}>{t('settings.backup.opml.history')}</h4>
+          <h4 className={styles.sectionSubtitle}>
+            {t('settings.backup.opml.history')}
+          </h4>
           <div className={styles.btnRow}>
             <button
               type="button"
@@ -416,7 +431,9 @@ export function BackupSection(): JSX.Element {
           </div>
 
           {opmlBackups.length === 0 ? (
-            <p className={styles.syncNote}>{t('settings.backup.opml.historyEmpty')}</p>
+            <p className={styles.syncNote}>
+              {t('settings.backup.opml.historyEmpty')}
+            </p>
           ) : (
             <div className={styles.backupList}>
               {opmlBackups.map((backup) => (
@@ -453,7 +470,9 @@ function BackupItem(props: {
     <div className={styles.backupItem}>
       <div className={styles.backupInfo}>
         <div className={styles.backupTime}>
-          {createdAt ? formatRelativeTime(createdAt) : t('settings.backup.opml.unknownTime')}
+          {createdAt
+            ? formatRelativeTime(createdAt)
+            : t('settings.backup.opml.unknownTime')}
         </div>
         <div className={styles.backupMeta}>
           {backup.deviceName} · {formatSize(backup.size)}

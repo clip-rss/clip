@@ -1,8 +1,5 @@
 import { create } from 'zustand'
-import {
-  WebDAVConfigService,
-  OPMLBackupService,
-} from '../Utils'
+import { WebDAVConfigService, OPMLBackupService } from '../Utils'
 
 import type {
   WebDAVView,

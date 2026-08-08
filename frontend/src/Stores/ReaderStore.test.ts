@@ -9,7 +9,11 @@ vi.mock('../Utils', () => ({
 }))
 
 import { SettingsService } from '../Utils'
-import { useReaderStore, DEFAULT_READER_PREFS, toReaderPrefs } from './ReaderStore'
+import {
+  useReaderStore,
+  DEFAULT_READER_PREFS,
+  toReaderPrefs,
+} from './ReaderStore'
 import { useSettingsStore } from './SettingsStore'
 import type { Settings } from '../Types'
 

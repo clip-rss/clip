@@ -100,7 +100,10 @@ describe('ThemeStore 初值', () => {
   })
 
   it('取自 v2 缓存', async () => {
-    localStorage.setItem(THEME_CACHE_KEY, JSON.stringify({ v: 2, preference: 'sepia' }))
+    localStorage.setItem(
+      THEME_CACHE_KEY,
+      JSON.stringify({ v: 2, preference: 'sepia' }),
+    )
     const { useThemeStore } = await freshModules()
     expect(useThemeStore.getState().preference).toBe('sepia')
   })
@@ -202,7 +205,9 @@ describe('后端设置 → 主题', () => {
     expect(useThemeStore.getState().preference).toBe('sepia')
     expect(cls().contains('theme-sepia')).toBe(true)
     // 后端值同时回写首帧缓存，下次启动即可直接涂对。
-    expect(JSON.parse(localStorage.getItem(THEME_CACHE_KEY)!).preference).toBe('sepia')
+    expect(JSON.parse(localStorage.getItem(THEME_CACHE_KEY)!).preference).toBe(
+      'sepia',
+    )
   })
 
   // 同步会拉到更高版本客户端写入的载荷，可能含本端不认识的主题名。
@@ -215,7 +220,10 @@ describe('后端设置 → 主题', () => {
   })
 
   it('偏好与缓存值相同时首次载入也会应用一次', async () => {
-    localStorage.setItem(THEME_CACHE_KEY, JSON.stringify({ v: 2, preference: 'dark' }))
+    localStorage.setItem(
+      THEME_CACHE_KEY,
+      JSON.stringify({ v: 2, preference: 'dark' }),
+    )
     const { useThemeStore, useSettingsStore } = await freshModules()
     cls().remove('theme-dark') // 抹掉模块加载时涂的，验证订阅确实会补涂
 

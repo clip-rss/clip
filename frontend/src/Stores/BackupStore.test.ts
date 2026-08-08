@@ -55,7 +55,11 @@ beforeEach(() => {
 
 describe('BackupStore - WebDAV', () => {
   it('loadWebDAVConfig 从后端获取配置', async () => {
-    const config = { url: 'https://dav.example.com', username: 'user', hasPassword: true }
+    const config = {
+      url: 'https://dav.example.com',
+      username: 'user',
+      hasPassword: true,
+    }
     GetWebDAVConfig.mockResolvedValue(config)
 
     await useBackupStore.getState().loadWebDAVConfig()
@@ -65,8 +69,16 @@ describe('BackupStore - WebDAV', () => {
   })
 
   it('saveWebDAVConfig 保存并重新加载', async () => {
-    const input = { url: 'https://dav.example.com', username: 'user', password: 'pass' }
-    const saved = { url: input.url, username: input.username, hasPassword: true }
+    const input = {
+      url: 'https://dav.example.com',
+      username: 'user',
+      password: 'pass',
+    }
+    const saved = {
+      url: input.url,
+      username: input.username,
+      hasPassword: true,
+    }
     SaveWebDAVConfig.mockResolvedValue(undefined)
     GetWebDAVConfig.mockResolvedValue(saved)
 
@@ -77,7 +89,11 @@ describe('BackupStore - WebDAV', () => {
   })
 
   it('testWebDAVConnection 返回测试结果', async () => {
-    const input = { url: 'https://dav.example.com', username: 'user', password: 'pass' }
+    const input = {
+      url: 'https://dav.example.com',
+      username: 'user',
+      password: 'pass',
+    }
     const result = { ok: true, message: '', hint: '', step: '' }
     TestWebDAVConnection.mockResolvedValue(result)
 
@@ -89,7 +105,11 @@ describe('BackupStore - WebDAV', () => {
 
   it('clearWebDAVConfig 清除配置', async () => {
     useBackupStore.setState({
-      webdavConfig: { url: 'https://dav.example.com', username: 'user', hasPassword: true },
+      webdavConfig: {
+        url: 'https://dav.example.com',
+        username: 'user',
+        hasPassword: true,
+      },
     })
     ClearWebDAVConfig.mockResolvedValue(undefined)
 
@@ -132,8 +152,18 @@ describe('BackupStore - OPML Backup', () => {
 
   it('listOPMLBackups 获取备份列表', async () => {
     const backups = [
-      { id: '1', createdAt: '2024-01-01T00:00:00Z', deviceName: 'Mac', size: 1024 },
-      { id: '2', createdAt: '2024-01-02T00:00:00Z', deviceName: 'Mac', size: 2048 },
+      {
+        id: '1',
+        createdAt: '2024-01-01T00:00:00Z',
+        deviceName: 'Mac',
+        size: 1024,
+      },
+      {
+        id: '2',
+        createdAt: '2024-01-02T00:00:00Z',
+        deviceName: 'Mac',
+        size: 2048,
+      },
     ]
     ListOPMLBackups.mockResolvedValue(backups)
 
@@ -143,7 +173,12 @@ describe('BackupStore - OPML Backup', () => {
   })
 
   it('backupOPML 执行备份并刷新状态', async () => {
-    const info = { id: '3', createdAt: '2024-01-03T00:00:00Z', deviceName: 'Mac', size: 3072 }
+    const info = {
+      id: '3',
+      createdAt: '2024-01-03T00:00:00Z',
+      deviceName: 'Mac',
+      size: 3072,
+    }
     const status = { lastBackupAt: '2024-01-03T00:00:00Z', lastError: '' }
     BackupOPMLToCloud.mockResolvedValue(info)
     GetOPMLBackupStatus.mockResolvedValue(status)
@@ -177,7 +212,11 @@ describe('BackupStore - OPML Backup', () => {
 
 describe('BackupStore - load', () => {
   it('load 并行加载所有数据', async () => {
-    const webdavConfig = { url: 'https://dav.example.com', username: 'user', hasPassword: true }
+    const webdavConfig = {
+      url: 'https://dav.example.com',
+      username: 'user',
+      hasPassword: true,
+    }
     const opmlConfig = { retention: 7 }
     const opmlStatus = { lastBackupAt: '2024-01-01T00:00:00Z', lastError: '' }
     const remotePath = 'clip/opml-backups/'

@@ -1,5 +1,9 @@
 import { Component, type ErrorInfo, type ReactNode, useMemo } from 'react'
+import { System } from '@wailsio/runtime'
+import { openURL, SystemService } from '../../Utils/Api'
 import styles from './CrashPage.module.scss'
+
+const BUG_REPORT_URL = 'https://github.com/clip-rss/clip/issues'
 
 export interface CrashReport {
   message: string
@@ -27,6 +31,21 @@ export class CrashBoundary extends Component<
 > {
   state: CrashBoundaryState = { report: null }
 
+  private captureError(
+    error: unknown,
+    source: CrashReport['source'],
+    componentStack = '',
+  ): void {
+    const report = createCrashReport(error, source, componentStack)
+    this.setState({ report })
+
+    void enrichCrashReport(report).then((enrichedReport) => {
+      this.setState((state) =>
+        state.report === report ? { report: enrichedReport } : null,
+      )
+    })
+  }
+
   componentDidMount(): void {
     window.addEventListener('error', this.handleWindowError)
     window.addEventListener('unhandledrejection', this.handleUnhandledRejection)
@@ -41,20 +60,16 @@ export class CrashBoundary extends Component<
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
-    this.setState({
-      report: createCrashReport(error, 'react', info.componentStack ?? ''),
-    })
+    this.captureError(error, 'react', info.componentStack ?? '')
   }
 
   handleWindowError = (event: ErrorEvent): void => {
     const error = event.error instanceof Error ? event.error : event.message
-    this.setState({ report: createCrashReport(error, 'window') })
+    this.captureError(error, 'window')
   }
 
   handleUnhandledRejection = (event: PromiseRejectionEvent): void => {
-    this.setState({
-      report: createCrashReport(event.reason, 'promise'),
-    })
+    this.captureError(event.reason, 'promise')
   }
 
   render(): ReactNode {
@@ -78,10 +93,53 @@ function createCrashReport(
     source,
     userAgent: window.navigator.userAgent,
     timestamp: new Date().toISOString(),
-    platform: 'Windows', // TODO: just test
-    arch: 'amd64', // TODO: just test
-    version: '1.0.0', // TODO: just test
+    platform: inferPlatform(),
+    arch: inferArchitecture(),
+    version: 'Unavailable',
   }
+}
+
+async function enrichCrashReport(report: CrashReport): Promise<CrashReport> {
+  const [environmentResult, versionResult] = await Promise.allSettled([
+    System.Environment(),
+    SystemService.Version(),
+  ])
+
+  const environment =
+    environmentResult.status === 'fulfilled'
+      ? environmentResult.value
+      : undefined
+  const version =
+    versionResult.status === 'fulfilled' ? versionResult.value : undefined
+
+  return {
+    ...report,
+    platform: environment ? platformName(environment.OS) : report.platform,
+    arch: environment?.Arch || report.arch,
+    version: version || report.version,
+  }
+}
+
+function inferPlatform(): CrashReport['platform'] {
+  if (System.IsMac()) return 'macOS'
+  if (System.IsWindows()) return 'Windows'
+  return platformName(window.navigator.userAgent)
+}
+
+function platformName(os: string): CrashReport['platform'] {
+  return /darwin|mac/i.test(os) ? 'macOS' : 'Windows'
+}
+
+function inferArchitecture(): string {
+  if (System.IsARM64()) return 'arm64'
+  if (System.IsAMD64()) return 'amd64'
+  if (System.IsARM()) return 'arm'
+
+  const userAgent = window.navigator.userAgent
+  if (/arm64|aarch64/i.test(userAgent)) return 'arm64'
+  if (/x86_64|x64|win64|amd64/i.test(userAgent)) return 'amd64'
+  if (/i[3-6]86|x86/i.test(userAgent)) return '386'
+  return 'unknown'
 }
 
 function normalizeError(error: unknown): Error {
@@ -151,7 +209,11 @@ function CrashPage(props: { report: CrashReport }): JSX.Element {
           >
             Reload app
           </button>
-          <button type="button" className={styles.button} disabled>
+          <button
+            type="button"
+            className={styles.button}
+            onClick={() => openURL(BUG_REPORT_URL)}
+          >
             Report a bug
           </button>
         </div>
