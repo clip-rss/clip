@@ -1,13 +1,14 @@
 package api
 
 import (
-	"fmt"
+	"errors"
 	"io"
 	"net"
 	"net/http"
 	"runtime"
 	"time"
 
+	"github.com/clip-rss/clip/internal/i18n"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -31,6 +32,9 @@ type SystemService struct {
 
 	// OnlineChangedFn 由 main 注入，把 WebView 的在线状态同步给后台调度器。
 	OnlineChangedFn func(online bool)
+
+	// LanguageFn 由 main 注入，每次生成用户可见提示时读取当前语言。
+	LanguageFn func() string
 }
 
 // Platform 返回当前运行的操作系统标识。
@@ -68,21 +72,25 @@ func (s *SystemService) CheckForUpdatesSilent() {
 
 // FetchChangelog 从 ChangelogURL 拉取原始 Markdown 文本返回给前端渲染。
 func (s *SystemService) FetchChangelog() (string, error) {
+	lang := i18n.English
+	if s.LanguageFn != nil {
+		lang = s.LanguageFn()
+	}
 	if s.ChangelogURL == "" {
-		return "", fmt.Errorf("changelog url not configured")
+		return "", errors.New(i18n.T(lang, "changelog.notConfigured"))
 	}
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Get(s.ChangelogURL)
 	if err != nil {
-		return "", fmt.Errorf("fetch changelog: %w", err)
+		return "", i18n.Error(lang, "changelog.fetchFailed", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", fmt.Errorf("fetch changelog: HTTP %d", resp.StatusCode)
+		return "", errors.New(i18n.T(lang, "changelog.badStatus", resp.StatusCode))
 	}
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 512<<10)) // 512 KB cap
 	if err != nil {
-		return "", fmt.Errorf("read changelog: %w", err)
+		return "", i18n.Error(lang, "changelog.readFailed", err)
 	}
 	return string(body), nil
 }

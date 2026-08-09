@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/clip-rss/clip/internal/i18n"
 	"github.com/clip-rss/clip/internal/secret"
 	"github.com/clip-rss/clip/internal/store"
 )
@@ -64,7 +65,7 @@ func (v *WebDAVVault) Credentials() (WebDAVCredentials, error) {
 	cfg, err := v.store.GetWebDAVConfig()
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			return WebDAVCredentials{}, errors.New("尚未配置 WebDAV 服务器")
+			return WebDAVCredentials{}, errors.New(i18n.T(backendLanguage(v.store), "webdav.notConfigured"))
 		}
 		return WebDAVCredentials{}, err
 	}
@@ -107,7 +108,7 @@ func (v *WebDAVVault) CredentialsFor(input WebDAVInput) (WebDAVCredentials, erro
 	}
 
 	if password == "" {
-		return WebDAVCredentials{}, errors.New("请输入密码")
+		return WebDAVCredentials{}, errors.New(i18n.T(backendLanguage(v.store), "webdav.passwordRequired"))
 	}
 
 	return WebDAVCredentials{

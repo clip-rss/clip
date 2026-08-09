@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/clip-rss/clip/internal/i18n"
 	"github.com/clip-rss/clip/internal/secret"
 	"github.com/clip-rss/clip/internal/store"
 	"github.com/clip-rss/clip/internal/webdav"
@@ -55,35 +56,36 @@ type WebDAVCredentials struct {
 // GetWebDAVConfig 读取 WebDAV 配置。不含密码，只带 hasPassword。
 func (s *WebDAVConfigService) GetWebDAVConfig() (WebDAVView, error) {
 	if s.vault == nil {
-		return WebDAVView{}, errCredentialStoreUnavailable
+		return WebDAVView{}, credentialStoreUnavailable(s.store)
 	}
-	return s.vault.View()
+	view, err := s.vault.View()
+	return view, backendError(s.store, err)
 }
 
 // SaveWebDAVConfig 保存 WebDAV 配置。密码传空串表示保持原密码不变。
 func (s *WebDAVConfigService) SaveWebDAVConfig(cfg WebDAVInput) error {
 	if s.vault == nil {
-		return errCredentialStoreUnavailable
+		return credentialStoreUnavailable(s.store)
 	}
 
 	// ⚠️ 先校验地址，再落库。避免保存无效配置。
 	creds, err := s.vault.CredentialsFor(cfg)
 	if err != nil {
-		return err
+		return backendError(s.store, err)
 	}
 	if _, err := s.newClient(creds); err != nil {
-		return err
+		return backendError(s.store, err)
 	}
 
-	return s.vault.Save(cfg)
+	return backendError(s.store, s.vault.Save(cfg))
 }
 
 // ClearWebDAVConfig 删除全部 WebDAV 配置（含密码）。
 func (s *WebDAVConfigService) ClearWebDAVConfig() error {
 	if s.vault == nil {
-		return errCredentialStoreUnavailable
+		return credentialStoreUnavailable(s.store)
 	}
-	return s.vault.Clear()
+	return backendError(s.store, s.vault.Clear())
 }
 
 // ConnectionTestResult 「测试连接」的逐步结果。
@@ -106,15 +108,15 @@ type ConnectionTestResult struct {
 // 密码留空时回落到已存的密码。
 func (s *WebDAVConfigService) TestWebDAVConnection(cfg WebDAVInput) (ConnectionTestResult, error) {
 	if s.vault == nil {
-		return ConnectionTestResult{}, errCredentialStoreUnavailable
+		return ConnectionTestResult{}, credentialStoreUnavailable(s.store)
 	}
 	creds, err := s.vault.CredentialsFor(cfg)
 	if err != nil {
-		return failedTest("connect", err), nil
+		return failedTest("connect", err, backendLanguage(s.store)), nil
 	}
 	client, err := s.newClient(creds)
 	if err != nil {
-		return failedTest("connect", err), nil
+		return failedTest("connect", err, backendLanguage(s.store)), nil
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), webdavTimeout)
@@ -122,11 +124,11 @@ func (s *WebDAVConfigService) TestWebDAVConnection(cfg WebDAVInput) (ConnectionT
 
 	testDir := "clip/"
 	if err := client.MkcolAll(ctx, testDir); err != nil {
-		return failedTest("mkcol", err), nil
+		return failedTest("mkcol", err, backendLanguage(s.store)), nil
 	}
 	probe := testDir + "clip-probe.tmp"
 	if _, err := client.Put(ctx, probe, []byte("clip connection probe\n"), ""); err != nil {
-		return failedTest("write", err), nil
+		return failedTest("write", err, backendLanguage(s.store)), nil
 	}
 	// 清理探针文件，失败不影响测试结果
 	_ = client.Delete(ctx, probe)
@@ -137,13 +139,14 @@ func (s *WebDAVConfigService) TestWebDAVConnection(cfg WebDAVInput) (ConnectionT
 // GetWebDAVClient 返回当前配置的 WebDAV 客户端，供其他服务使用。
 func (s *WebDAVConfigService) GetWebDAVClient() (*webdav.Client, error) {
 	if s.vault == nil {
-		return nil, errCredentialStoreUnavailable
+		return nil, credentialStoreUnavailable(s.store)
 	}
 	creds, err := s.vault.Credentials()
 	if err != nil {
-		return nil, err
+		return nil, backendError(s.store, err)
 	}
-	return s.newClient(creds)
+	client, err := s.newClient(creds)
+	return client, backendError(s.store, err)
 }
 
 // newClient 用凭据与当前代理设置构造 WebDAV 客户端。
@@ -168,39 +171,37 @@ func (s *WebDAVConfigService) newClientWithOptions(
 	}, opts...)
 }
 
-// errCredentialStoreUnavailable 凭据加密不可用时的统一错误。
-var errCredentialStoreUnavailable = errors.New(
-	"凭据存储不可用，无法读写 WebDAV 密码；请检查配置目录权限后重启")
+func credentialStoreUnavailable(st *store.Store) error {
+	return errors.New(i18n.T(backendLanguage(st), "webdav.credentialsUnavailable"))
+}
 
 // failedTest 把错误转成一步失败的测试结果。
-func failedTest(step string, err error) ConnectionTestResult {
+func failedTest(step string, err error, lang string) ConnectionTestResult {
 	return ConnectionTestResult{
 		OK:      false,
 		Step:    step,
-		Message: err.Error(),
-		Hint:    hintFor(err),
+		Message: i18n.LocalizeError(lang, err).Error(),
+		Hint:    hintFor(err, lang),
 	}
 }
 
 // hintFor 按错误类别给出可操作建议。
-func hintFor(err error) string {
+func hintFor(err error, lang string) string {
 	switch {
 	case errors.Is(err, webdav.ErrUnauthorized):
-		return "若使用坚果云，请在「安全选项」里生成应用密码，不要用登录密码。" +
-			"Nextcloud 开启两步验证后同样需要应用专用密码。"
+		return i18n.T(lang, "webdav.hintUnauthorized")
 	case errors.Is(err, webdav.ErrNotCollection):
-		return "服务器地址指向的上级目录不存在。请确认地址填到了 WebDAV 根目录，" +
-			"例如 Nextcloud 形如 https://<域名>/remote.php/dav/files/<用户名>/"
+		return i18n.T(lang, "webdav.hintNotCollection")
 	case errors.Is(err, webdav.ErrNotFound):
-		return "地址不存在。常见原因是只填了域名而漏掉了 WebDAV 路径。"
+		return i18n.T(lang, "webdav.hintNotFound")
 	case errors.Is(err, webdav.ErrInvalidConfig):
-		return "请检查地址格式，必须以 https:// 开头。"
+		return i18n.T(lang, "webdav.hintInvalidConfig")
 	case errors.Is(err, webdav.ErrInsufficientStorage):
-		return "网盘空间不足，清理后重试。"
+		return i18n.T(lang, "webdav.hintInsufficientStorage")
 	case errors.Is(err, secret.ErrCredentialsLost):
-		return "本机的凭据密钥已失效（常见于换机器或清理过配置目录），请重新输入密码。"
+		return i18n.T(lang, "webdav.hintCredentialsLost")
 	case errors.Is(err, webdav.ErrNetwork):
-		return "请检查网络连接与代理设置。"
+		return i18n.T(lang, "webdav.hintNetwork")
 	}
 	return ""
 }

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/clip-rss/clip/internal/i18n"
 	"github.com/clip-rss/clip/internal/scheduler"
 	"github.com/clip-rss/clip/internal/store"
 )
@@ -47,16 +48,21 @@ type SettingsProvider interface {
 //   - summary → 一条摘要消息，格式 “《源标题》新增 N 篇: title1, title2...”
 //   - each   → 每篇一条，但若单次 > summaryThreshold 篇则自动合并为摘要
 func Plan(mode string, feedTitle string, items []scheduler.NewItem) []Message {
+	return PlanLocalized(mode, i18n.SimplifiedChinese, feedTitle, items)
+}
+
+// PlanLocalized is Plan with notification wording selected by language.
+func PlanLocalized(mode, lang string, feedTitle string, items []scheduler.NewItem) []Message {
 	if mode == ModeOff || mode == "" || len(items) == 0 {
 		return nil
 	}
 	if mode == ModeSummary || (mode == ModeEach && len(items) > summaryThreshold) {
-		return []Message{summaryMsg(feedTitle, items)}
+		return []Message{summaryMsg(lang, feedTitle, items)}
 	}
 	return eachMsgs(feedTitle, items)
 }
 
-func summaryMsg(feedTitle string, items []scheduler.NewItem) Message {
+func summaryMsg(lang, feedTitle string, items []scheduler.NewItem) Message {
 	id := items[0].ID
 	titles := make([]string, len(items))
 	for i, it := range items {
@@ -64,8 +70,8 @@ func summaryMsg(feedTitle string, items []scheduler.NewItem) Message {
 	}
 	return Message{
 		ID:    fmt.Sprintf("article:%d", id),
-		Title: fmt.Sprintf("%s 新增 %d 篇", feedTitle, len(items)),
-		Body:  joinTitles(titles, 3),
+		Title: i18n.T(lang, "notify.newItems", feedTitle, len(items)),
+		Body:  joinTitlesLocalized(lang, titles, 3),
 	}
 }
 
@@ -83,11 +89,23 @@ func eachMsgs(feedTitle string, items []scheduler.NewItem) []Message {
 
 // joinTitles 拼接标题列表，最多展示前 n 条，超出加省略。
 func joinTitles(titles []string, max int) string {
+	return joinTitlesLocalized(i18n.SimplifiedChinese, titles, max)
+}
+
+func joinTitlesLocalized(lang string, titles []string, max int) string {
 	n := len(titles)
 	if n > max {
-		return fmt.Sprintf("%s… 等 %d 篇", joinFirst(titles[:max], "、"), n)
+		separator := ", "
+		if i18n.IsChinese(lang) {
+			separator = "、"
+		}
+		return i18n.T(lang, "notify.moreItems", joinFirst(titles[:max], separator), n)
 	}
-	return joinFirst(titles, "、")
+	separator := ", "
+	if i18n.IsChinese(lang) {
+		separator = "、"
+	}
+	return joinFirst(titles, separator)
 }
 
 func joinFirst(ss []string, sep string) string {
@@ -126,7 +144,7 @@ func (s *Service) Notify(ctx context.Context, feed store.Feed, items []scheduler
 		s.reportError(fmt.Errorf("load settings: %w", err))
 		return
 	}
-	msgs := Plan(cfg.NotificationMode, feed.Title, items)
+	msgs := PlanLocalized(cfg.NotificationMode, cfg.Language, feed.Title, items)
 	for _, msg := range msgs {
 		if err := s.sender.Send(msg); err != nil {
 			s.reportError(fmt.Errorf("send %s: %w", msg.ID, err))

@@ -3,10 +3,10 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/clip-rss/clip/internal/fetcher"
+	"github.com/clip-rss/clip/internal/i18n"
 	"github.com/clip-rss/clip/internal/scheduler"
 	"github.com/clip-rss/clip/internal/store"
 )
@@ -41,7 +41,7 @@ type FeedPreview struct {
 func (s *FeedService) PreviewFeed(rawURL string) (*FeedPreview, error) {
 	rawURL = strings.TrimSpace(rawURL)
 	if rawURL == "" {
-		return nil, errors.New("feed url is empty")
+		return nil, errors.New(i18n.T(backendLanguage(s.store), "feed.urlEmpty"))
 	}
 
 	ctx := context.Background()
@@ -57,15 +57,15 @@ func (s *FeedService) PreviewFeed(rawURL string) (*FeedPreview, error) {
 	// 解析失败多半是普通网页，尝试自动发现其中声明的 Feed。
 	discovered, derr := s.fetcher.Discover(ctx, rawURL)
 	if derr != nil || len(discovered) == 0 {
-		return nil, errors.New("未在该地址找到可订阅的源")
+		return nil, errors.New(i18n.T(backendLanguage(s.store), "feed.notFound"))
 	}
 	feedURL := discovered[0].URL
 	parsed, _, err := s.fetcher.FetchFeedForce(ctx, feedURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch feed: %w", err)
+		return nil, i18n.Error(backendLanguage(s.store), "feed.fetchFailed", err)
 	}
 	if parsed == nil {
-		return nil, errors.New("empty feed response")
+		return nil, errors.New(i18n.T(backendLanguage(s.store), "feed.emptyResponse"))
 	}
 	return s.buildPreview(feedURL, parsed), nil
 }
@@ -89,20 +89,20 @@ func (s *FeedService) buildPreview(feedURL string, parsed *fetcher.ParsedFeed) *
 func (s *FeedService) AddFeed(feedURL string, categoryID int64) (*store.Feed, error) {
 	feedURL = strings.TrimSpace(feedURL)
 	if feedURL == "" {
-		return nil, errors.New("feed url is empty")
+		return nil, errors.New(i18n.T(backendLanguage(s.store), "feed.urlEmpty"))
 	}
 	if existing, _ := s.store.GetFeedByURL(feedURL); existing != nil {
-		return nil, fmt.Errorf("feed already exists: %s", feedURL)
+		return nil, errors.New(i18n.T(backendLanguage(s.store), "feed.alreadyExists", feedURL))
 	}
 
 	ctx := context.Background()
 	// 用 Force 全量抓取，避免命中条件 GET 缓存返回 304（如检测时已缓存过 ETag）。
 	parsed, _, err := s.fetcher.FetchFeedForce(ctx, feedURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch feed: %w", err)
+		return nil, i18n.Error(backendLanguage(s.store), "feed.fetchFailed", err)
 	}
 	if parsed == nil {
-		return nil, errors.New("empty feed response")
+		return nil, errors.New(i18n.T(backendLanguage(s.store), "feed.emptyResponse"))
 	}
 
 	settings, _ := s.store.GetSettings()

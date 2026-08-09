@@ -14,6 +14,7 @@ import (
 
 	"github.com/clip-rss/clip/api"
 	"github.com/clip-rss/clip/internal/fetcher"
+	"github.com/clip-rss/clip/internal/i18n"
 	"github.com/clip-rss/clip/internal/notify"
 	"github.com/clip-rss/clip/internal/scheduler"
 	"github.com/clip-rss/clip/internal/secret"
@@ -174,7 +175,7 @@ func (s *softwareUpdateWindow) ensure() *application.WebviewWindow {
 	}
 	win := s.app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Name:   "software-update",
-		Title:  "Software Update",
+		Title:  i18n.T(lang, "updater.title"),
 		Width:  updWinFullWidth,
 		Height: updWinFullHeight,
 		HTML:   buildSoftwareUpdateHTML(s.dict, lang),
@@ -535,10 +536,16 @@ func main() {
 		AppVersion:      currentVersion,
 		ChangelogURL:    changelogURL,
 		OnlineChangedFn: func(online bool) { sch.SetOfflineMode(!online) },
+		LanguageFn: func() string {
+			if current, err := st.GetSettings(); err == nil {
+				return current.Language
+			}
+			return "en"
+		},
 	}
 	app := application.New(application.Options{
 		Name:        "clip",
-		Description: "简单好用的跨平台 RSS 阅读器",
+		Description: i18n.T(settings.Language, "app.description"),
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},

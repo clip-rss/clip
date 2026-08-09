@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/clip-rss/clip/internal/i18n"
 	"github.com/clip-rss/clip/internal/opmlbackup"
 	"github.com/clip-rss/clip/internal/store"
 	"github.com/clip-rss/clip/internal/webdav"
@@ -48,30 +49,32 @@ func NewOPMLBackupService(
 
 // GetOPMLBackupConfig 读取 OPML 备份配置。
 func (s *OPMLBackupService) GetOPMLBackupConfig() (opmlbackup.Config, error) {
-	return s.manager.GetConfig()
+	cfg, err := s.manager.GetConfig()
+	return cfg, backendError(s.webdavConfig.store, err)
 }
 
 // SaveOPMLBackupConfig 保存 OPML 备份配置（目前只有保留版本数）。
 func (s *OPMLBackupService) SaveOPMLBackupConfig(cfg opmlbackup.Config) error {
-	return s.manager.SaveConfig(cfg)
+	return backendError(s.webdavConfig.store, s.manager.SaveConfig(cfg))
 }
 
 // GetOPMLBackupStatus 读取 OPML 备份状态。
 func (s *OPMLBackupService) GetOPMLBackupStatus() (opmlbackup.Status, error) {
-	return s.manager.Status()
+	status, err := s.manager.Status()
+	return status, backendError(s.webdavConfig.store, err)
 }
 
 // ListOPMLBackups 列出远端所有 OPML 备份。
 func (s *OPMLBackupService) ListOPMLBackups() ([]opmlbackup.BackupInfo, error) {
 	remote, err := s.getRemote()
 	if err != nil {
-		return nil, err
+		return nil, backendError(s.webdavConfig.store, err)
 	}
 	ctx, done := s.operationContext()
 	defer done()
 	backups, err := s.manager.List(ctx, remote)
 	if err != nil {
-		return nil, err
+		return nil, backendError(s.webdavConfig.store, err)
 	}
 	return backups, nil
 }
@@ -80,13 +83,13 @@ func (s *OPMLBackupService) ListOPMLBackups() ([]opmlbackup.BackupInfo, error) {
 func (s *OPMLBackupService) BackupOPMLToCloud() (opmlbackup.BackupInfo, error) {
 	remote, err := s.getRemote()
 	if err != nil {
-		return opmlbackup.BackupInfo{}, err
+		return opmlbackup.BackupInfo{}, backendError(s.webdavConfig.store, err)
 	}
 	ctx, done := s.operationContext()
 	defer done()
 	info, err := s.manager.Backup(ctx, remote)
 	if err != nil {
-		return opmlbackup.BackupInfo{}, err
+		return opmlbackup.BackupInfo{}, backendError(s.webdavConfig.store, err)
 	}
 	return info, nil
 }
@@ -94,17 +97,17 @@ func (s *OPMLBackupService) BackupOPMLToCloud() (opmlbackup.BackupInfo, error) {
 // RestoreOPMLFromCloud 从云备份恢复订阅列表。
 func (s *OPMLBackupService) RestoreOPMLFromCloud(id string) (opmlbackup.ImportResult, error) {
 	if id == "" {
-		return opmlbackup.ImportResult{}, errors.New("请选择要恢复的备份")
+		return opmlbackup.ImportResult{}, errors.New(i18n.T(backendLanguage(s.webdavConfig.store), "backup.restoreSelection"))
 	}
 	remote, err := s.getRemote()
 	if err != nil {
-		return opmlbackup.ImportResult{}, err
+		return opmlbackup.ImportResult{}, backendError(s.webdavConfig.store, err)
 	}
 	ctx, done := s.operationContext()
 	defer done()
 	result, err := s.manager.Restore(ctx, remote, id)
 	if err != nil {
-		return opmlbackup.ImportResult{}, err
+		return opmlbackup.ImportResult{}, backendError(s.webdavConfig.store, err)
 	}
 	return result, nil
 }
@@ -112,11 +115,11 @@ func (s *OPMLBackupService) RestoreOPMLFromCloud(id string) (opmlbackup.ImportRe
 // DeleteOPMLBackup 删除指定的远端 OPML 备份。
 func (s *OPMLBackupService) DeleteOPMLBackup(id string) error {
 	if id == "" {
-		return errors.New("请选择要删除的备份")
+		return errors.New(i18n.T(backendLanguage(s.webdavConfig.store), "backup.deleteSelection"))
 	}
 	remote, err := s.getRemote()
 	if err != nil {
-		return err
+		return backendError(s.webdavConfig.store, err)
 	}
 	ctx, done := s.operationContext()
 	defer done()
@@ -125,7 +128,7 @@ func (s *OPMLBackupService) DeleteOPMLBackup(id string) error {
 		if errors.Is(err, webdav.ErrNotFound) {
 			return nil
 		}
-		return err
+		return backendError(s.webdavConfig.store, err)
 	}
 	return nil
 }
@@ -173,7 +176,7 @@ func (s *OPMLBackupService) operationContext() (context.Context, func()) {
 func (s *OPMLBackupService) getRemote() (opmlbackup.Remote, error) {
 	client, err := s.webdavConfig.GetWebDAVClient()
 	if err != nil {
-		return nil, err
+		return nil, backendError(s.webdavConfig.store, err)
 	}
 	return &webdavRemoteAdapter{client: client}, nil
 }

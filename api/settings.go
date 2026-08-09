@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/clip-rss/clip/internal/fetcher"
+	"github.com/clip-rss/clip/internal/i18n"
 	"github.com/clip-rss/clip/internal/scheduler"
 	"github.com/clip-rss/clip/internal/store"
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -92,12 +93,12 @@ func (s *SettingsService) UpdateSettings(settings store.Settings) error {
 // TestProxy 测试代理连通性：用指定代理请求一个测试 URL，成功返回 nil。
 func (s *SettingsService) TestProxy(host string, port int) error {
 	if host == "" || port <= 0 {
-		return errors.New("代理地址或端口无效")
+		return errors.New(i18n.T(backendLanguage(s.store), "proxy.invalid"))
 	}
 	proxyURL := fmt.Sprintf("http://%s:%d", host, port)
 	u, err := url.Parse(proxyURL)
 	if err != nil {
-		return fmt.Errorf("代理地址格式错误: %w", err)
+		return i18n.Error(backendLanguage(s.store), "proxy.invalidAddress", err)
 	}
 	transport := &http.Transport{Proxy: http.ProxyURL(u)}
 	client := &http.Client{Transport: transport, Timeout: 10 * time.Second}
@@ -106,11 +107,11 @@ func (s *SettingsService) TestProxy(host string, port int) error {
 	req, _ := http.NewRequest(http.MethodGet, "https://www.google.com", nil)
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("代理连接失败: %w", err)
+		return i18n.Error(backendLanguage(s.store), "proxy.connectionFailed", err)
 	}
 	resp.Body.Close()
 	if resp.StatusCode >= 400 {
-		return fmt.Errorf("代理返回异常状态: %s", resp.Status)
+		return errors.New(i18n.T(backendLanguage(s.store), "proxy.badStatus", resp.Status))
 	}
 	return nil
 }
@@ -135,12 +136,12 @@ func (s *SettingsService) GetCacheStats() (store.CacheStats, error) {
 func (s *SettingsService) BackupDatabase() (bool, error) {
 	app := application.Get()
 	if app == nil {
-		return false, errors.New("application not available")
+		return false, errors.New(i18n.T(backendLanguage(s.store), "app.unavailable"))
 	}
 	dest, err := app.Dialog.SaveFile().
-		SetMessage("备份数据库").
+		SetMessage(i18n.T(backendLanguage(s.store), "database.backup")).
 		SetFilename("clip-backup.db").
-		AddFilter("Clip 数据库", "*.db").
+		AddFilter(i18n.T(backendLanguage(s.store), "database.fileFilter"), "*.db").
 		PromptForSingleSelection()
 	if err != nil {
 		return false, err
@@ -160,11 +161,11 @@ func (s *SettingsService) BackupDatabase() (bool, error) {
 func (s *SettingsService) RestoreDatabase() (bool, error) {
 	app := application.Get()
 	if app == nil {
-		return false, errors.New("application not available")
+		return false, errors.New(i18n.T(backendLanguage(s.store), "app.unavailable"))
 	}
 	src, err := app.Dialog.OpenFile().
-		SetTitle("恢复数据库").
-		AddFilter("Clip 数据库", "*.db").
+		SetTitle(i18n.T(backendLanguage(s.store), "database.restore")).
+		AddFilter(i18n.T(backendLanguage(s.store), "database.fileFilter"), "*.db").
 		CanChooseFiles(true).
 		PromptForSingleSelection()
 	if err != nil {

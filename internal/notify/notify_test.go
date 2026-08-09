@@ -89,6 +89,13 @@ func TestPlanSummary(t *testing.T) {
 	}
 }
 
+func TestPlanLocalizedEnglish(t *testing.T) {
+	msgs := PlanLocalized(ModeSummary, "en", "Tech", items(2))
+	if len(msgs) != 1 || msgs[0].Title != "Tech: 2 new items" {
+		t.Fatalf("english summary = %+v", msgs)
+	}
+}
+
 func TestJoinTitles(t *testing.T) {
 	in := []string{"a", "b", "c", "d", "e"}
 	got := joinTitles(in, 3)

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/clip-rss/clip/internal/i18n"
 	"github.com/clip-rss/clip/internal/store"
 )
 
@@ -21,7 +22,7 @@ func NewCategoryService(st *store.Store) *CategoryService {
 func (s *CategoryService) AddCategory(name string, parentID int64) (*store.Category, error) {
 	name = strings.TrimSpace(name)
 	if name == "" {
-		return nil, errors.New("category name is empty")
+		return nil, errors.New(i18n.T(backendLanguage(s.store), "category.nameEmpty"))
 	}
 	cat := &store.Category{Name: name, ParentID: nullableID(parentID)}
 	if err := s.store.CreateCategory(cat); err != nil {

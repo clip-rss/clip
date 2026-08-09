@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/clip-rss/clip/internal/i18n"
 	"github.com/clip-rss/clip/internal/opml"
 	"github.com/clip-rss/clip/internal/store"
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -31,7 +32,7 @@ type ImportResult struct {
 // 导入仅根据 OPML 元信息建源，不发起网络抓取；文章将在下次调度或手动刷新时拉取。
 func (s *OPMLService) ImportOPML(content string) (ImportResult, error) {
 	if strings.TrimSpace(content) == "" {
-		return ImportResult{}, errors.New("opml content is empty")
+		return ImportResult{}, errors.New(i18n.T(backendLanguage(s.store), "opml.contentEmpty"))
 	}
 	doc, err := opml.Parse([]byte(content))
 	if err != nil {
@@ -72,7 +73,7 @@ func (s *OPMLService) importOutlines(outlines []opml.Outline, parentID *int64, s
 		}
 
 		// 分组节点 → 分类。
-		cat := &store.Category{Name: firstNonEmpty(o.Label(), "未命名分类"), ParentID: parentID}
+		cat := &store.Category{Name: firstNonEmpty(o.Label(), i18n.T(backendLanguage(s.store), "opml.unnamedCategory")), ParentID: parentID}
 		if err := s.store.CreateCategory(cat); err != nil {
 			return err
 		}
@@ -93,12 +94,12 @@ func (s *OPMLService) ExportOPML() (bool, error) {
 	}
 	app := application.Get()
 	if app == nil {
-		return false, errors.New("application not available")
+		return false, errors.New(i18n.T(backendLanguage(s.store), "app.unavailable"))
 	}
 	dest, err := app.Dialog.SaveFile().
-		SetMessage("导出订阅").
+		SetMessage(i18n.T(backendLanguage(s.store), "opml.export")).
 		SetFilename("clip-feeds.opml").
-		AddFilter("OPML 文件", "*.opml").
+		AddFilter(i18n.T(backendLanguage(s.store), "opml.fileFilter"), "*.opml").
 		PromptForSingleSelection()
 	if err != nil {
 		return false, err
