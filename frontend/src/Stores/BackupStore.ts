@@ -26,6 +26,7 @@ interface BackupState {
   opmlSaving: boolean
   opmlBacking: boolean
   opmlRestoring: boolean
+  opmlDeleting: string | null
 
   remotePath: string
 
@@ -42,6 +43,7 @@ interface BackupState {
   listOPMLBackups: () => Promise<void>
   backupOPML: () => Promise<OPMLBackupInfo>
   restoreOPML: (id: string) => Promise<OPMLImportResult>
+  deleteOPMLBackup: (id: string) => Promise<void>
   loadRemotePath: () => Promise<void>
   load: () => Promise<void>
 }
@@ -60,6 +62,7 @@ export const useBackupStore = create<BackupState>((set, get) => ({
   opmlSaving: false,
   opmlBacking: false,
   opmlRestoring: false,
+  opmlDeleting: null,
 
   remotePath: '',
 
@@ -169,6 +172,18 @@ export const useBackupStore = create<BackupState>((set, get) => ({
       return result
     } finally {
       set({ opmlRestoring: false })
+    }
+  },
+
+  deleteOPMLBackup: async (id: string) => {
+    set({ opmlDeleting: id })
+    try {
+      await OPMLBackupService.DeleteOPMLBackup(id)
+      set((state) => ({
+        opmlBackups: state.opmlBackups.filter((backup) => backup.id !== id),
+      }))
+    } finally {
+      set({ opmlDeleting: null })
     }
   },
 

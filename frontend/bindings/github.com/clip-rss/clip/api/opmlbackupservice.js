@@ -29,6 +29,15 @@ export function BackupOPMLToCloud() {
 }
 
 /**
+ * DeleteOPMLBackup 删除指定的远端 OPML 备份。
+ * @param {string} id
+ * @returns {$CancellablePromise<void>}
+ */
+export function DeleteOPMLBackup(id) {
+    return $Call.ByID(2548658063, id);
+}
+
+/**
  * GetOPMLBackupConfig 读取 OPML 备份配置。
  * @returns {$CancellablePromise<opmlbackup$0.Config>}
  */

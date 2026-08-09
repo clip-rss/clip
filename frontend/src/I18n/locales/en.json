@@ -288,7 +288,13 @@
         "restoreConfirm": "Confirm restore",
         "restoring": "Restoring…",
         "restoreSuccess": "Restored {{feeds}} feeds and {{categories}} categories",
-        "restoreError": "Could not restore backup"
+        "restoreError": "Could not restore backup",
+        "delete": "Delete",
+        "deleteWarning": "This backup will be permanently deleted from the server.",
+        "deleteConfirm": "Confirm delete",
+        "deleting": "Deleting…",
+        "deleteSuccess": "Remote backup deleted",
+        "deleteError": "Could not delete remote backup"
       }
     },
     "data": {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/clip-rss/clip/internal/opmlbackup"
 	"github.com/clip-rss/clip/internal/store"
+	"github.com/clip-rss/clip/internal/webdav"
 )
 
 const opmlBackupTimeout = 5 * time.Minute
@@ -106,6 +107,27 @@ func (s *OPMLBackupService) RestoreOPMLFromCloud(id string) (opmlbackup.ImportRe
 		return opmlbackup.ImportResult{}, err
 	}
 	return result, nil
+}
+
+// DeleteOPMLBackup 删除指定的远端 OPML 备份。
+func (s *OPMLBackupService) DeleteOPMLBackup(id string) error {
+	if id == "" {
+		return errors.New("请选择要删除的备份")
+	}
+	remote, err := s.getRemote()
+	if err != nil {
+		return err
+	}
+	ctx, done := s.operationContext()
+	defer done()
+	if err := s.manager.Delete(ctx, remote, id); err != nil {
+		// 多设备同时管理备份时，目标可能已被其他设备删除。
+		if errors.Is(err, webdav.ErrNotFound) {
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 // OPMLBackupRemotePath 返回 OPML 备份远端目录。

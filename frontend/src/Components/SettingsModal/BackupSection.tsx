@@ -19,6 +19,11 @@ interface Feedback {
   hint?: string
 }
 
+interface PendingBackupAction {
+  id: string
+  kind: 'restore' | 'delete'
+}
+
 /** 后端 time.Time 过 IPC 后是 ISO 字符串 */
 function asTime(value: unknown): string | null {
   return typeof value === 'string' && value !== '' ? value : null
@@ -48,6 +53,7 @@ export function BackupSection(): JSX.Element {
   const opmlSaving = useBackupStore((s) => s.opmlSaving)
   const opmlBacking = useBackupStore((s) => s.opmlBacking)
   const opmlRestoring = useBackupStore((s) => s.opmlRestoring)
+  const opmlDeleting = useBackupStore((s) => s.opmlDeleting)
   const remotePath = useBackupStore((s) => s.remotePath)
 
   // WebDAV 表单状态
@@ -60,7 +66,8 @@ export function BackupSection(): JSX.Element {
   // OPML 配置状态。自动备份已移除，配置只剩「保留版本数」。
   const [retention, setRetention] = useState(7)
   const [opmlFeedback, setOpmlFeedback] = useState<Feedback | null>(null)
-  const [confirmRestore, setConfirmRestore] = useState<string | null>(null)
+  const [pendingBackupAction, setPendingBackupAction] =
+    useState<PendingBackupAction | null>(null)
 
   useEffect(() => {
     void useBackupStore.getState().load()
@@ -180,7 +187,7 @@ export function BackupSection(): JSX.Element {
   }
 
   async function handleRestore(id: string): Promise<void> {
-    setConfirmRestore(null)
+    setPendingBackupAction(null)
     setOpmlFeedback(null)
     try {
       const result = await useBackupStore.getState().restoreOPML(id)
@@ -199,8 +206,31 @@ export function BackupSection(): JSX.Element {
     }
   }
 
+  async function handleDeleteBackup(id: string): Promise<void> {
+    setOpmlFeedback(null)
+    try {
+      await useBackupStore.getState().deleteOPMLBackup(id)
+      setOpmlFeedback({
+        ok: true,
+        msg: t('settings.backup.opml.deleteSuccess'),
+      })
+    } catch (err) {
+      setOpmlFeedback({
+        ok: false,
+        msg: `${t('settings.backup.opml.deleteError')}：${toApiError(err)}`,
+      })
+    } finally {
+      setPendingBackupAction(null)
+    }
+  }
+
   const busy =
-    webdavSaving || webdavTesting || opmlSaving || opmlBacking || opmlRestoring
+    webdavSaving ||
+    webdavTesting ||
+    opmlSaving ||
+    opmlBacking ||
+    opmlRestoring ||
+    opmlDeleting !== null
   const configured =
     Boolean(webdavConfig?.url) || Boolean(webdavConfig?.hasPassword)
   const lastBackupAt = asTime(opmlStatus?.lastBackupAt)
@@ -441,9 +471,11 @@ export function BackupSection(): JSX.Element {
                   key={backup.id}
                   backup={backup}
                   busy={busy}
-                  confirmRestore={confirmRestore}
+                  pendingAction={pendingBackupAction}
+                  deleting={opmlDeleting === backup.id}
                   onRestore={handleRestore}
-                  onConfirm={setConfirmRestore}
+                  onDelete={handleDeleteBackup}
+                  onConfirm={setPendingBackupAction}
                 />
               ))}
             </div>
@@ -458,13 +490,25 @@ export function BackupSection(): JSX.Element {
 function BackupItem(props: {
   backup: OPMLBackupInfo
   busy: boolean
-  confirmRestore: string | null
+  pendingAction: PendingBackupAction | null
+  deleting: boolean
   onRestore: (id: string) => void
-  onConfirm: (id: string | null) => void
+  onDelete: (id: string) => void
+  onConfirm: (action: PendingBackupAction | null) => void
 }): JSX.Element {
   const { t } = useTranslation()
-  const { backup, busy, confirmRestore, onRestore, onConfirm } = props
+  const {
+    backup,
+    busy,
+    pendingAction,
+    deleting,
+    onRestore,
+    onDelete,
+    onConfirm,
+  } = props
   const createdAt = asTime(backup.createdAt)
+  const activeAction =
+    pendingAction?.id === backup.id ? pendingAction.kind : null
 
   return (
     <div className={styles.backupItem}>
@@ -479,34 +523,59 @@ function BackupItem(props: {
         </div>
       </div>
       <div className={styles.backupActions}>
-        {confirmRestore === backup.id ? (
+        {activeAction ? (
           <>
             <button
               type="button"
               className={`${styles.btn} ${styles.btnDanger}`}
-              onClick={() => onRestore(backup.id)}
+              onClick={() =>
+                activeAction === 'restore'
+                  ? onRestore(backup.id)
+                  : onDelete(backup.id)
+              }
               disabled={busy}
-              title={t('settings.backup.opml.restoreWarning')}
+              title={t(
+                activeAction === 'restore'
+                  ? 'settings.backup.opml.restoreWarning'
+                  : 'settings.backup.opml.deleteWarning',
+              )}
             >
-              {t('settings.backup.opml.restoreConfirm')}
+              {deleting
+                ? t('settings.backup.opml.deleting')
+                : t(
+                    activeAction === 'restore'
+                      ? 'settings.backup.opml.restoreConfirm'
+                      : 'settings.backup.opml.deleteConfirm',
+                  )}
             </button>
             <button
               type="button"
               className={styles.btn}
               onClick={() => onConfirm(null)}
+              disabled={busy}
             >
               {t('confirm.cancel')}
             </button>
           </>
         ) : (
-          <button
-            type="button"
-            className={styles.btn}
-            onClick={() => onConfirm(backup.id)}
-            disabled={busy}
-          >
-            {t('settings.backup.opml.restore')}
-          </button>
+          <>
+            <button
+              type="button"
+              className={styles.btn}
+              onClick={() => onConfirm({ id: backup.id, kind: 'restore' })}
+              disabled={busy}
+            >
+              {t('settings.backup.opml.restore')}
+            </button>
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnDanger}`}
+              onClick={() => onConfirm({ id: backup.id, kind: 'delete' })}
+              disabled={busy}
+            >
+              {t('settings.backup.opml.delete')}
+            </button>
+          </>
         )}
       </div>
     </div>

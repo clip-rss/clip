@@ -654,11 +654,10 @@
   line-height: 1.5;
 }
 
-/* 同一面板内的第二个标题（「同步状态」），与上一区拉开距离并加分隔线。 */
+/* 同一面板内的第二个标题（「同步状态」） */
 .sectionTitleSpaced {
   margin: 24px 0 16px;
   padding-top: 20px;
-  border-top: 1px solid var(--border);
   font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);

@@ -104,8 +104,8 @@ type BackupInfo struct {
 
 // Manager OPML 云备份管理器。
 type Manager struct {
-	store   Store
-	builder OPMLBuilder
+	store    Store
+	builder  OPMLBuilder
 	importer OPMLImporter
 }
 
@@ -237,6 +237,27 @@ func (m *Manager) Restore(ctx context.Context, remote Remote, id string) (Import
 	return result, nil
 }
 
+// Delete 删除指定的远端 OPML 备份。
+func (m *Manager) Delete(ctx context.Context, remote Remote, id string) error {
+	remotePath, err := backupRemotePath(id)
+	if err != nil {
+		return err
+	}
+	if err := remote.Delete(ctx, remotePath); err != nil {
+		return fmt.Errorf("删除备份失败: %w", err)
+	}
+	return nil
+}
+
+// backupRemotePath 将前端传入的备份 ID 限制为备份目录下的单个 OPML 文件。
+func backupRemotePath(id string) (string, error) {
+	if id == "" || path.Base(id) != id ||
+		strings.ContainsAny(id, `/\%?#`) || !strings.HasSuffix(id, ".opml") {
+		return "", fmt.Errorf("无效的备份 ID")
+	}
+	return remoteDir + id, nil
+}
+
 // cleanup 清理超过保留数量的旧备份。
 func (m *Manager) cleanup(ctx context.Context, remote Remote, retention int) error {
 	backups, err := m.List(ctx, remote)
@@ -251,8 +272,7 @@ func (m *Manager) cleanup(ctx context.Context, remote Remote, retention int) err
 	// 删除最旧的备份
 	toDelete := backups[retention:]
 	for _, backup := range toDelete {
-		remotePath := remoteDir + backup.ID
-		if err := remote.Delete(ctx, remotePath); err != nil {
+		if err := m.Delete(ctx, remote, backup.ID); err != nil {
 			// 删除失败不中断清理流程
 			_ = err
 		}

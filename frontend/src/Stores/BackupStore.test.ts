@@ -14,6 +14,7 @@ vi.mock('../Utils', () => ({
     ListOPMLBackups: vi.fn(),
     BackupOPMLToCloud: vi.fn(),
     RestoreOPMLFromCloud: vi.fn(),
+    DeleteOPMLBackup: vi.fn(),
     OPMLBackupRemotePath: vi.fn(),
   },
   toApiError: (e: unknown) => String(e),
@@ -33,6 +34,7 @@ const GetOPMLBackupStatus = OPMLBackupService.GetOPMLBackupStatus as Mock
 const ListOPMLBackups = OPMLBackupService.ListOPMLBackups as Mock
 const BackupOPMLToCloud = OPMLBackupService.BackupOPMLToCloud as Mock
 const RestoreOPMLFromCloud = OPMLBackupService.RestoreOPMLFromCloud as Mock
+const DeleteOPMLBackup = OPMLBackupService.DeleteOPMLBackup as Mock
 const OPMLBackupRemotePath = OPMLBackupService.OPMLBackupRemotePath as Mock
 
 beforeEach(() => {
@@ -49,6 +51,7 @@ beforeEach(() => {
     opmlSaving: false,
     opmlBacking: false,
     opmlRestoring: false,
+    opmlDeleting: null,
     remotePath: '',
   })
 })
@@ -199,6 +202,61 @@ describe('BackupStore - OPML Backup', () => {
 
     expect(res).toEqual(result)
     expect(RestoreOPMLFromCloud).toHaveBeenCalledWith('backup-id')
+  })
+
+  it('deleteOPMLBackup 删除远端备份并更新列表', async () => {
+    useBackupStore.setState({
+      opmlBackups: [
+        {
+          id: 'keep.opml',
+          deviceName: 'Mac',
+          size: 1024,
+          createdAt: '2024-01-01T00:00:00Z',
+          lastModified: '2024-01-01T00:00:00Z',
+        },
+        {
+          id: 'delete.opml',
+          deviceName: 'Mac',
+          size: 2048,
+          createdAt: '2024-01-02T00:00:00Z',
+          lastModified: '2024-01-02T00:00:00Z',
+        },
+      ],
+    })
+    DeleteOPMLBackup.mockResolvedValue(undefined)
+
+    await useBackupStore.getState().deleteOPMLBackup('delete.opml')
+
+    expect(DeleteOPMLBackup).toHaveBeenCalledWith('delete.opml')
+    expect(useBackupStore.getState().opmlBackups).toEqual([
+      {
+        id: 'keep.opml',
+        deviceName: 'Mac',
+        size: 1024,
+        createdAt: '2024-01-01T00:00:00Z',
+        lastModified: '2024-01-01T00:00:00Z',
+      },
+    ])
+    expect(useBackupStore.getState().opmlDeleting).toBeNull()
+  })
+
+  it('deleteOPMLBackup 失败时保留列表并清除忙碌状态', async () => {
+    const backup = {
+      id: 'keep.opml',
+      deviceName: 'Mac',
+      size: 1024,
+      createdAt: '2024-01-01T00:00:00Z',
+      lastModified: '2024-01-01T00:00:00Z',
+    }
+    useBackupStore.setState({ opmlBackups: [backup] })
+    DeleteOPMLBackup.mockRejectedValue(new Error('delete failed'))
+
+    await expect(
+      useBackupStore.getState().deleteOPMLBackup(backup.id),
+    ).rejects.toThrow('delete failed')
+
+    expect(useBackupStore.getState().opmlBackups).toEqual([backup])
+    expect(useBackupStore.getState().opmlDeleting).toBeNull()
   })
 
   it('loadRemotePath 获取远端路径', async () => {
