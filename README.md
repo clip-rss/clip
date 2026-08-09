@@ -27,7 +27,7 @@
 - **Subscription management**: add feeds, organize into folders, OPML import/export
 - **Scheduled fetching**: RSS / Atom parsing with background auto-refresh
 - **Focused reading**: full-text reading view + distraction-free focus mode
-- **Fast search**: global search with Chinese-friendly tokenization
+- **Fast search**: global full-text search across titles, summaries, and notes
 - **Notes**: attach notes to articles for later review
 - **Desktop notifications**: new-article alerts, macOS Dock / Windows taskbar badges
 - **Keyboard driven**: a complete set of shortcuts
