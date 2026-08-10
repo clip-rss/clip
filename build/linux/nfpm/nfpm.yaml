@@ -12,7 +12,7 @@ priority: "extra"
 maintainer: ${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>
 description: "A simple cross-platform RSS reader"
 vendor: "Clip RSS"
-homepage: "https://wails.io"
+homepage: "https://github.com/clip-rss/clip"
 license: "MIT"
 release: "1"
 
