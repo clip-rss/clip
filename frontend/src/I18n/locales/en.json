@@ -201,7 +201,7 @@
       "success": "Connected",
       "failed": "Connection failed",
       "error": "Invalid proxy address or port",
-      "save": "Save",
+      "save": "Save & Apply",
       "saving": "Saving…",
       "saved": "Saved",
       "saveError": "Save failed"

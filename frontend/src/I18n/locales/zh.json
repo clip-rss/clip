@@ -201,7 +201,7 @@
       "success": "连接成功",
       "failed": "连接失败",
       "error": "代理地址或端口无效",
-      "save": "保存",
+      "save": "保存并应用",
       "saving": "保存中…",
       "saved": "已保存",
       "saveError": "保存失败"
