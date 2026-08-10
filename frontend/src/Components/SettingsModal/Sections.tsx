@@ -590,7 +590,7 @@ export function AboutSection(): JSX.Element {
     { key: 'reportBug', url: 'https://github.com/clip-rss/clip/issues' },
     {
       key: 'license',
-      url: 'https://github.com/clip-rss/clip/blob/main/LICENSE.md',
+      url: 'https://github.com/clip-rss/clip/blob/main/LICENSE',
     },
     {
       key: 'changelog',
