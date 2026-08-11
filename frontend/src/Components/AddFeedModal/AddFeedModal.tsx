@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import * as Dialog from '@radix-ui/react-dialog'
+import { Clipboard } from '@wailsio/runtime'
 import clsx from 'clsx'
 import { useSidebarStore } from '../../Stores'
 import { FeedService, flattenCategories, toApiError } from '../../Utils'
@@ -19,6 +20,7 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
   const { open, onOpenChange } = props
   const categories = useSidebarStore((s) => s.categories)
   const reload = useSidebarStore((s) => s.load)
+  const urlInputRef = useRef<HTMLInputElement>(null)
 
   const [url, setUrl] = useState('')
   const [status, setStatus] = useState<Status>('idle')
@@ -53,6 +55,21 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
       setPreview(null)
       setErrorMsg('')
     }
+  }
+
+  function clearUrl(): void {
+    handleUrlChange('')
+    urlInputRef.current?.focus()
+  }
+
+  async function pasteUrl(): Promise<void> {
+    try {
+      handleUrlChange(await Clipboard.Text())
+    } catch {
+      setErrorMsg(t('feed.add.pasteFailed'))
+      setStatus('error')
+    }
+    urlInputRef.current?.focus()
   }
 
   async function detect(): Promise<void> {
@@ -134,17 +151,42 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
               {t('feed.add.url')}
             </label>
             <div className={styles.urlRow}>
-              <input
-                id="add-feed-url"
-                type="text"
-                className={styles.urlInput}
-                placeholder={t('feed.add.urlPlaceholder')}
-                value={url}
-                onChange={(e) => handleUrlChange(e.target.value)}
-                onKeyDown={handleUrlKeyDown}
-                readOnly={status === 'detecting'}
-                autoFocus
-              />
+              <div className={styles.urlInputWrap}>
+                <input
+                  ref={urlInputRef}
+                  id="add-feed-url"
+                  type="text"
+                  className={styles.urlInput}
+                  placeholder={t('feed.add.urlPlaceholder')}
+                  value={url}
+                  onChange={(e) => handleUrlChange(e.target.value)}
+                  onKeyDown={handleUrlKeyDown}
+                  readOnly={status === 'detecting'}
+                  autoFocus
+                />
+                {url ? (
+                  <button
+                    type="button"
+                    className={styles.urlAction}
+                    onClick={clearUrl}
+                    disabled={status === 'detecting'}
+                    title={t('feed.add.clearUrl')}
+                    aria-label={t('feed.add.clearUrl')}
+                  >
+                    <CloseIcon />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={styles.urlAction}
+                    onClick={pasteUrl}
+                    title={t('feed.add.paste')}
+                    aria-label={t('feed.add.paste')}
+                  >
+                    <span className={styles.clipboardIcon} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
               <button
                 type="button"
                 className={styles.detectBtn}
