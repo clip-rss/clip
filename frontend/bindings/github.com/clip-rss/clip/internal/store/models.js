@@ -818,14 +818,6 @@ export class Settings {
              */
             this["autoMarkReadDelay"] = 0;
         }
-        if (!("launchMinimized" in $$source)) {
-            /**
-             * 启动时最小化窗口
-             * @member
-             * @type {boolean}
-             */
-            this["launchMinimized"] = false;
-        }
         if (!("reduceMotion" in $$source)) {
             /**
              * 减弱动画效果（无障碍）

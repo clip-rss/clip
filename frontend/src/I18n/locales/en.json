@@ -149,8 +149,6 @@
       "maxItems": "Max items per feed",
       "maxItemsDesc": "Maximum articles retained per feed",
       "itemsUnit": "items",
-      "launchMinimized": "Launch minimized",
-      "launchMinimizedDesc": "Takes effect after restart",
       "reduceMotion": "Reduce motion",
       "reduceMotionDesc": "Disable animations and transitions for better accessibility",
       "showFocusIndicator": "Show focus indicator",

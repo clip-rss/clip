@@ -29,7 +29,6 @@ type Settings struct {
 	NotificationMode      string `json:"notificationMode"`      // each / summary / off
 	ShowUnreadBadge       bool   `json:"showUnreadBadge"`       // 是否展示未读角标：macOS 在 Dock 显示数字，Windows 在任务栏显示红点
 	AutoMarkReadDelay     int    `json:"autoMarkReadDelay"`     // 自动标记已读延迟（毫秒）：-1 关闭 / 0 立即 / >0 延迟
-	LaunchMinimized       bool   `json:"launchMinimized"`       // 启动时最小化窗口
 	ReduceMotion          bool   `json:"reduceMotion"`          // 减弱动画效果（无障碍）
 	ShowFocusIndicator    bool   `json:"showFocusIndicator"`    // 显示焦点指示器（无障碍）
 	WindowWidth           int    `json:"windowWidth"`           // 主窗口上次关闭时的宽度
@@ -56,7 +55,6 @@ func DefaultSettings() Settings {
 		NotificationMode:      NotifyEach,
 		ShowUnreadBadge:       true,
 		AutoMarkReadDelay:     0,
-		LaunchMinimized:       false,
 		ShowFocusIndicator:    true,
 		WindowWidth:           1200,
 		WindowHeight:          800,

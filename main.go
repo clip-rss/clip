@@ -675,20 +675,14 @@ func main() {
 		_ = st.Close()
 	})
 
-	// 启动行为：用户开启「启动时最小化」时以最小化状态创建窗口（保留任务栏/Dock 图标）。
-	startState := application.WindowStateNormal
-	if settings.LaunchMinimized {
-		startState = application.WindowStateMinimised
-	}
 	windowWidth, windowHeight := savedWindowSize(settings)
 
 	mainWindow = app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title:      "Clip",
-		Width:      windowWidth,
-		Height:     windowHeight,
-		MinWidth:   minWindowWidth,
-		MinHeight:  minWindowHeight,
-		StartState: startState,
+		Title:     "Clip",
+		Width:     windowWidth,
+		Height:    windowHeight,
+		MinWidth:  minWindowWidth,
+		MinHeight: minWindowHeight,
 		Mac: application.MacWindow{
 			Backdrop: application.MacBackdropTranslucent,
 			TitleBar: application.MacTitleBarHiddenInset,

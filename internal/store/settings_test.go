@@ -68,7 +68,6 @@ func TestSettingsRoundTrip(t *testing.T) {
 		DefaultMaxItems:       50,
 		NotificationMode:      NotifyOff,
 		AutoMarkReadDelay:     2000,
-		LaunchMinimized:       true,
 		WindowWidth:           1366,
 		WindowHeight:          768,
 		ReaderFontFamily:      "serif",

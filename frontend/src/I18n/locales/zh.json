@@ -149,8 +149,6 @@
       "maxItems": "每源最大条目",
       "maxItemsDesc": "新订阅源默认保留的最大文章数",
       "itemsUnit": "篇",
-      "launchMinimized": "启动时最小化",
-      "launchMinimizedDesc": "重启应用后生效",
       "reduceMotion": "减弱动画效果",
       "reduceMotionDesc": "关闭界面动画和过渡效果，提升无障碍体验",
       "showFocusIndicator": "显示焦点指示器",

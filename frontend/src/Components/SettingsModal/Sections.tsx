@@ -96,17 +96,6 @@ export function GeneralSection(): JSX.Element {
       </SettingRow>
 
       <SettingRow
-        label={t('settings.general.launchMinimized')}
-        description={t('settings.general.launchMinimizedDesc')}
-      >
-        <Toggle
-          checked={settings?.launchMinimized ?? false}
-          onChange={(v) => update({ launchMinimized: v })}
-          label={t('settings.general.launchMinimized')}
-        />
-      </SettingRow>
-
-      <SettingRow
         label={t('settings.general.reduceMotion')}
         description={t('settings.general.reduceMotionDesc')}
       >
