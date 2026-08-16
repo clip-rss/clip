@@ -30,6 +30,18 @@ export function CheckForUpdatesSilent() {
 }
 
 /**
+ * DownloadImage 下载图片到用户指定的目录：弹出保存对话框选择位置后写盘。
+ * 
+ * 返回 (true, nil) 表示已保存；(false, nil) 表示用户取消；(false, err) 表示失败。
+ * 文件名从 URL 路径推断，无法推断时回退为 "image"；扩展名缺失时按 Content-Type 补全。
+ * @param {string} rawURL
+ * @returns {$CancellablePromise<boolean>}
+ */
+export function DownloadImage(rawURL) {
+    return $Call.ByID(2976514266, rawURL);
+}
+
+/**
  * FetchChangelog 从 ChangelogURL 拉取原始 Markdown 文本返回给前端渲染。
  * @returns {$CancellablePromise<string>}
  */

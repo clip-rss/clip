@@ -535,3 +535,61 @@ func TestSystemServiceSetOnline(t *testing.T) {
 		t.Fatalf("online callback called=%v value=%v, want called with false", called, got)
 	}
 }
+
+func TestImageFilename(t *testing.T) {
+	tests := []struct {
+		name        string
+		rawURL      string
+		contentType string
+		want        string
+	}{
+		{"path with extension", "https://example.com/a/b/photo.png", "", "photo.png"},
+		{"query string ignored", "https://example.com/img.jpg?v=2&s=100", "", "img.jpg"},
+		{"no extension, png", "https://example.com/raw/abc123", "image/png", "abc123.png"},
+		{"no extension, jpeg", "https://example.com/photo", "image/jpeg", "photo.jpg"},
+		{"no extension, svg", "https://example.com/icon", "image/svg+xml", "icon.svg"},
+		{"unknown content type", "https://example.com/data", "application/octet-stream", "data"},
+		{"root path fallback", "https://example.com", "", "image"},
+		{"empty path fallback", "https://example.com/", "image/webp", "image.webp"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := imageFilename(tt.rawURL, tt.contentType); got != tt.want {
+				t.Errorf("imageFilename(%q, %q) = %q, want %q", tt.rawURL, tt.contentType, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExtFromContentType(t *testing.T) {
+	tests := []struct {
+		ct   string
+		want string
+	}{
+		{"image/png", ".png"},
+		{"image/jpeg", ".jpg"},
+		{"IMAGE/JPEG", ".jpg"},
+		{"image/gif", ".gif"},
+		{"image/webp", ".webp"},
+		{"image/svg+xml", ".svg"},
+		{"image/avif", ".avif"},
+		{"image/bmp", ".bmp"},
+		{"text/html", ""},
+		{"", ""},
+	}
+	for _, tt := range tests {
+		if got := extFromContentType(tt.ct); got != tt.want {
+			t.Errorf("extFromContentType(%q) = %q, want %q", tt.ct, got, tt.want)
+		}
+	}
+}
+
+func TestDownloadImageRejectsEmptyURL(t *testing.T) {
+	svc := &SystemService{HTTPClient: fetcher.NewClient()}
+	if _, err := svc.DownloadImage("   "); err == nil {
+		t.Fatal("expected error for empty URL")
+	}
+	if _, err := svc.DownloadImage(""); err == nil {
+		t.Fatal("expected error for empty URL")
+	}
+}

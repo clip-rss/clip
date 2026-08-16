@@ -117,7 +117,12 @@
     "backgroundDesc": "阅读区独立背景色，可与全局主题不同",
     "empty": "选择一篇文章以阅读",
     "loadingContent": "正在加载内容…",
-    "endOfContent": "已是全部内容"
+    "endOfContent": "已是全部内容",
+    "lightbox": {
+      "download": "下载图片",
+      "saved": "已保存",
+      "failed": "下载失败"
+    }
   },
   "focus": {
     "exit": "退出专注",

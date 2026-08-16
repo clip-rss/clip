@@ -85,6 +85,12 @@ var messages = map[string]map[string]string{
 		"secret.credentialsLost":         "The sync password is no longer valid; enter it again",
 		"notify.newItems":                "%s: %d new items",
 		"notify.moreItems":               "%s… and %d more",
+		"image.save":                     "Save image",
+		"image.fileFilter":               "Image files",
+		"image.urlEmpty":                 "Image URL is empty",
+		"image.downloadUnavailable":      "Image download is unavailable",
+		"image.downloadFailed":           "Failed to download image",
+		"image.writeFailed":              "Failed to save image",
 	},
 	SimplifiedChinese: {
 		"feed.urlEmpty":                  "订阅地址不能为空",
@@ -157,6 +163,12 @@ var messages = map[string]map[string]string{
 		"secret.credentialsLost":         "同步密码已失效，请重新输入",
 		"notify.newItems":                "%s 新增 %d 篇",
 		"notify.moreItems":               "%s… 等 %d 篇",
+		"image.save":                     "保存图片",
+		"image.fileFilter":               "图片文件",
+		"image.urlEmpty":                 "图片地址为空",
+		"image.downloadUnavailable":      "图片下载不可用",
+		"image.downloadFailed":           "下载图片失败",
+		"image.writeFailed":              "保存图片失败",
 	},
 }
 

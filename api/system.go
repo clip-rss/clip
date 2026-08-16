@@ -1,13 +1,19 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net"
 	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
+	"github.com/clip-rss/clip/internal/fetcher"
 	"github.com/clip-rss/clip/internal/i18n"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -35,6 +41,10 @@ type SystemService struct {
 
 	// LanguageFn 由 main 注入，每次生成用户可见提示时读取当前语言。
 	LanguageFn func() string
+
+	// HTTPClient 由 main 注入，用于下载图片等二进制资源（复用代理/超时/重试）。
+	// 为 nil 时（如单测）下载功能不可用。
+	HTTPClient *fetcher.Client
 }
 
 // Platform 返回当前运行的操作系统标识。
@@ -112,5 +122,99 @@ func (s *SystemService) IsOnline() bool {
 func (s *SystemService) SetOnline(online bool) {
 	if s.OnlineChangedFn != nil {
 		s.OnlineChangedFn(online)
+	}
+}
+
+// DownloadImage 下载图片到用户指定的目录：弹出保存对话框选择位置后写盘。
+//
+// 返回 (true, nil) 表示已保存；(false, nil) 表示用户取消；(false, err) 表示失败。
+// 文件名从 URL 路径推断，无法推断时回退为 "image"；扩展名缺失时按 Content-Type 补全。
+func (s *SystemService) DownloadImage(rawURL string) (bool, error) {
+	lang := i18n.English
+	if s.LanguageFn != nil {
+		lang = s.LanguageFn()
+	}
+
+	if s.HTTPClient == nil {
+		return false, errors.New(i18n.T(lang, "image.downloadUnavailable"))
+	}
+	if strings.TrimSpace(rawURL) == "" {
+		return false, errors.New(i18n.T(lang, "image.urlEmpty"))
+	}
+
+	app := application.Get()
+	if app == nil {
+		return false, errors.New(i18n.T(lang, "app.unavailable"))
+	}
+
+	// 先下载，再弹保存对话框：避免用户选完路径后才发现下载失败。
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	body, contentType, err := s.HTTPClient.Get(ctx, rawURL)
+	if err != nil {
+		return false, i18n.Error(lang, "image.downloadFailed", err)
+	}
+
+	filename := imageFilename(rawURL, contentType)
+	dest, err := app.Dialog.SaveFile().
+		SetMessage(i18n.T(lang, "image.save")).
+		SetFilename(filename).
+		AddFilter(i18n.T(lang, "image.fileFilter"), "*.png;*.jpg;*.jpeg;*.gif;*.webp;*.svg;*.avif;*.bmp").
+		PromptForSingleSelection()
+	if err != nil {
+		return false, err
+	}
+	if dest == "" {
+		return false, nil // 用户取消
+	}
+	if err := os.WriteFile(dest, body, 0o644); err != nil {
+		return false, i18n.Error(lang, "image.writeFailed", err)
+	}
+	return true, nil
+}
+
+// imageFilename 从图片 URL 推断一个合理的保存文件名。
+// 无法从路径推断时回退为 "image"，扩展名缺失时按 Content-Type 补全。
+func imageFilename(rawURL, contentType string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return "image"
+	}
+	base := filepath.Base(u.Path)
+	if base == "" || base == "." || base == "/" {
+		base = "image"
+	}
+	// 去掉查询串可能残留的非法字符（filepath.Base 已处理路径，这里兜底）。
+	base = strings.TrimSpace(base)
+	if base == "" {
+		base = "image"
+	}
+	if filepath.Ext(base) == "" {
+		if ext := extFromContentType(contentType); ext != "" {
+			base += ext
+		}
+	}
+	return base
+}
+
+// extFromContentType 把常见图片 Content-Type 映射为文件扩展名。
+func extFromContentType(contentType string) string {
+	switch strings.ToLower(strings.TrimSpace(strings.Split(contentType, ";")[0])) {
+	case "image/png":
+		return ".png"
+	case "image/jpeg":
+		return ".jpg"
+	case "image/gif":
+		return ".gif"
+	case "image/webp":
+		return ".webp"
+	case "image/svg+xml":
+		return ".svg"
+	case "image/avif":
+		return ".avif"
+	case "image/bmp":
+		return ".bmp"
+	default:
+		return ""
 	}
 }

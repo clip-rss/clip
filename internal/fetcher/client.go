@@ -18,6 +18,9 @@ const DefaultTimeout = 20 * time.Second
 // maxResponseBytes 限制响应体大小，防止超大 Feed 占用内存（10 MiB）。
 const maxResponseBytes = 10 << 20
 
+// maxDownloadBytes 限制下载资源（如图片）的响应体大小（50 MiB）。
+const maxDownloadBytes = 50 << 20
+
 // Client 封装 HTTP 抓取：超时、重试、自定义 UA、条件 GET。
 type Client struct {
 	http      *http.Client
@@ -169,6 +172,60 @@ func (c *Client) do(ctx context.Context, rawURL string, cond ConditionalHeaders)
 		ETag:         resp.Header.Get("ETag"),
 		LastModified: resp.Header.Get("Last-Modified"),
 	}, false, nil
+}
+
+// Get 下载一个二进制资源（如图片），返回响应体字节与 Content-Type。
+//
+// 与 Fetch 不同：不携带条件 GET 头、Accept 头面向任意资源，且响应体上限更大
+// （maxDownloadBytes）。复用同一 http.Client，因此代理、超时、重试策略一致。
+func (c *Client) Get(ctx context.Context, rawURL string) (body []byte, contentType string, err error) {
+	var lastErr error
+	for attempt := 0; attempt <= c.maxRetry; attempt++ {
+		if attempt > 0 {
+			if err := sleepCtx(ctx, retryBackoff(attempt)); err != nil {
+				return nil, "", err
+			}
+		}
+
+		body, contentType, retryable, err := c.get(ctx, rawURL)
+		if err == nil {
+			return body, contentType, nil
+		}
+		lastErr = err
+		if !retryable {
+			return nil, "", err
+		}
+	}
+	return nil, "", fmt.Errorf("fetcher: download %q failed after retries: %w", rawURL, lastErr)
+}
+
+// get 执行单次下载请求。retryable 指示该错误是否值得重试。
+func (c *Client) get(ctx context.Context, rawURL string) (body []byte, contentType string, retryable bool, err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	if err != nil {
+		return nil, "", false, fmt.Errorf("fetcher: build request: %w", err)
+	}
+	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("Accept", "image/*, */*;q=0.8")
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, "", true, fmt.Errorf("fetcher: request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 500 {
+		return nil, "", true, fmt.Errorf("fetcher: server error: %s", resp.Status)
+	}
+	if resp.StatusCode >= 400 {
+		return nil, "", false, fmt.Errorf("fetcher: client error: %s", resp.Status)
+	}
+
+	body, err = io.ReadAll(io.LimitReader(resp.Body, maxDownloadBytes))
+	if err != nil {
+		return nil, "", true, fmt.Errorf("fetcher: read body: %w", err)
+	}
+	return body, resp.Header.Get("Content-Type"), false, nil
 }
 
 // retryBackoff 计算第 attempt 次重试的等待时间（指数，封顶 8s）。

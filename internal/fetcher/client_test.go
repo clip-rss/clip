@@ -108,3 +108,67 @@ func TestClientUserAgent(t *testing.T) {
 		t.Errorf("User-Agent = %q, want %q", v, ua)
 	}
 }
+
+func TestClientGetDownloadsBinary(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			t.Errorf("method = %s, want GET", r.Method)
+		}
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte{0x89, 'P', 'N', 'G'})
+	}))
+	defer srv.Close()
+
+	c := NewClient()
+	body, ct, err := c.Get(context.Background(), srv.URL)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if ct != "image/png" {
+		t.Errorf("content-type = %q, want image/png", ct)
+	}
+	if string(body) != string([]byte{0x89, 'P', 'N', 'G'}) {
+		t.Errorf("body = %v", body)
+	}
+}
+
+func TestClientGetRetriesOn5xx(t *testing.T) {
+	var calls int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if atomic.AddInt32(&calls, 1) == 1 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		_, _ = w.Write([]byte("img"))
+	}))
+	defer srv.Close()
+
+	c := NewClient(WithMaxRetry(2))
+	body, _, err := c.Get(context.Background(), srv.URL)
+	if err != nil {
+		t.Fatalf("get with retry: %v", err)
+	}
+	if string(body) != "img" {
+		t.Errorf("body = %q", body)
+	}
+	if got := atomic.LoadInt32(&calls); got != 2 {
+		t.Errorf("server calls = %d, want 2", got)
+	}
+}
+
+func TestClientGetNoRetryOn4xx(t *testing.T) {
+	var calls int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&calls, 1)
+		w.WriteHeader(http.StatusForbidden)
+	}))
+	defer srv.Close()
+
+	c := NewClient(WithMaxRetry(3))
+	if _, _, err := c.Get(context.Background(), srv.URL); err == nil {
+		t.Fatal("expected error on 403")
+	}
+	if got := atomic.LoadInt32(&calls); got != 1 {
+		t.Errorf("4xx should not retry: calls = %d, want 1", got)
+	}
+}

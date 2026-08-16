@@ -542,6 +542,7 @@ func main() {
 			}
 			return "en"
 		},
+		HTTPClient: ft.Client(),
 	}
 	app := application.New(application.Options{
 		Name:        "clip",

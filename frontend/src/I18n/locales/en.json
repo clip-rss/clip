@@ -117,7 +117,12 @@
     "backgroundDesc": "Independent reading background, separate from global theme",
     "empty": "Select an article to read",
     "loadingContent": "Loading content…",
-    "endOfContent": "End of content"
+    "endOfContent": "End of content",
+    "lightbox": {
+      "download": "Download image",
+      "saved": "Saved",
+      "failed": "Download failed"
+    }
   },
   "focus": {
     "exit": "Exit Focus",
