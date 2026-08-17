@@ -1,5 +1,10 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { formatRelativeTime, type ReaderContentStyle } from '../../Utils'
+import {
+  formatRelativeTime,
+  parseCategories,
+  type ReaderContentStyle,
+} from '../../Utils'
 import type { Item } from '../../Types'
 import ReaderContent from './ReaderContent'
 import styles from './ReadingView.module.scss'
@@ -15,6 +20,10 @@ interface ReaderArticleProps {
 function ReaderArticle(props: ReaderArticleProps): JSX.Element {
   const { t } = useTranslation()
   const { item, sourceName, contentStyle, onImageClick } = props
+  const tags = useMemo(
+    () => parseCategories(item.categories),
+    [item.categories],
+  )
 
   return (
     <div className={styles.article} style={{ maxWidth: contentStyle.maxWidth }}>
@@ -31,6 +40,15 @@ function ReaderArticle(props: ReaderArticleProps): JSX.Element {
         {sourceName ? <span className={styles.metaDot}>·</span> : null}
         {sourceName ? <span>{sourceName}</span> : null}
       </div>
+      {tags.length > 0 ? (
+        <div className={styles.tags}>
+          {tags.map((tag) => (
+            <span key={tag} className={styles.tag} title={tag}>
+              {tag}
+            </span>
+          ))}
+        </div>
+      ) : null}
       <div className={styles.divider} />
       <ReaderContent
         html={item.content}

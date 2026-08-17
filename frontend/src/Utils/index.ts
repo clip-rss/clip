@@ -34,6 +34,9 @@ export {
 } from './ArticleFilter'
 export type { FilterSortOptions } from './ArticleFilter'
 
+// 文章标签解析
+export { parseCategories } from './Categories'
+
 // 搜索关键词高亮
 export { highlightText } from './Highlight'
 
