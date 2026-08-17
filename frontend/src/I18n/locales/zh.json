@@ -119,6 +119,11 @@
     "loadingContent": "正在加载内容…",
     "endOfContent": "已是全部内容",
     "lightbox": {
+      "close": "关闭",
+      "zoomOut": "缩小",
+      "zoomIn": "放大",
+      "rotate": "逆时针旋转",
+      "reset": "复位",
       "download": "下载图片",
       "saved": "已保存",
       "failed": "下载失败"

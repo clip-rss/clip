@@ -119,6 +119,11 @@
     "loadingContent": "Loading content…",
     "endOfContent": "End of content",
     "lightbox": {
+      "close": "Close",
+      "zoomOut": "Zoom out",
+      "zoomIn": "Zoom in",
+      "rotate": "Rotate left",
+      "reset": "Reset",
       "download": "Download image",
       "saved": "Saved",
       "failed": "Download failed"

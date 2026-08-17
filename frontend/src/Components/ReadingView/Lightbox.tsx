@@ -83,10 +83,7 @@ function Lightbox(props: LightboxProps): JSX.Element | null {
   // 逆时针旋转 90 度。用负数角度累积而非取模：CSS transition 对 transform 做
   // 线性插值，若把 0 取模成 270，补间会沿顺时针弧线走 270 度（视觉上先往顺时针转）；
   // 而 0 → -90 → -180 … 每一步都是 -90 增量，动画始终逆时针。
-  const rotateCcw = useCallback(
-    () => setRotation((r) => r - ROTATION_STEP),
-    [],
-  )
+  const rotateCcw = useCallback(() => setRotation((r) => r - ROTATION_STEP), [])
   const reset = useCallback(() => {
     setScale(1)
     setRotation(0)
@@ -181,7 +178,8 @@ function Lightbox(props: LightboxProps): JSX.Element | null {
         type="button"
         className={styles.lightboxClose}
         onClick={onClose}
-        aria-label="关闭"
+        title={t('reader.lightbox.close')}
+        aria-label={t('reader.lightbox.close')}
       >
         <CloseIcon size={20} />
       </button>
@@ -191,7 +189,8 @@ function Lightbox(props: LightboxProps): JSX.Element | null {
           type="button"
           className={styles.lightboxBtn}
           onClick={zoomOut}
-          aria-label="缩小"
+          title={t('reader.lightbox.zoomOut')}
+          aria-label={t('reader.lightbox.zoomOut')}
         >
           <ZoomOutIcon />
         </button>
@@ -199,7 +198,8 @@ function Lightbox(props: LightboxProps): JSX.Element | null {
           type="button"
           className={styles.lightboxBtn}
           onClick={zoomIn}
-          aria-label="放大"
+          title={t('reader.lightbox.zoomIn')}
+          aria-label={t('reader.lightbox.zoomIn')}
         >
           <ZoomInIcon />
         </button>
@@ -207,7 +207,8 @@ function Lightbox(props: LightboxProps): JSX.Element | null {
           type="button"
           className={styles.lightboxBtn}
           onClick={rotateCcw}
-          aria-label="旋转"
+          title={t('reader.lightbox.rotate')}
+          aria-label={t('reader.lightbox.rotate')}
         >
           <RotateIcon />
         </button>
@@ -215,7 +216,8 @@ function Lightbox(props: LightboxProps): JSX.Element | null {
           type="button"
           className={styles.lightboxBtn}
           onClick={reset}
-          aria-label="复位"
+          title={t('reader.lightbox.reset')}
+          aria-label={t('reader.lightbox.reset')}
         >
           <ResetIcon />
         </button>
@@ -224,8 +226,8 @@ function Lightbox(props: LightboxProps): JSX.Element | null {
           className={styles.lightboxBtn}
           onClick={handleDownload}
           disabled={downloadState === 'downloading'}
-          aria-label={t('reader.lightbox.download')}
           title={t('reader.lightbox.download')}
+          aria-label={t('reader.lightbox.download')}
         >
           <DownloadIcon />
         </button>
