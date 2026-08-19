@@ -6,7 +6,9 @@
     "addFeed": "+ Subscribe",
     "focusMode": "Focus Mode",
     "settings": "Settings",
-    "clearSearch": "Clear search"
+    "clearSearch": "Clear search",
+    "searchHistory": "Recent searches",
+    "clearSearchHistory": "Clear history"
   },
   "sidebar": {
     "title": "Feeds",

@@ -26,6 +26,7 @@ vi.mock('../Utils', () => ({
 import { ItemService } from '../Utils'
 import { useArticleStore } from './ArticleStore'
 import { useSettingsStore } from './SettingsStore'
+import { useSearchHistoryStore } from './SearchHistoryStore'
 
 const ListItems = ItemService.ListItems as Mock
 const ListItemsLight = ItemService.ListItemsLight as Mock
@@ -206,6 +207,30 @@ describe('ArticleStore', () => {
     useArticleStore.getState().setSearchQuery('周刊')
     await useArticleStore.getState().runSearch()
     expect(useArticleStore.getState().searchResults).toEqual([])
+  })
+
+  it('命中才入搜索历史；无结果与过期结果都不记', async () => {
+    useSearchHistoryStore.setState({ history: [] })
+
+    SearchItems.mockResolvedValue([item(7)])
+    useArticleStore.getState().setSearchQuery('周刊')
+    await useArticleStore.getState().runSearch()
+    expect(useSearchHistoryStore.getState().history).toEqual(['周刊'])
+
+    // 零结果不入历史
+    SearchItems.mockResolvedValue([])
+    useArticleStore.getState().setSearchQuery('错字')
+    await useArticleStore.getState().runSearch()
+    expect(useSearchHistoryStore.getState().history).toEqual(['周刊'])
+
+    // 过期结果（防竞态提前 return）也不入历史
+    SearchItems.mockImplementation(async () => {
+      useArticleStore.setState({ searchQuery: '别的词' })
+      return [item(1)]
+    })
+    useArticleStore.getState().setSearchQuery('抢跑')
+    await useArticleStore.getState().runSearch()
+    expect(useSearchHistoryStore.getState().history).toEqual(['周刊'])
   })
 
   it('选中搜索结果即便不在 items 中也能标记已读', () => {

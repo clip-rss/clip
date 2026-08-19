@@ -4,7 +4,12 @@ import clsx from 'clsx'
 import { ThemeToggle } from '../ThemeToggle'
 import { usePlatform, type Platform } from '../../Hooks'
 import { modKey } from '../../Utils'
-import { useArticleStore, useLayoutStore, useUpdateStore } from '../../Stores'
+import {
+  useArticleStore,
+  useLayoutStore,
+  useUpdateStore,
+  useSearchHistoryStore,
+} from '../../Stores'
 import styles from './Toolbar.module.scss'
 
 const SEARCH_DEBOUNCE_MS = 300
@@ -33,6 +38,10 @@ function Toolbar(props: ToolbarProps): JSX.Element {
   const [searchFocused, setSearchFocused] = useState(false)
   const searchExpanded = searchFocused || searchQuery !== ''
 
+  const history = useSearchHistoryStore((s) => s.history)
+  const clearHistory = useSearchHistoryStore((s) => s.clear)
+  const historyOpen = searchFocused && searchQuery === '' && history.length > 0
+
   useEffect(() => () => window.clearTimeout(debounceRef.current), [])
 
   function handleSearchChange(value: string): void {
@@ -42,6 +51,13 @@ function Toolbar(props: ToolbarProps): JSX.Element {
       () => runSearch(),
       SEARCH_DEBOUNCE_MS,
     )
+  }
+
+  function handlePickHistory(query: string): void {
+    window.clearTimeout(debounceRef.current)
+    setSearchQuery(query)
+    void runSearch()
+    inputRef.current?.blur()
   }
 
   function handleClear(): void {
@@ -104,6 +120,36 @@ function Toolbar(props: ToolbarProps): JSX.Element {
             >
               <ClearIcon />
             </button>
+          ) : null}
+          {historyOpen ? (
+            <div
+              className={styles.historyPanel}
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              <div className={styles.historyHeader}>
+                <span>{t('toolbar.searchHistory')}</span>
+                <button
+                  type="button"
+                  className={styles.historyClear}
+                  onClick={clearHistory}
+                  title={t('toolbar.clearSearchHistory')}
+                  aria-label={t('toolbar.clearSearchHistory')}
+                >
+                  {t('toolbar.clearSearchHistory')}
+                </button>
+              </div>
+              {history.map((q) => (
+                <button
+                  key={q}
+                  type="button"
+                  className={styles.historyItem}
+                  onClick={() => handlePickHistory(q)}
+                  title={q}
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
           ) : null}
         </div>
       </div>

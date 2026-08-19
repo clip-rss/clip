@@ -29,6 +29,7 @@
 }
 
 .search {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -90,6 +91,68 @@
   &:hover {
     background-color: var(--bg-tertiary);
     color: var(--text-primary);
+  }
+}
+
+/* ===== 搜索历史下拉 ===== */
+.historyPanel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background-color: var(--bg-primary);
+  box-shadow: var(--shadow);
+  z-index: 20;
+}
+
+.historyHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px 6px;
+  font-size: var(--font-size-small);
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.historyClear {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--font-size-small);
+  font-style: italic;
+  transition: background-color 0.15s, color 0.15s;
+
+  &:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+}
+
+.historyItem {
+  padding: 5px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background-color 0.15s;
+
+  &:hover {
+    background-color: var(--bg-secondary);
   }
 }
 

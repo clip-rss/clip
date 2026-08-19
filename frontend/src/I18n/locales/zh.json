@@ -6,7 +6,9 @@
     "addFeed": "＋ 订阅",
     "focusMode": "专注模式",
     "settings": "设置",
-    "clearSearch": "清除搜索"
+    "clearSearch": "清除搜索",
+    "searchHistory": "最近搜索",
+    "clearSearchHistory": "清除历史"
   },
   "sidebar": {
     "title": "源",

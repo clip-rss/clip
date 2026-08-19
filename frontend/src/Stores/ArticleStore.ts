@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { ItemService, toApiError } from '../Utils'
 import { useSidebarStore } from './SidebarStore'
 import { useSettingsStore } from './SettingsStore'
+import { useSearchHistoryStore } from './SearchHistoryStore'
 import type {
   ArticleFilter,
   ArticleSort,
@@ -332,6 +333,8 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
         // 防竞态：输入在请求期间变化（含被清除）则丢弃本次结果。
         if (get().searchQuery.trim() !== trimmed) return
         set({ searchResults: results ?? [], searching: false })
+        // 仅在确实命中时入历史：过了防竞态检查，且不记无结果的错字。
+        if (results?.length) useSearchHistoryStore.getState().push(trimmed)
       } catch (err) {
         set({ error: toApiError(err), searching: false, searchResults: [] })
       }
