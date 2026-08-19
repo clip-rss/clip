@@ -1,6 +1,7 @@
 package fetcher
 
 import (
+	"errors"
 	"testing"
 )
 
@@ -135,11 +136,33 @@ func TestParseAtom(t *testing.T) {
 func TestParseUnknownFormat(t *testing.T) {
 	cases := [][]byte{
 		[]byte("just plain text, not xml"),
-		[]byte("<html><body>nope</body></html>"),
+		[]byte("<foo><bar>nope</bar></foo>"),
 	}
 	for _, data := range cases {
-		if _, err := Parse(data); err == nil {
+		_, err := Parse(data)
+		if err == nil {
 			t.Errorf("expected error for %q", data)
+			continue
+		}
+		if errors.Is(err, ErrHTMLResponse) {
+			t.Errorf("%q should not be reported as an HTML response", data)
+		}
+	}
+}
+
+// 返回网页时必须与「格式未知」区分开：用户的处置办法不同（换地址 / 该站拦截了阅读器），
+// 调用方靠 errors.Is 给出针对性提示。
+func TestParseHTMLResponse(t *testing.T) {
+	cases := [][]byte{
+		[]byte(`<html><body>nope</body></html>`),
+		[]byte(`<!DOCTYPE html><html lang="en"><head></head><body>waf</body></html>`),
+		// 根元素名大小写不敏感：XML 解码器原样返回本地名。
+		[]byte(`<!DOCTYPE HTML><HTML><BODY>waf</BODY></HTML>`),
+	}
+	for _, data := range cases {
+		_, err := Parse(data)
+		if !errors.Is(err, ErrHTMLResponse) {
+			t.Errorf("Parse(%.40q) error = %v, want ErrHTMLResponse", data, err)
 		}
 	}
 }

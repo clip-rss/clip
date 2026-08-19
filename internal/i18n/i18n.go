@@ -17,6 +17,7 @@ var messages = map[string]map[string]string{
 	English: {
 		"feed.urlEmpty":                  "Feed URL is required",
 		"feed.notFound":                  "No subscribable feed was found at this address",
+		"feed.htmlResponse":              "The server returned a web page instead of a feed. The site may be blocking feed readers, or this is not a feed address.",
 		"feed.fetchFailed":               "Failed to fetch feed",
 		"feed.emptyResponse":             "The feed returned an empty response",
 		"feed.alreadyExists":             "This feed is already subscribed: %s",
@@ -95,6 +96,7 @@ var messages = map[string]map[string]string{
 	SimplifiedChinese: {
 		"feed.urlEmpty":                  "订阅地址不能为空",
 		"feed.notFound":                  "未在该地址找到可订阅的源",
+		"feed.htmlResponse":              "服务器返回的是网页而不是订阅源。该站点可能拦截了阅读器访问，或这个地址不是订阅地址。",
 		"feed.fetchFailed":               "获取订阅源失败",
 		"feed.emptyResponse":             "订阅源返回了空响应",
 		"feed.alreadyExists":             "该订阅源已存在：%s",

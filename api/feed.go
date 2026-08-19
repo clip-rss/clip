@@ -50,13 +50,19 @@ func (s *FeedService) PreviewFeed(rawURL string) (*FeedPreview, error) {
 	// 用 Force 全量抓取：检测是用户主动行为，必须拿到完整内容；
 	// 普通 FetchFeed 会携带条件 GET 头，若该源此前抓过会命中 304（parsed 为 nil），
 	// 被误判为「非 Feed」而走到下面的网页发现分支并失败。
-	if parsed, _, err := s.fetcher.FetchFeedForce(ctx, rawURL); err == nil && parsed != nil {
+	parsed, _, ferr := s.fetcher.FetchFeedForce(ctx, rawURL)
+	if ferr == nil && parsed != nil {
 		return s.buildPreview(rawURL, parsed), nil
 	}
 
 	// 解析失败多半是普通网页，尝试自动发现其中声明的 Feed。
 	discovered, derr := s.fetcher.Discover(ctx, rawURL)
 	if derr != nil || len(discovered) == 0 {
+		// 返回的确实是网页却发现不到 Feed 声明：多为反爬校验页，
+		// 「未找到可订阅的源」会误导用户以为地址写错，这里给出针对性提示。
+		if errors.Is(ferr, fetcher.ErrHTMLResponse) {
+			return nil, errors.New(i18n.T(backendLanguage(s.store), "feed.htmlResponse"))
+		}
 		return nil, errors.New(i18n.T(backendLanguage(s.store), "feed.notFound"))
 	}
 	feedURL := discovered[0].URL

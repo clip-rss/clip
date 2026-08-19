@@ -8,6 +8,14 @@ import (
 // ErrUnknownFormat 表示无法识别的 Feed 格式（既非 RSS 也非 Atom）。
 var ErrUnknownFormat = errors.New("fetcher: unknown feed format")
 
+// ErrHTMLResponse 表示服务器返回的是网页而非 Feed。常见于三种情况：
+// 反爬/WAF 校验页（如火山引擎的 JS 挑战）、地址填的是网站首页而非订阅地址、
+// 订阅地址已失效并被重定向到错误页。
+//
+// 与 ErrUnknownFormat 分开是为了让调用方能给出可行动的提示 —— 前者是「内容不是 XML」，
+// 后者是「内容是一个能在浏览器里打开的网页」，用户的处置办法完全不同。
+var ErrHTMLResponse = errors.New("fetcher: server returned a web page, not a feed (anti-bot page or wrong URL)")
+
 // ParsedFeed 统一的 Feed 数据模型，兼容 RSS 2.0 与 Atom 的字段差异。
 type ParsedFeed struct {
 	Title       string       // 频道标题

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"time"
 )
@@ -83,7 +84,39 @@ func NewClient(opts ...ClientOption) *Client {
 	for _, opt := range opts {
 		opt(c)
 	}
+	// Cookie jar 供反爬挑战的凭据复用（见 challenge.go）。在构造期装好而非按需创建：
+	// FetchMany 会并发调用，运行时改 c.http.Jar 会产生数据竞争。
+	// 仅存内存、不落盘；jar 自身是并发安全的。
+	if c.http.Jar == nil {
+		if jar, err := cookiejar.New(nil); err == nil {
+			c.http.Jar = jar
+		}
+	}
 	return c
+}
+
+// solveChallenge 尝试求解响应体中的反爬 JS 挑战。成功则把凭据写入 cookie jar
+// （后续请求由 http.Client 自动携带，凭据可复用，不必每次重解），返回 true。
+//
+// 非挑战页、载荷结构不符、或无 jar 时返回 false，调用方沿用原始解析错误。
+func (c *Client) solveChallenge(rawURL string, body []byte) bool {
+	if c.http.Jar == nil || !looksLikeWAFChallenge(body) {
+		return false
+	}
+	value, ok := solveWAFChallenge(body)
+	if !ok {
+		return false
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+	c.http.Jar.SetCookies(u, []*http.Cookie{{
+		Name:  wafCookieName,
+		Value: value,
+		Path:  "/",
+	}})
+	return true
 }
 
 // ConditionalHeaders 条件 GET 所需的缓存校验头。

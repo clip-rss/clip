@@ -25,6 +25,11 @@ func Parse(data []byte) (*ParsedFeed, error) {
 	case "rss": // RSS 2.0
 		return parseRSS(data)
 	default:
+		// 根元素名大小写不敏感：XML 解码器原样返回本地名，`<HTML>` 与 `<html>` 都可能出现。
+		if strings.EqualFold(root, "html") {
+			// 反爬校验页 / 网站首页 / 失效后的错误页
+			return nil, ErrHTMLResponse
+		}
 		return nil, fmt.Errorf("%w: <%s>", ErrUnknownFormat, root)
 	}
 }

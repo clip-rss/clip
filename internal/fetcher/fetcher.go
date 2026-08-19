@@ -10,6 +10,7 @@ package fetcher
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 )
@@ -91,6 +92,14 @@ func (f *Fetcher) fetch(ctx context.Context, feedURL string, cond ConditionalHea
 	}
 
 	feed, err := Parse(result.Body)
+	if errors.Is(err, ErrHTMLResponse) && f.client.solveChallenge(feedURL, result.Body) {
+		// 命中反爬挑战且已算出凭据：带 cookie 重取一次。
+		// 只重试一次，不递归 —— 若仍是挑战页则沿用错误，避免刷新时死循环。
+		if retry, rerr := f.client.Fetch(ctx, feedURL, cond); rerr == nil && !retry.NotModified {
+			result = retry
+			feed, err = Parse(retry.Body)
+		}
+	}
 	if err != nil {
 		return nil, result, err
 	}
