@@ -23,7 +23,7 @@ const (
 // 直接比较整个结构体）。加入 slice / map / 函数字段会使其不可比较，编译期即失败。
 type Settings struct {
 	Theme                 string `json:"theme"`                 // system / light / dark / sepia
-	Language              string `json:"language"`              // zh / en
+	Language              string `json:"language"`              // zh / zh-TW / en
 	DefaultUpdateInterval int    `json:"defaultUpdateInterval"` // 全局更新间隔（分钟；字段名为兼容旧设置保留）
 	DefaultMaxItems       int    `json:"defaultMaxItems"`       // 默认每源最大保留条目数
 	NotificationMode      string `json:"notificationMode"`      // each / summary / off

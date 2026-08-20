@@ -8,7 +8,7 @@
 
 <img alt="Static Badge" src="https://img.shields.io/badge/Go-1.25.0-blue.svg"> <img alt="Static Badge" src="https://img.shields.io/badge/Wails-v3.0.0--alpha.98-blue.svg"> <img alt="Static Badge" src="https://img.shields.io/badge/React-18.2-blue.svg"> <img alt="Static Badge" src="https://img.shields.io/badge/TypeScript-6.0-blue.svg"> <img alt="Static Badge" src="https://img.shields.io/badge/Vite-8.0-blue.svg"> <img alt="Static Badge" src="https://img.shields.io/badge/Tailwind%20CSS-4.0-blue.svg"> <img alt="Static Badge" src="https://img.shields.io/badge/SQLite-1.52%20%28modernc%29-blue.svg">
 
-简体中文 | [English](README.md)
+简体中文 | 繁體中文 | [English](README.md)
 
 </div>
 
@@ -31,7 +31,7 @@
 - **笔记记录**：为文章添加笔记，随时回顾
 - **桌面通知**：新文章到达提醒，支持 macOS Dock / Windows 任务栏角标
 - **键盘驱动**：完善的快捷键系统
-- **主题与国际化**：浅色 / 深色 / 跟随系统，中英双语
+- **主题与国际化**：浅色 / 深色 / 跟随系统，支持多语言
 - **性能与离线**：轻量列表查询、本地缓存、离线可读
 
 ## 从源码构建

@@ -40,7 +40,7 @@ func TestDefaultSettingsLanguageFromSystemLocale(t *testing.T) {
 		want   string
 	}{
 		{name: "simplified chinese", locale: "zh-CN", want: "zh"},
-		{name: "traditional chinese", locale: "zh_Hant_TW", want: "zh"},
+		{name: "traditional chinese", locale: "zh_Hant_TW", want: "zh-TW"},
 		{name: "english", locale: "en-US", want: "en"},
 		{name: "japanese", locale: "ja-JP", want: "en"},
 		{name: "empty", locale: "", want: "en"},

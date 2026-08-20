@@ -181,7 +181,7 @@ func imageFilename(rawURL, contentType string) string {
 		return "image"
 	}
 	base := filepath.Base(u.Path)
-	if base == "" || base == "." || base == "/" {
+	if base == "" || base == "." || base == "/" || base == string(filepath.Separator) || base == "\\" {
 		base = "image"
 	}
 	// 去掉查询串可能残留的非法字符（filepath.Base 已处理路径，这里兜底）。

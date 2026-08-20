@@ -42,7 +42,7 @@ var assets embed.FS
 //go:embed build/updater/window.html
 var softwareUpdateHTML string
 
-// updaterLocaleEN / updaterLocaleZH 是前端 locale 文件，作为更新窗口 i18n 的**唯一数据源**。
+// updaterLocale* 是前端 locale 文件，作为更新窗口 i18n 的**唯一数据源**。
 // 启动时取其中的 "updater" 段注入窗口，不再在 HTML 里手抄字典。
 //
 //go:embed frontend/src/I18n/locales/en.json
@@ -50,6 +50,9 @@ var updaterLocaleEN []byte
 
 //go:embed frontend/src/I18n/locales/zh.json
 var updaterLocaleZH []byte
+
+//go:embed frontend/src/I18n/locales/zh-TW.json
+var updaterLocaleZHTW []byte
 
 const (
 	updI18nDictMarker = "__CLIP_I18N_DICT__"
@@ -62,7 +65,7 @@ const (
 	changelogURL   = "https://raw.githubusercontent.com/clip-rss/clip/main/CHANGELOG.md"
 )
 
-// updaterI18nDict 解析出 en/zh 两份 locale 的 "updater" 段，拼成 {en:{...},zh:{...}} 的
+// updaterI18nDict 解析出三份 locale 的 "updater" 段，拼成 {en:{...},zh:{...},zh-TW:{...}} 的
 // JSON（注入窗口用）。任一 locale 缺 "updater" 段则 panic —— 属于开发期集成错误，早失败。
 func updaterI18nDict() string {
 	extract := func(raw []byte, lang string) map[string]any {
@@ -77,8 +80,9 @@ func updaterI18nDict() string {
 		return seg
 	}
 	dict := map[string]any{
-		"en": extract(updaterLocaleEN, "en"),
-		"zh": extract(updaterLocaleZH, "zh"),
+		"en":    extract(updaterLocaleEN, "en"),
+		"zh":    extract(updaterLocaleZH, "zh"),
+		"zh-TW": extract(updaterLocaleZHTW, "zh-TW"),
 	}
 	// json.Marshal 默认转义 <>& 为 \uXXXX，可安全内嵌进 <script>。
 	b, err := json.Marshal(dict)

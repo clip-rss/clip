@@ -96,6 +96,19 @@ func TestPlanLocalizedEnglish(t *testing.T) {
 	}
 }
 
+func TestPlanLocalizedTraditionalUsesIdeographicSeparator(t *testing.T) {
+	msgs := PlanLocalized(ModeSummary, "zh-TW", "科技", items(6))
+	if len(msgs) != 1 {
+		t.Fatalf("traditional summary = %+v", msgs)
+	}
+	if !strings.Contains(msgs[0].Body, "、") {
+		t.Fatalf("traditional summary should use ideographic separator: %q", msgs[0].Body)
+	}
+	if strings.Contains(msgs[0].Body, ", ") {
+		t.Fatalf("traditional summary should not use ASCII separator: %q", msgs[0].Body)
+	}
+}
+
 func TestJoinTitles(t *testing.T) {
 	in := []string{"a", "b", "c", "d", "e"}
 	got := joinTitles(in, 3)

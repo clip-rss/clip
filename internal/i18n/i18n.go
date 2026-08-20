@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	English           = "en"
-	SimplifiedChinese = "zh-CN"
+	English            = "en"
+	SimplifiedChinese  = "zh-CN"
+	TraditionalChinese = "zh-TW"
 )
 
 var messages = map[string]map[string]string{
@@ -172,14 +173,76 @@ var messages = map[string]map[string]string{
 		"image.downloadFailed":           "下载图片失败",
 		"image.writeFailed":              "保存图片失败",
 	},
+	TraditionalChinese: {}, // populated from the complete catalog in init
+}
+
+// traditionalChineseMessages starts with the complete Simplified Chinese
+// catalog so a newly added backend key never falls through to English. The
+// replacements below use Taiwan terminology for the UI phrases shared by the
+// backend (the frontend locale contains the larger user-facing catalog).
+func traditionalChineseMessages() map[string]string {
+	translations := []struct{ from, to string }{
+		{"请输入密码", "請輸入密碼"}, {"下载更新包", "下載更新套件"},
+		{"安全选项", "安全選項"}, {"两步验证", "兩步驗證"},
+		{"服务器地址", "伺服器位址"}, {"上级目录", "上層目錄"},
+		{"重新定向", "重新導向"}, {"重定向", "重新導向"},
+		{"本机", "本機"}, {"凭据密钥", "認證金鑰"}, {"密钥", "金鑰"},
+		{"存储", "儲存"}, {"读写", "讀寫"}, {"专用", "專用"},
+		{"简单好用", "簡單好用"}, {"请检查", "請檢查"}, {"请确认", "請確認"},
+		{"尚未配置", "尚未設定"}, {"未配置", "未設定"}, {"必须", "必須"},
+		{"开头", "開頭"}, {"开启", "開啟"}, {"同样", "同樣"}, {"常见", "常見"},
+		{"上级", "上層"}, {"填到", "填寫至"}, {"漏掉", "遺漏"}, {"网盘", "雲端硬碟"},
+		{"换机器", "更換電腦"}, {"清理后", "清理後"}, {"已被其他设备", "已被其他裝置"},
+		{"锁定", "鎖定"}, {"写入", "寫入"}, {"拒绝", "拒絕"}, {"过于频繁", "過於頻繁"},
+		{"账号", "帳號"}, {"权限", "權限"}, {"链路", "連線"},
+		{"稍后", "稍後"}, {"无可用", "無可用"},
+		{"设备", "裝置"}, {"配置", "設定"}, {"请", "請"}, {"确认", "確認"},
+		{"验证", "驗證"},
+		{"文件夹", "資料夾"}, {"数据库", "資料庫"},
+		{"剪贴板", "剪貼簿"}, {"阅读器", "閱讀器"}, {"服务器", "伺服器"},
+		{"软件", "軟體"}, {"默认", "預設"}, {"文件", "檔案"}, {"设置", "設定"},
+		{"用户", "使用者"}, {"数据", "資料"}, {"信息", "訊息"}, {"支持", "支援"},
+		{"搜索", "搜尋"}, {"网络", "網路"}, {"缓存", "快取"}, {"字体", "字型"},
+		{"签名", "簽章"}, {"解压", "解壓縮"}, {"屏幕", "螢幕"}, {"复制", "複製"},
+		{"订阅", "訂閱"}, {"地址", "位址"}, {"连接", "連線"}, {"失败", "失敗"},
+		{"错误", "錯誤"}, {"检查", "檢查"}, {"获取", "取得"}, {"请输入", "請輸入"},
+		{"请选择", "請選擇"}, {"无效", "無效"}, {"无法", "無法"}, {"为空", "不可為空"},
+		{"返回", "回傳"}, {"响应", "回應"}, {"请求", "請求"}, {"目录", "目錄"},
+		{"路径", "路徑"}, {"远端", "遠端"}, {"资源", "資源"}, {"重试", "重試"},
+		{"导出", "匯出"}, {"导入", "匯入"}, {"备份", "備份"}, {"恢复", "還原"},
+		{"生成", "產生"}, {"删除", "刪除"},
+		{"安装", "安裝"}, {"分类", "分類"}, {"名称", "名稱"}, {"密码", "密碼"},
+		{"凭据", "認證資訊"}, {"清理", "清理"}, {"空间", "空間"}, {"内部", "內部"},
+		{"权限", "權限"}, {"应用", "應用程式"}, {"跨平台", "跨平台"}, {"图片", "圖片"},
+		{"新增", "新增"}, {"篇", "篇"}, {"等", "等"},
+	}
+	result := make(map[string]string, len(messages[SimplifiedChinese]))
+	for key, value := range messages[SimplifiedChinese] {
+		translated := value
+		for _, translation := range translations {
+			translated = strings.ReplaceAll(translated, translation.from, translation.to)
+		}
+		result[key] = translated
+	}
+	return result
+}
+
+func init() {
+	messages[TraditionalChinese] = traditionalChineseMessages()
 }
 
 // Normalize converts locale names to canonical supported language tags.
-// Only Simplified Chinese is currently supported; other locales fall back to
-// English.
 func Normalize(lang string) string {
 	lang = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(lang, "_", "-")))
+	if idx := strings.IndexAny(lang, ".@"); idx >= 0 {
+		lang = lang[:idx]
+	}
 	switch {
+	case lang == "zh-tw", strings.HasPrefix(lang, "zh-tw-"),
+		lang == "zh-hk", strings.HasPrefix(lang, "zh-hk-"),
+		lang == "zh-mo", strings.HasPrefix(lang, "zh-mo-"),
+		strings.HasPrefix(lang, "zh-hant"):
+		return TraditionalChinese
 	case lang == "zh", lang == "zh-cn", strings.HasPrefix(lang, "zh-cn-"),
 		lang == "zh-sg", strings.HasPrefix(lang, "zh-sg-"),
 		strings.HasPrefix(lang, "zh-hans"):
@@ -188,8 +251,19 @@ func Normalize(lang string) string {
 	return English
 }
 
-// IsChinese reports whether lang is a supported Simplified Chinese locale.
+// IsChinese reports whether notifications should use Chinese punctuation.
 func IsChinese(lang string) bool {
+	return UsesChineseSeparator(lang)
+}
+
+// UsesChineseSeparator reports whether Chinese list punctuation should be used.
+// Both Simplified and Traditional Chinese use the ideographic comma.
+func UsesChineseSeparator(lang string) bool {
+	normalized := Normalize(lang)
+	return normalized == SimplifiedChinese || normalized == TraditionalChinese
+}
+
+func isSimplifiedChinese(lang string) bool {
 	return Normalize(lang) == SimplifiedChinese
 }
 
@@ -198,6 +272,11 @@ func IsChinese(lang string) bool {
 func T(lang, key string, args ...any) string {
 	lang = Normalize(lang)
 	template, ok := messages[lang][key]
+	if !ok {
+		if lang == TraditionalChinese {
+			template, ok = messages[SimplifiedChinese][key]
+		}
+	}
 	if !ok {
 		template, ok = messages[English][key]
 		if !ok {
@@ -232,7 +311,7 @@ func (e localizedError) Unwrap() error { return e.cause }
 // It is used at API boundaries for errors produced by lower-level packages
 // that predate backend i18n; unknown diagnostic text is left untouched.
 func LocalizeError(lang string, err error) error {
-	if err == nil || IsChinese(lang) {
+	if err == nil || isSimplifiedChinese(lang) {
 		return err
 	}
 	message := err.Error()

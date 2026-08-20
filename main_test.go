@@ -10,7 +10,7 @@ import (
 )
 
 // TestUpdaterI18nInjection 验证更新窗口的 i18n 注入：占位符被替换、字典是合法 JSON、
-// 且 en/zh 两语言的 "updater" key 集合一致（防止本地化漏项 / locale 结构漂移）。
+// 且三语言的 "updater" key 集合一致（防止本地化漏项 / locale 结构漂移）。
 func TestUpdaterI18nInjection(t *testing.T) {
 	dict := updaterI18nDict()
 
@@ -26,6 +26,10 @@ func TestUpdaterI18nInjection(t *testing.T) {
 	zh, ok := parsed["zh"]
 	if !ok || len(zh) == 0 {
 		t.Fatal("dict 缺少非空 zh 段")
+	}
+	zhTW, ok := parsed["zh-TW"]
+	if !ok || len(zhTW) == 0 {
+		t.Fatal("dict 缺少非空 zh-TW 段")
 	}
 
 	// en/zh 的 key 必须一致（递归比较支持嵌套结构）。
@@ -52,6 +56,7 @@ func TestUpdaterI18nInjection(t *testing.T) {
 		}
 	}
 	compareKeys("", en, zh)
+	compareKeys("", en, zhTW)
 
 	// 注入后占位符应全部消失，且选定语言出现在结果中。
 	html := buildSoftwareUpdateHTML(dict, "zh")
@@ -64,9 +69,16 @@ func TestUpdaterI18nInjection(t *testing.T) {
 	if !strings.Contains(html, `var lang = "zh"`) {
 		t.Error("注入后未见 var lang = \"zh\"")
 	}
+	traditionalHTML := buildSoftwareUpdateHTML(dict, "zh-TW")
+	if !strings.Contains(traditionalHTML, `var lang = "zh-TW"`) {
+		t.Error("注入后未见 var lang = \"zh-TW\"")
+	}
 	// 抽查一个已知 key 的中文文案确实进入了 HTML（检查顶级 key）。
 	if zhClose, ok := zh["close"].(string); ok && zhClose != "" && !strings.Contains(html, zhClose) {
 		t.Errorf("注入后未见 zh.close 文案 %q", zhClose)
+	}
+	if close, ok := zhTW["close"].(string); ok && close != "" && !strings.Contains(traditionalHTML, close) {
+		t.Errorf("注入后未见 zh-TW.close 文案 %q", close)
 	}
 }
 
@@ -151,5 +163,3 @@ func TestCleanOrphanedUpdateDirs_OnlyNewest(t *testing.T) {
 		t.Errorf("the only directory should be kept as newest")
 	}
 }
-
-

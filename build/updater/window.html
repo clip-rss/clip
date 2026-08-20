@@ -400,8 +400,8 @@ body {
 
   /* === i18n ===
      这是独立 HTML 页面（无 React / i18next 运行时）。下面两个占位符由 Go 在建窗时替换
-     （见 main.go buildSoftwareUpdateHTML）：字典占位符 → {en:{...},zh:{...}}，其唯一数据源
-     是 frontend 的 locale JSON；语言占位符 → 当前 App 语言（"zh"/"en"），来自用户设置。
+     （见 main.go buildSoftwareUpdateHTML）：字典占位符 → {en:{...},zh:{...},zh-TW:{...}}，其唯一数据源
+     是 frontend 的 locale JSON；语言占位符 → 当前 App 语言（"zh"/"zh-TW"/"en"），来自用户设置。
      因此这里不再内联字典、也不做语言探测；改文案只需改 locale JSON。
      注意：占位符在本文件中必须各只出现一次（Go 用 Replace(...,1) 注入），勿在注释里重复其字面量。 */
   var I18N = __CLIP_I18N_DICT__;

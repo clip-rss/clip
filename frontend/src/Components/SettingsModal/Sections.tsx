@@ -63,6 +63,7 @@ export function GeneralSection(): JSX.Element {
           }}
         >
           <option value="zh">简体中文</option>
+          <option value="zh-TW">繁體中文</option>
           <option value="en">English</option>
         </select>
       </SettingRow>

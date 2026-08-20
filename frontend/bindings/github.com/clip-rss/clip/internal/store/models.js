@@ -772,7 +772,7 @@ export class Settings {
         }
         if (!("language" in $$source)) {
             /**
-             * zh / en
+             * zh / zh-TW / en
              * @member
              * @type {string}
              */

@@ -96,13 +96,13 @@ func joinTitlesLocalized(lang string, titles []string, max int) string {
 	n := len(titles)
 	if n > max {
 		separator := ", "
-		if i18n.IsChinese(lang) {
+		if i18n.UsesChineseSeparator(lang) {
 			separator = "、"
 		}
 		return i18n.T(lang, "notify.moreItems", joinFirst(titles[:max], separator), n)
 	}
 	separator := ", "
-	if i18n.IsChinese(lang) {
+	if i18n.UsesChineseSeparator(lang) {
 		separator = "、"
 	}
 	return joinFirst(titles, separator)
