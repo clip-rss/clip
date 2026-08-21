@@ -60,7 +60,7 @@ const (
 )
 
 const (
-	currentVersion = "0.1.0"
+	currentVersion = "0.2.0"
 	repo           = "clip-rss/clip"
 	changelogURL   = "https://raw.githubusercontent.com/clip-rss/clip/main/CHANGELOG.md"
 )

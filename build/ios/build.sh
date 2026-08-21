@@ -2,10 +2,10 @@
 set -e
 
 # Build configuration
-APP_NAME="clip"
+APP_NAME="Clip"
 BUNDLE_ID="io.github.cliprss.clip"
-VERSION="0.1.0"
-BUILD_NUMBER="0.1.0"
+VERSION="0.2.0"
+BUILD_NUMBER="0.2.0"
 BUILD_DIR="build/ios"
 TARGET="simulator"
 

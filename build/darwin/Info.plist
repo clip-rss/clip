@@ -3,7 +3,7 @@
 <plist version="1.0">
 	<dict>
 		<key>CFBundleExecutable</key>
-		<string>clip</string>
+		<string>Clip</string>
 		<key>CFBundleGetInfoString</key>
 		<string>A simple cross-platform RSS reader</string>
 		<key>CFBundleIconFile</key>
@@ -17,9 +17,9 @@
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>
-		<string>0.1.0</string>
+		<string>0.2.0</string>
 		<key>CFBundleVersion</key>
-		<string>0.1.0</string>
+		<string>0.2.0</string>
 		<key>LSMinimumSystemVersion</key>
 		<string>12.0.0</string>
 		<key>NSHighResolutionCapable</key>

@@ -5,7 +5,7 @@
 !include "FileFunc.nsh"
 
 !ifndef INFO_PROJECTNAME
-    !define INFO_PROJECTNAME "clip"
+    !define INFO_PROJECTNAME "Clip"
 !endif
 !ifndef INFO_COMPANYNAME
     !define INFO_COMPANYNAME "Clip RSS"
@@ -14,7 +14,7 @@
     !define INFO_PRODUCTNAME "Clip"
 !endif
 !ifndef INFO_PRODUCTVERSION
-    !define INFO_PRODUCTVERSION "0.1.0"
+    !define INFO_PRODUCTVERSION "0.2.0"
 !endif
 !ifndef INFO_COPYRIGHT
     !define INFO_COPYRIGHT "© 2026 Clip RSS"

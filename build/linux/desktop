@@ -3,11 +3,11 @@ Version=1.0
 Name=Clip
 Comment=A simple cross-platform RSS reader
 # The Exec line includes %u to pass the URL to the application
-Exec=/usr/local/bin/clip %u
+Exec=/usr/local/bin/Clip %u
 Terminal=false
 Type=Application
-Icon=clip
+Icon=Clip
 Categories=Utility;
-StartupWMClass=clip
+StartupWMClass=Clip
 
  
