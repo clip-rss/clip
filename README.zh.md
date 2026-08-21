@@ -8,7 +8,7 @@
 
 <img alt="Static Badge" src="https://img.shields.io/badge/Go-1.25.0-blue.svg"> <img alt="Static Badge" src="https://img.shields.io/badge/Wails-v3.0.0--alpha.98-blue.svg"> <img alt="Static Badge" src="https://img.shields.io/badge/React-18.2-blue.svg"> <img alt="Static Badge" src="https://img.shields.io/badge/TypeScript-6.0-blue.svg"> <img alt="Static Badge" src="https://img.shields.io/badge/Vite-8.0-blue.svg"> <img alt="Static Badge" src="https://img.shields.io/badge/Tailwind%20CSS-4.0-blue.svg"> <img alt="Static Badge" src="https://img.shields.io/badge/SQLite-1.52%20%28modernc%29-blue.svg">
 
-简体中文 | 繁體中文 | [English](README.md)
+简体中文 | [繁體中文](README.zh-TW.md) | [English](README.md)
 
 </div>
 
