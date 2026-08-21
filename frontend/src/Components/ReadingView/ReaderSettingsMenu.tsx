@@ -8,7 +8,7 @@ import type {
   ReaderLineHeight,
   ReaderWidth,
 } from '../../Types'
-import { MoreIcon, CheckIcon } from './Icons'
+import { LetterCaseIcon, CheckIcon } from './Icons'
 import styles from './ReadingView.module.scss'
 
 function RadioRow(props: { value: string; label: string }): JSX.Element {
@@ -67,7 +67,7 @@ function ReaderSettingsMenu(): JSX.Element {
           title={t('reader.settings.title')}
           aria-label={t('reader.settings.title')}
         >
-          <MoreIcon size={18} />
+          <LetterCaseIcon size={18} />
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>

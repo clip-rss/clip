@@ -6,7 +6,6 @@ import { usePlatform, type Platform } from '../../Hooks'
 import { modKey } from '../../Utils'
 import {
   useArticleStore,
-  useLayoutStore,
   useUpdateStore,
   useSearchHistoryStore,
 } from '../../Stores'
@@ -23,9 +22,6 @@ function Toolbar(props: ToolbarProps): JSX.Element {
   const { t } = useTranslation()
   const { onAddFeed, onOpenSettings } = props
   const platform = usePlatform()
-  const focusMode = useLayoutStore((s) => s.focusMode)
-  const toggleFocus = useLayoutStore((s) => s.toggleFocus)
-  const hasSelection = useArticleStore((s) => s.selectedItemId !== null)
   const updateAvailable = useUpdateStore((s) => s.updateAvailable)
 
   const searchQuery = useArticleStore((s) => s.searchQuery)
@@ -76,8 +72,6 @@ function Toolbar(props: ToolbarProps): JSX.Element {
   }
 
   const addTitle = `${t('toolbar.addFeed')} (${modKey(platform)}N)`
-  const focusShortcut = platform === 'mac' ? '⇧F' : '+Shift+F'
-  const focusTitle = `${t('toolbar.focusMode')} (${modKey(platform)}${focusShortcut})`
   const settingsShortcut = platform === 'mac' ? '，' : ','
   const settingsTitle = `${t('toolbar.settings')} (${modKey(platform)}${settingsShortcut})`
 
@@ -162,19 +156,6 @@ function Toolbar(props: ToolbarProps): JSX.Element {
         >
           {t('toolbar.addFeed')}
         </button>
-        <button
-          className={clsx(
-            styles.iconButton,
-            focusMode && styles.iconButtonActive,
-          )}
-          onClick={toggleFocus}
-          disabled={!focusMode && !hasSelection}
-          title={focusTitle}
-          aria-label={t('toolbar.focusMode')}
-          aria-pressed={focusMode}
-        >
-          <LayoutIcon />
-        </button>
         <ThemeToggle />
         <button
           className={styles.iconButton}
@@ -243,25 +224,6 @@ function ClearIcon(): JSX.Element {
       aria-hidden="true"
     >
       <path d="M18 6 6 18M6 6l12 12" />
-    </svg>
-  )
-}
-
-function LayoutIcon(): JSX.Element {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3" y="3" width="7" height="18" />
-      <rect x="14" y="3" width="7" height="7" />
-      <rect x="14" y="14" width="7" height="7" />
     </svg>
   )
 }

@@ -21,6 +21,10 @@
   --error:     #DC2626;
   --warning:   #ff9500;
 
+  --scrollbar-thumb:        rgba(17, 24, 39, 0.3);
+  --scrollbar-thumb-hover:  rgba(17, 24, 39, 0.5);
+  --scrollbar-thumb-active: rgba(17, 24, 39, 0.65);
+
   --radius:    10px;
   --radius-sm: 6px;
   --pad:       20px;
@@ -41,6 +45,9 @@
     --accent:    #3B82F6;
     --accent-dim:#3b82f644;
     --error:     #EF4444;
+    --scrollbar-thumb:        rgba(229, 231, 235, 0.28);
+    --scrollbar-thumb-hover:  rgba(229, 231, 235, 0.48);
+    --scrollbar-thumb-active: rgba(229, 231, 235, 0.62);
   }
 }
 
@@ -147,7 +154,17 @@ body {
   font-style: italic;
 }
 .u__notes::-webkit-scrollbar { width: 10px; }
-.u__notes::-webkit-scrollbar-thumb { background: var(--border); border: 2px solid var(--surface); border-radius: 5px; }
+/* thumb 不用 --border：#E5E7EB 压在 --surface(#FFFFFF) 上对比度约 1.1:1，等于没画。
+   透明边框 + padding-box 让视觉宽度收到 6px，命中区仍是 10px。 */
+.u__notes::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 10px;
+  min-height: 32px;
+}
+.u__notes::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); background-clip: padding-box; }
+.u__notes::-webkit-scrollbar-thumb:active { background: var(--scrollbar-thumb-active); background-clip: padding-box; }
 /* Markdown subset rendered by renderMarkdown() inside notes */
 .u__notes p { margin: 0 0 8px 0; }
 .u__notes p:last-child { margin-bottom: 0; }

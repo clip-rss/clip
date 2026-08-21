@@ -104,6 +104,17 @@
   }
 }
 
+/* 专注模式激活态 */
+.focusActive {
+  background-color: var(--bg-secondary);
+  color: var(--accent);
+
+  &:hover {
+    background-color: var(--bg-secondary);
+    color: var(--accent);
+  }
+}
+
 /* ===== 滚动正文区 ===== */
 .scroll {
   flex: 1;

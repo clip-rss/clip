@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import { useArticleStore, useLayoutStore } from '../../Stores'
-import { openURL } from '../../Utils'
+import { modKey, openURL } from '../../Utils'
+import { usePlatform } from '../../Hooks'
 import type { Item } from '../../Types'
 import {
   ReadIcon,
@@ -9,6 +10,7 @@ import {
   StarIcon,
   NoteIcon,
   ExternalLinkIcon,
+  EnterFullScreenIcon,
 } from './Icons'
 import ReaderSettingsMenu from './ReaderSettingsMenu'
 import styles from './ReadingView.module.scss'
@@ -20,12 +22,18 @@ interface ReaderToolbarProps {
 function ReaderToolbar(props: ReaderToolbarProps): JSX.Element {
   const { t } = useTranslation()
   const { item } = props
+  const platform = usePlatform()
   const markRead = useArticleStore((s) => s.markRead)
   const markUnread = useArticleStore((s) => s.markUnread)
   const toggleStar = useArticleStore((s) => s.toggleStar)
   const notePanelOpen = useLayoutStore((s) => s.notePanelOpen)
   const toggleNotePanel = useLayoutStore((s) => s.toggleNotePanel)
+  const focusMode = useLayoutStore((s) => s.focusMode)
+  const toggleFocus = useLayoutStore((s) => s.toggleFocus)
   const hasNote = item.note.trim() !== ''
+
+  const focusShortcut = platform === 'mac' ? '⇧F' : '+Shift+F'
+  const focusTitle = `${t('toolbar.focusMode')} (${modKey(platform)}${focusShortcut})`
 
   return (
     <div className={styles.toolbar}>
@@ -99,6 +107,16 @@ function ReaderToolbar(props: ReaderToolbarProps): JSX.Element {
           <ExternalLinkIcon size={18} />
         </button>
         <ReaderSettingsMenu />
+        <button
+          type="button"
+          className={clsx(styles.toolbarBtn, focusMode && styles.focusActive)}
+          onClick={toggleFocus}
+          title={focusTitle}
+          aria-label={t('toolbar.focusMode')}
+          aria-pressed={focusMode}
+        >
+          <EnterFullScreenIcon size={18} />
+        </button>
       </div>
     </div>
   )

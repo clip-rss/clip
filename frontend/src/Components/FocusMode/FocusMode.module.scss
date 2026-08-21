@@ -168,14 +168,20 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding-top: 32px; // 顶部留白，使首屏标题不被浮动控制条压住
-
-  // 纤细半透明滚动条，仅 hover 时可见
   &::-webkit-scrollbar-thumb {
     background-color: transparent;
   }
 
   &:hover::-webkit-scrollbar-thumb {
-    background-color: var(--border);
+    background-color: var(--scrollbar-thumb);
+  }
+
+  &:hover::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
+
+  &::-webkit-scrollbar-thumb:active {
+    background-color: var(--scrollbar-thumb-active);
   }
 }
 
