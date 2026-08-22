@@ -1,21 +1,41 @@
 @keyframes overlayIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes overlayOut {
-  from { opacity: 1; }
-  to   { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes contentIn {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
-  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 @keyframes contentOut {
-  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  to   { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
 }
 
 .overlay {
@@ -98,11 +118,28 @@
   user-select: none;
 
   /* Markdown 渲染后样式 */
+  h1,
   h2 {
-    margin: 0 0 4px;
+    /* 多个版本小节相邻时靠上间距区隔，首个标题不留白 */
+    margin: 28px 0 4px;
     font-size: 20px;
     font-weight: 700;
     color: var(--text-primary);
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  h3 {
+    margin: 20px 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+
+    &:first-child {
+      margin-top: 0;
+    }
   }
 
   h4 {
@@ -124,6 +161,28 @@
   ul {
     margin: 0 0 12px;
     padding-left: 20px;
+  }
+
+  ol {
+    margin: 0 0 12px;
+    padding-left: 22px;
+  }
+
+  blockquote {
+    margin: 0 0 12px;
+    padding-left: 12px;
+    border-left: 2px solid var(--border);
+    color: var(--text-secondary);
+  }
+
+  hr {
+    margin: 20px 0;
+    border: none;
+    border-top: 1px solid var(--border);
+  }
+
+  del {
+    color: var(--text-secondary);
   }
 
   li {

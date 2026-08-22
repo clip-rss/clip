@@ -1,77 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import * as Dialog from '@radix-ui/react-dialog'
-import { sanitizeHtml, SystemService, toApiError } from '../../Utils'
+import {
+  markdownToHtml,
+  sanitizeHtml,
+  SystemService,
+  toApiError,
+} from '../../Utils'
 import Skeleton from '../Skeleton/Skeleton'
 import styles from './ChangelogModal.module.scss'
 
 interface ChangelogModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-}
-
-/** 轻度 Markdown → HTML 转换，仅处理 CHANGELOG.md 中使用的标记。 */
-function markdownToHTML(md: string): string {
-  // 按段落分割（空行分隔）
-  const blocks = md.split(/\n\n+/)
-  return blocks
-    .map((block) => {
-      const trimmed = block.trim()
-      if (!trimmed) return ''
-
-      // ## 标题
-      if (trimmed.startsWith('## ')) {
-        return `<h2>${escapeHTML(trimmed.slice(3))}</h2>`
-      }
-      // #### 日期
-      if (trimmed.startsWith('#### ')) {
-        return `<h4>${inline(trimmed.slice(5))}</h4>`
-      }
-
-      // 无序列表
-      if (trimmed.startsWith('- ')) {
-        const items = trimmed
-          .split('\n')
-          .filter((l) => l.trim().startsWith('- '))
-          .map((l) => `<li>${inline(l.trim().slice(2))}</li>`)
-          .join('')
-        return `<ul>${items}</ul>`
-      }
-
-      // 代码块
-      if (trimmed.startsWith('```')) {
-        const inner = trimmed.replace(/^```\w*\n?/, '').replace(/\n?```$/, '')
-        return `<pre><code>${escapeHTML(inner)}</code></pre>`
-      }
-
-      // 普通段落
-      return `<p>${inline(trimmed)}</p>`
-    })
-    .join('\n')
-}
-
-/** 行内格式：加粗、链接、行内代码 */
-function inline(text: string): string {
-  return (
-    text
-      // 加粗
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      // 链接
-      .replace(
-        /\[([^\]]+)\]\(([^)]+)\)/g,
-        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
-      )
-      // 行内代码
-      .replace(/`([^`]+)`/g, '<code>$1</code>')
-  )
-}
-
-function escapeHTML(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
 }
 
 function CloseIcon(): JSX.Element {
@@ -106,8 +47,7 @@ export function ChangelogModal(props: ChangelogModalProps): JSX.Element {
 
     SystemService.FetchChangelog()
       .then((md: string) => {
-        const raw = markdownToHTML(md)
-        setHtml(sanitizeHtml(raw))
+        setHtml(sanitizeHtml(markdownToHtml(md)))
       })
       .catch((err: unknown) => {
         setError(toApiError(err))
