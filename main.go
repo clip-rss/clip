@@ -246,6 +246,7 @@ type updateController struct {
 	mu          sync.Mutex
 	lastRelease *updater.Release // 最近一次 Check 命中的新版（供状态重放）
 	lastStatus  func()           // 窗口 ready 时重放最近状态的闭包
+	noUpdate    bool             // 最近一次 Check 明确返回「已是最新」（供更新日志缓存判定）
 }
 
 func newUpdateController(app *application.App, up *updater.Updater, win *softwareUpdateWindow, version string) *updateController {
@@ -332,26 +333,52 @@ func (c *updateController) currentRelease() *updater.Release {
 	return c.lastRelease
 }
 
+// recordCheck 记录一次 Check 的结论：命中新版则留存 release，明确「已是最新」则置
+// noUpdate（更新日志缓存据此判定可否复用）。
+//
+// ⚠️ 出错时置 noUpdate = false，而不是保留原值：「没检查出来」不等于「没有新版」。
+// 若把失败当作最新，一次网络抖动就足以让缓存被认为有效，之后长期吐旧日志。
+func (c *updateController) recordCheck(rel *updater.Release, err error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if err != nil {
+		c.noUpdate = false
+		return
+	}
+	if rel != nil {
+		c.lastRelease = rel
+		c.noUpdate = false
+		return
+	}
+	c.noUpdate = true
+}
+
+// confirmedNoUpdate 报告最近一次更新检查是否明确确认「已是最新」。
+// 供 SystemService 判定更新日志缓存能否复用——见 api/system.go 的 FetchChangelog。
+func (c *updateController) confirmedNoUpdate() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.noUpdate
+}
+
 // check 是菜单「Check for Updates」的入口：新建窗口并只做检查（不下载）。
 func (c *updateController) check() {
 	// 重置本轮状态，rebuild 全新窗口（干净 JS 状态）。
+	// noUpdate 一并清空：本轮结论未出之前不该沿用上一轮的「已是最新」，否则检查进行中
+	// 打开更新日志仍会命中缓存。
 	c.mu.Lock()
 	c.lastRelease = nil
+	c.noUpdate = false
 	c.lastStatus = func() { c.app.Event.Emit(updater.EventCheckStarted) }
 	c.mu.Unlock()
 	c.win.rebuild()
 
 	go func() {
 		rel, err := c.updater.Check(context.Background())
+		c.recordCheck(rel, err)
 		if err != nil {
 			// Check 已发过 EventError；记录重放（携带错误信息由 Updater 内部 emit 决定）。
 			c.app.Logger.Error("update", "stage", "check", "error", err)
-			return
-		}
-		if rel != nil {
-			c.mu.Lock()
-			c.lastRelease = rel
-			c.mu.Unlock()
 		}
 	}()
 }
@@ -361,14 +388,12 @@ func (c *updateController) check() {
 func (c *updateController) checkSilent() {
 	go func() {
 		rel, err := c.updater.Check(context.Background())
+		c.recordCheck(rel, err)
 		if err != nil {
 			c.app.Logger.Error("update", "stage", "check-silent", "error", err)
 			return
 		}
 		if rel != nil {
-			c.mu.Lock()
-			c.lastRelease = rel
-			c.mu.Unlock()
 			// 通知主窗口前端：有新版本可用
 			c.app.Event.Emit("clip:update:available", rel)
 		}
@@ -539,6 +564,7 @@ func main() {
 	sysSvc := &api.SystemService{
 		AppVersion:      currentVersion,
 		ChangelogURL:    changelogURL,
+		Store:           st,
 		OnlineChangedFn: func(online bool) { sch.SetOfflineMode(!online) },
 		LanguageFn: func() string {
 			if current, err := st.GetSettings(); err == nil {
@@ -603,6 +629,7 @@ func main() {
 	updCtrl := newUpdateController(app, app.Updater, updWin, currentVersion)
 	sysSvc.CheckUpdateFn = updCtrl.check
 	sysSvc.CheckSilentFn = updCtrl.checkSilent
+	sysSvc.NoUpdateFn = updCtrl.confirmedNoUpdate
 
 	menu := application.DefaultApplicationMenu()
 

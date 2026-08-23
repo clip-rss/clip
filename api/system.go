@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/clip-rss/clip/internal/fetcher"
 	"github.com/clip-rss/clip/internal/i18n"
+	"github.com/clip-rss/clip/internal/store"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -30,11 +32,19 @@ type SystemService struct {
 	// 前端调 SystemService.CheckForUpdatesSilent() 即可触发。
 	CheckSilentFn func()
 
+	// NoUpdateFn 由 main.go 延迟注入，报告最近一次更新检查是否明确确认「已是最新」。
+	// 为 nil 时视为「未确认」，更新日志缓存不会被复用也不会被写入。
+	NoUpdateFn func() bool
+
 	// AppVersion 由 main.go 注入当前应用版本号（与更新检查使用的版本一致）。
 	AppVersion string
 
 	// ChangelogURL 由 main.go 注入，指向 CHANGELOG.md 的 raw 地址。
 	ChangelogURL string
+
+	// Store 由 main 注入，用于持久化更新日志缓存。
+	// 为 nil 时（如单测）退化为每次都重新抓取。
+	Store *store.Store
 
 	// OnlineChangedFn 由 main 注入，把 WebView 的在线状态同步给后台调度器。
 	OnlineChangedFn func(online bool)
@@ -80,8 +90,63 @@ func (s *SystemService) CheckForUpdatesSilent() {
 	}
 }
 
-// FetchChangelog 从 ChangelogURL 拉取原始 Markdown 文本返回给前端渲染。
+// FetchChangelog 返回更新日志原始 Markdown 文本，供前端渲染。
+//
+// 优先读本地缓存：changelogURL 指向仓库 main 分支，内容就是「最新已发布版本」的日志，
+// 所以当版本号与缓存一致、且更新检查已确认无新版时，远端内容不可能变，直接复用即可，
+// 不再发请求。检出新版（或尚未检查）时缓存立即失效，保证升级前后都能看到对应的日志。
+//
+// 抓取失败时若存有本版本的缓存则回退返回缓存，让离线状态下仍能查看更新日志。
 func (s *SystemService) FetchChangelog() (string, error) {
+	cache, cached := s.changelogCache()
+	noUpdate := s.NoUpdateFn != nil && s.NoUpdateFn()
+
+	// 命中条件必须同时含 noUpdate：只比版本号不够——用户长时间不重启、期间上游发了新版
+	// 并被检出时，本地版本号依然等于缓存里的版本，但远端日志已变。
+	if cached && noUpdate {
+		return cache.Markdown, nil
+	}
+
+	md, err := s.fetchChangelogRemote()
+	if err != nil {
+		if cached {
+			return cache.Markdown, nil
+		}
+		return "", err
+	}
+
+	// 只在确认无新版时回写：有新版待装时抓到的是新版日志，缓存下来会在升级后被
+	// 当作「当前版本」的日志复用（版本号那时才追上），反而把内容锁死在错误的一版。
+	if noUpdate && s.Store != nil {
+		if err := s.Store.SaveChangelogCache(store.ChangelogCache{
+			Version:  s.AppVersion,
+			Markdown: md,
+		}); err != nil {
+			log.Printf("changelog: save cache: %v", err)
+		}
+	}
+	return md, nil
+}
+
+// changelogCache 读取与当前版本匹配的更新日志缓存。
+// 缓存不存在、版本不符或已损坏时返回 (零值, false)——损坏只记日志，随后重新抓取即可自愈。
+func (s *SystemService) changelogCache() (store.ChangelogCache, bool) {
+	if s.Store == nil {
+		return store.ChangelogCache{}, false
+	}
+	cache, found, err := s.Store.GetChangelogCache()
+	if err != nil {
+		log.Printf("changelog: read cache: %v", err)
+		return store.ChangelogCache{}, false
+	}
+	if !found || cache.Version != s.AppVersion || cache.Markdown == "" {
+		return store.ChangelogCache{}, false
+	}
+	return cache, true
+}
+
+// fetchChangelogRemote 从 ChangelogURL 抓取原始 Markdown 文本。
+func (s *SystemService) fetchChangelogRemote() (string, error) {
 	lang := i18n.English
 	if s.LanguageFn != nil {
 		lang = s.LanguageFn()

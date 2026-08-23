@@ -42,7 +42,13 @@ export function DownloadImage(rawURL) {
 }
 
 /**
- * FetchChangelog 从 ChangelogURL 拉取原始 Markdown 文本返回给前端渲染。
+ * FetchChangelog 返回更新日志原始 Markdown 文本，供前端渲染。
+ * 
+ * 优先读本地缓存：changelogURL 指向仓库 main 分支，内容就是「最新已发布版本」的日志，
+ * 所以当版本号与缓存一致、且更新检查已确认无新版时，远端内容不可能变，直接复用即可，
+ * 不再发请求。检出新版（或尚未检查）时缓存立即失效，保证升级前后都能看到对应的日志。
+ * 
+ * 抓取失败时若存有本版本的缓存则回退返回缓存，让离线状态下仍能查看更新日志。
  * @returns {$CancellablePromise<string>}
  */
 export function FetchChangelog() {
