@@ -6,13 +6,13 @@
 name: "Clip"
 arch: ${GOARCH}
 platform: "linux"
-version: "0.2.0"
+version: "0.3.0"
 section: "default"
 priority: "extra"
 maintainer: ${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>
 description: "A simple cross-platform RSS reader"
 vendor: "Clip RSS"
-homepage: "https://github.com/clip-rss/clip"
+homepage: "https://wails.io"
 license: "MIT"
 release: "1"
 
