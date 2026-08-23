@@ -397,6 +397,7 @@ body {
   <footer class="u__footer">
     <div class="u__primary-actions">
       <button class="u__btn" data-show="available downloading ready error up-to-date" id="btn-cancel" type="button"></button>
+      <button class="u__btn" data-show="error" id="btn-browser" type="button"></button>
       <button class="u__btn u__btn--primary" data-show="available" id="btn-install" type="button"></button>
       <button class="u__btn u__btn--primary" data-show="ready" id="btn-restart" type="button"></button>
       <button class="u__btn u__btn--primary" data-show="error" id="btn-retry" type="button"></button>
@@ -424,10 +425,24 @@ body {
   var I18N = __CLIP_I18N_DICT__;
   var lang = "__CLIP_I18N_LANG__";
   if (!I18N[lang]) lang = "en";
+  /* 按 "." 分段下钻取值：locale JSON 里 errors / stages 是嵌套对象，扁平查表取不到，
+     会把 "errors.networkError" 这类 key 本身当文案渲染出去。只接受字符串叶子，
+     命中中间节点（对象）视为未命中，让调用方走 en 回退或原样返回 key。 */
+  function lookup(obj, key) {
+    var parts = key.split(".");
+    var cur = obj;
+    for (var i = 0; i < parts.length; i++) {
+      if (cur == null || typeof cur !== "object") return null;
+      cur = cur[parts[i]];
+    }
+    return typeof cur === "string" ? cur : null;
+  }
   function t(key, params) {
     var dict = I18N[lang] || I18N.en || {};
     var en = I18N.en || {};
-    var s = dict[key] != null ? dict[key] : (en[key] != null ? en[key] : key);
+    var s = lookup(dict, key);
+    if (s == null) s = lookup(en, key);
+    if (s == null) s = key;
     if (params) {
       s = s.replace(/\{\{(\w+)\}\}/g, function (_, k) {
         return params[k] != null ? params[k] : "";
@@ -451,6 +466,7 @@ body {
     btnCancel:   document.getElementById("btn-cancel"),
     btnRestart:  document.getElementById("btn-restart"),
     btnRetry:    document.getElementById("btn-retry"),
+    btnBrowser:  document.getElementById("btn-browser"),
   };
 
   /* 静态按钮文案（只依赖 lang，不依赖状态）——初始化与语言变更时套用。 */
@@ -459,6 +475,7 @@ body {
     els.btnInstall.textContent = t("installUpdate");
     els.btnRestart.textContent = t("restartApply");
     els.btnRetry.textContent   = t("tryAgain");
+    els.btnBrowser.textContent = t("openInBrowser");
   }
 
   /* Per-state visual identity for the hero icon */
@@ -724,8 +741,13 @@ body {
     if (info && info.message) {
       var rawMsg = info.message.toLowerCase();
 
-      // 匹配常见错误关键词
-      if (/network|connection|timeout|dns/.test(rawMsg)) {
+      // 匹配常见错误关键词。
+      // ⚠️ 顺序敏感：timeout 必须排在 network 之前。Go 的超时错误文本同时含
+      // "timeout"/"deadline exceeded"，若 network 分支先匹配 timeout，则
+      // errors.timeout 永远取不到，慢速链路上的超时会被误报成「网络连接失败」。
+      if (/timeout|timed out|deadline exceeded/.test(rawMsg)) {
+        msg = t("errors.timeout");
+      } else if (/network|connection|dns|no such host|reset by peer|broken pipe|unexpected eof/.test(rawMsg)) {
         msg = t("errors.networkError");
       } else if (/download.*fail|fetch.*fail/.test(rawMsg)) {
         msg = t("errors.downloadFailed");
@@ -739,8 +761,6 @@ body {
         msg = t("errors.permissionDenied");
       } else if (/disk.*full|no.*space|insufficient.*space/.test(rawMsg)) {
         msg = t("errors.diskFull");
-      } else if (/timeout|timed out/.test(rawMsg)) {
-        msg = t("errors.timeout");
       } else {
         // 无法匹配，使用原始消息
         msg = info.message;
@@ -830,6 +850,10 @@ body {
   if (els.btnCancel)  els.btnCancel.addEventListener ("click", function () { Events.Emit("wails:updater:user:cancel"); });
   if (els.btnRestart) els.btnRestart.addEventListener("click", function () { Events.Emit("wails:updater:user:restart"); });
   if (els.btnRetry)   els.btnRetry.addEventListener  ("click", function () { Events.Emit("wails:updater:user:install"); });
+  /* 下载失败的逃生口：交给系统浏览器去拿安装包（用户自己的代理/VPN/镜像往往比 App 内
+     的直连更有办法）。注意这里只发一个裸事件名——inline event shim 的 Emit 不带 payload
+     （pkg/application/inline_event_shim.js），所以具体开哪个 URL 由 Go 侧自己解析。 */
+  if (els.btnBrowser) els.btnBrowser.addEventListener("click", function () { Events.Emit("clip:updater:user:browser"); });
 
   /* Wails queues ExecJS calls (including dispatchWailsEvent pushes) until
      the page invokes "wails:runtime:ready" — see HandleMessage in

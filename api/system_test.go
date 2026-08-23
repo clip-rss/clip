@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/clip-rss/clip/internal/fetcher"
 	"github.com/clip-rss/clip/internal/store"
 )
 
@@ -31,7 +32,16 @@ func newChangelogService(t *testing.T, url string, noUpdate *bool) *SystemServic
 		Store:        newTestStore(t),
 		NoUpdateFn:   func() bool { return *noUpdate },
 		LanguageFn:   func() string { return "en" },
+		HTTPClient:   newTestChangelogClient(),
 	}
+}
+
+// newTestChangelogClient 造一个不重试的抓取客户端。
+//
+// 生产配置带 2 次重试，用在这些用例里会让「命中服务端几次」的断言全部偏移，
+// 而且失败路径要真等退避睡眠。重试本身已由 fetcher 包自己的测试覆盖。
+func newTestChangelogClient() *fetcher.Client {
+	return fetcher.NewClient(fetcher.WithMaxRetry(0))
 }
 
 // TestFetchChangelogServesCacheWhenNoUpdate 确认无新版时第二次调用不再走网络。
@@ -167,6 +177,7 @@ func TestFetchChangelogWithoutStore(t *testing.T) {
 		ChangelogURL: srv.URL,
 		NoUpdateFn:   func() bool { return true },
 		LanguageFn:   func() string { return "en" },
+		HTTPClient:   newTestChangelogClient(),
 	}
 
 	for i := 0; i < 2; i++ {
@@ -192,6 +203,7 @@ func TestFetchChangelogWithoutNoUpdateFn(t *testing.T) {
 		ChangelogURL: srv.URL,
 		Store:        newTestStore(t),
 		LanguageFn:   func() string { return "en" },
+		HTTPClient:   newTestChangelogClient(),
 	}
 
 	if _, err := svc.FetchChangelog(); err != nil {

@@ -437,6 +437,7 @@
     "installUpdate": "Install Update",
     "restartApply": "Restart & Apply",
     "tryAgain": "Try Again",
+    "openInBrowser": "Download in Browser",
     "errorDuring": "During {{stage}}: {{message}}",
     "errors": {
       "networkError": "Network connection failed. Please check your internet connection.",

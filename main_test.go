@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/wailsapp/wails/v3/pkg/updater"
 )
 
 // TestUpdaterI18nInjection 验证更新窗口的 i18n 注入：占位符被替换、字典是合法 JSON、
@@ -79,6 +82,124 @@ func TestUpdaterI18nInjection(t *testing.T) {
 	}
 	if close, ok := zhTW["close"].(string); ok && close != "" && !strings.Contains(traditionalHTML, close) {
 		t.Errorf("注入后未见 zh-TW.close 文案 %q", close)
+	}
+}
+
+// updaterTKeyRE 抓取 window.html 里 t("…") 的字面量 key。要求引号后紧跟 , 或 )，以排除
+// 唯一的拼接调用 t("stages." + stage)——那个由下面显式拼出的 stages.* 覆盖。
+var updaterTKeyRE = regexp.MustCompile(`\bt\("([^"]+)"\s*[,)]`)
+
+// lookupDotted 复刻 window.html 里 lookup() 的取值语义：按 "." 下钻，只接受字符串叶子。
+func lookupDotted(seg map[string]interface{}, key string) (string, bool) {
+	var cur interface{} = seg
+	for _, part := range strings.Split(key, ".") {
+		m, ok := cur.(map[string]interface{})
+		if !ok {
+			return "", false
+		}
+		cur, ok = m[part]
+		if !ok {
+			return "", false
+		}
+	}
+	s, ok := cur.(string)
+	return s, ok
+}
+
+// TestUpdaterWindowKeysResolve 验证 window.html 里每个 t() 调用的 key 在三份 locale 中
+// 都能取到字符串文案。
+//
+// 这条断言存在的原因：窗口的 t() 曾只做扁平查表，而 locale 的 errors / stages 是嵌套
+// 对象，于是 t("errors.networkError") 取不到值、把 key 本身当文案渲染给用户
+// （表现为「download时出错：errors.networkError」），renderError 的整套错误分类形同虚设。
+// 纯前端 HTML 无法被 vitest 覆盖，只能从 Go 侧对文件做静态校验。
+func TestUpdaterWindowKeysResolve(t *testing.T) {
+	var parsed map[string]map[string]interface{}
+	if err := json.Unmarshal([]byte(updaterI18nDict()), &parsed); err != nil {
+		t.Fatalf("dict 不是合法 JSON: %v", err)
+	}
+
+	matches := updaterTKeyRE.FindAllStringSubmatch(softwareUpdateHTML, -1)
+	if len(matches) == 0 {
+		t.Fatal("window.html 中未找到任何 t(\"…\") 调用，正则或模板已漂移")
+	}
+
+	// stage 由 Go 侧 updater.Stage 常量决定，逐个拼出 t("stages." + stage) 的实际 key。
+	keys := make([]string, 0, len(matches)+4)
+	for _, m := range matches {
+		keys = append(keys, m[1])
+	}
+	for _, stage := range []updater.Stage{
+		updater.StageCheck, updater.StageDownload, updater.StageVerify, updater.StageInstall,
+	} {
+		keys = append(keys, "stages."+string(stage))
+	}
+
+	for _, lang := range []string{"en", "zh", "zh-TW"} {
+		seg, ok := parsed[lang]
+		if !ok {
+			t.Fatalf("dict 缺少 %s 段", lang)
+		}
+		for _, key := range keys {
+			if _, ok := lookupDotted(seg, key); !ok {
+				t.Errorf("%s: t(%q) 取不到字符串文案", lang, key)
+			}
+		}
+	}
+}
+
+// TestUpdaterWindowTimeoutPrecedesNetwork 锁定 renderError 的分支顺序：Go 的超时错误文本
+// 同时含 "timeout"，若 network 分支排在前面就会吞掉它，errors.timeout 永远不可达。
+func TestUpdaterWindowTimeoutPrecedesNetwork(t *testing.T) {
+	timeoutIdx := strings.Index(softwareUpdateHTML, `t("errors.timeout")`)
+	networkIdx := strings.Index(softwareUpdateHTML, `t("errors.networkError")`)
+	if timeoutIdx < 0 || networkIdx < 0 {
+		t.Fatal("renderError 中未找到 errors.timeout / errors.networkError 分支")
+	}
+	if timeoutIdx > networkIdx {
+		t.Error("errors.timeout 分支排在 errors.networkError 之后，超时会被误报为网络错误")
+	}
+}
+
+// TestUpdaterBrowserEventContract 锁定「用浏览器下载」按钮的事件名两侧一致。
+// 该字符串是 Go 与 window.html 之间的契约，任一侧单独改名都会让按钮静默失效。
+func TestUpdaterBrowserEventContract(t *testing.T) {
+	if !strings.Contains(softwareUpdateHTML, `Events.Emit("`+eventUserOpenBrowser+`")`) {
+		t.Errorf("window.html 未发出事件 %q，Go 侧的监听将永远收不到", eventUserOpenBrowser)
+	}
+	// 按钮本身也得在错误态可见，否则监听器再对也点不到。
+	if !strings.Contains(softwareUpdateHTML, `data-show="error" id="btn-browser"`) {
+		t.Error("window.html 缺少错误态可见的 btn-browser 按钮")
+	}
+}
+
+// TestDownloadPageURL 验证浏览器下载地址的选取：有 release 用其页面，否则退回 latest。
+func TestDownloadPageURL(t *testing.T) {
+	const relURL = "https://github.com/clip-rss/clip/releases/tag/v9.9.9"
+	tests := []struct {
+		name string
+		rel  *updater.Release
+		want string
+	}{
+		{"无 release（检查阶段就失败）", nil, latestReleaseURL},
+		{"有 release 带 htmlURL", &updater.Release{
+			Metadata: map[string]any{"github.release.htmlURL": relURL},
+		}, relURL},
+		{"metadata 为 nil", &updater.Release{}, latestReleaseURL},
+		{"htmlURL 为空串", &updater.Release{
+			Metadata: map[string]any{"github.release.htmlURL": ""},
+		}, latestReleaseURL},
+		{"htmlURL 类型不对", &updater.Release{
+			Metadata: map[string]any{"github.release.htmlURL": 42},
+		}, latestReleaseURL},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			c := &updateController{lastRelease: tc.rel}
+			if got := c.downloadPageURL(); got != tc.want {
+				t.Errorf("downloadPageURL() = %q，期望 %q", got, tc.want)
+			}
+		})
 	}
 }
 

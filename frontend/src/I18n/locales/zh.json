@@ -436,6 +436,7 @@
     "installUpdate": "安装更新",
     "restartApply": "重启并应用",
     "tryAgain": "重试",
+    "openInBrowser": "用浏览器下载",
     "errorDuring": "{{stage}}时出错：{{message}}",
     "errors": {
       "networkError": "网络连接失败，请检查您的网络连接。",

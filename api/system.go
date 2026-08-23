@@ -3,10 +3,8 @@ package api
 import (
 	"context"
 	"errors"
-	"io"
 	"log"
 	"net"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -18,6 +16,12 @@ import (
 	"github.com/clip-rss/clip/internal/i18n"
 	"github.com/clip-rss/clip/internal/store"
 	"github.com/wailsapp/wails/v3/pkg/application"
+)
+
+// 更新日志抓取的上限。fetcher.Client 自带重试，这里的超时覆盖含重试的整轮。
+const (
+	changelogFetchTimeout = 30 * time.Second
+	changelogMaxBytes     = 512 << 10
 )
 
 // SystemService 提供与运行平台相关的信息，暴露给前端用于平台差异化渲染。
@@ -146,6 +150,10 @@ func (s *SystemService) changelogCache() (store.ChangelogCache, bool) {
 }
 
 // fetchChangelogRemote 从 ChangelogURL 抓取原始 Markdown 文本。
+//
+// 走注入的 fetcher.Client 而非自建裸客户端：ChangelogURL 指向 raw.githubusercontent.com，
+// 在部分网络环境下需要代理才能访问，而代理配置只存在于这个共享客户端上。顺带也拿到了
+// 它的重试与统一超时。
 func (s *SystemService) fetchChangelogRemote() (string, error) {
 	lang := i18n.English
 	if s.LanguageFn != nil {
@@ -154,18 +162,17 @@ func (s *SystemService) fetchChangelogRemote() (string, error) {
 	if s.ChangelogURL == "" {
 		return "", errors.New(i18n.T(lang, "changelog.notConfigured"))
 	}
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(s.ChangelogURL)
+	if s.HTTPClient == nil {
+		return "", errors.New(i18n.T(lang, "changelog.clientUnavailable"))
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), changelogFetchTimeout)
+	defer cancel()
+	body, _, err := s.HTTPClient.Get(ctx, s.ChangelogURL)
 	if err != nil {
 		return "", i18n.Error(lang, "changelog.fetchFailed", err)
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", errors.New(i18n.T(lang, "changelog.badStatus", resp.StatusCode))
-	}
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 512<<10)) // 512 KB cap
-	if err != nil {
-		return "", i18n.Error(lang, "changelog.readFailed", err)
+	if len(body) > changelogMaxBytes {
+		body = body[:changelogMaxBytes]
 	}
 	return string(body), nil
 }

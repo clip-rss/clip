@@ -436,6 +436,7 @@
                     "installUpdate":  "安裝更新",
     "restartApply":  "重新啟動並套用",
                     "tryAgain":  "重試",
+                    "openInBrowser":  "用瀏覽器下載",
     "errorDuring":  "{{stage}}時發生錯誤：{{message}}",
                     "errors":  {
                                    "networkError":  "網路連線失敗，請檢查您的網路連線。",

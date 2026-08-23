@@ -19,13 +19,13 @@ import (
 	"github.com/clip-rss/clip/internal/scheduler"
 	"github.com/clip-rss/clip/internal/secret"
 	"github.com/clip-rss/clip/internal/store"
+	"github.com/clip-rss/clip/internal/updatesrc"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 	"github.com/wailsapp/wails/v3/pkg/services/dock"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 	"github.com/wailsapp/wails/v3/pkg/updater"
-	"github.com/wailsapp/wails/v3/pkg/updater/providers/github"
 )
 
 //go:embed all:frontend/dist
@@ -63,6 +63,12 @@ const (
 	currentVersion = "0.2.0"
 	repo           = "clip-rss/clip"
 	changelogURL   = "https://raw.githubusercontent.com/clip-rss/clip/main/CHANGELOG.md"
+	// latestReleaseURL 是「用浏览器下载」在没有具体 release 信息时的落点。
+	latestReleaseURL = "https://github.com/" + repo + "/releases/latest"
+	// eventUserOpenBrowser 是更新窗口「用浏览器下载」按钮发出的事件名。
+	// 自定义命名空间（非 wails:updater:*）：这是 Clip 自加的动作，不属于 Wails 的契约。
+	// ⚠️ 字符串是与 build/updater/window.html 的约定，两侧必须同时改。
+	eventUserOpenBrowser = "clip:updater:user:browser"
 )
 
 // updaterI18nDict 解析出三份 locale 的 "updater" 段，拼成 {en:{...},zh:{...},zh-TW:{...}} 的
@@ -276,6 +282,16 @@ func (c *updateController) wire() {
 	})
 	on(updater.EventUserCancel, func(*application.CustomEvent) { c.win.Close() })
 
+	// —— 下载失败的逃生口：把安装包交给系统浏览器去取 ——
+	// 用户自己的代理 / VPN / 镜像站往往比 App 内的直连更有办法，尤其在国内网络下。
+	// 事件名自定义（非 wails:updater:* 命名空间），由 window.html 的按钮发出；
+	// inline event shim 的 Emit 不带 payload，所以这里自己解析该开哪个 URL。
+	on(eventUserOpenBrowser, func(*application.CustomEvent) {
+		if err := c.app.Browser.OpenURL(c.downloadPageURL()); err != nil {
+			c.app.Logger.Error("update", "stage", "open-browser", "error", err)
+		}
+	})
+
 	// —— 状态事件：调整窗口尺寸（我们不走 CheckAndInstall，Updater 的自动 SetSize
 	//    不会触发，这里自己按状态放大/缩小），并记录“最近状态”供 ready 重放。——
 	full := func() { c.win.SetSize(updWinFullWidth, updWinFullHeight) }
@@ -331,6 +347,20 @@ func (c *updateController) currentRelease() *updater.Release {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.lastRelease
+}
+
+// downloadPageURL 返回「用浏览器下载」应打开的地址：优先本轮命中版本的 release 页面
+// （Check 阶段由 provider 存进 Metadata），否则退回仓库的 latest release 页。
+//
+// 退回分支不是兜底摆设：检查阶段本身就失败时根本没有 release 对象，而那恰恰是用户最
+// 需要这个按钮的时候。
+func (c *updateController) downloadPageURL() string {
+	if rel := c.currentRelease(); rel != nil && rel.Metadata != nil {
+		if u, ok := rel.Metadata["github.release.htmlURL"].(string); ok && u != "" {
+			return u
+		}
+	}
+	return latestReleaseURL
 }
 
 // recordCheck 记录一次 Check 的结论：命中新版则留存 release，明确「已是最新」则置
@@ -531,8 +561,12 @@ func main() {
 
 	// 抓取与调度层。
 	ft := fetcher.New()
+	// updProxy 是软件更新专用的代理配置，与抓取共用用户设置里的同一份代理，
+	// 但持有独立的 Transport（更新下载是长连接大文件，不该与 feed 抓取共享连接池）。
+	updProxy := &updatesrc.Proxy{}
 	if settings.ProxyHost != "" && settings.ProxyPort > 0 {
 		ft.Client().SetProxy(settings.ProxyHost, settings.ProxyPort)
+		updProxy.SetProxy(settings.ProxyHost, settings.ProxyPort)
 	}
 	sch := scheduler.New(st, ft,
 		scheduler.WithEmitter(wailsEmitter{}),
@@ -556,7 +590,9 @@ func main() {
 	// 绑定服务（暴露给前端）。
 	//
 	// settingsSvc 提成变量：需要它来下发更新间隔到订阅源与调度器。
-	settingsSvc := api.NewSettingsService(st, sch, ft.Client())
+	// 两个代理接收者都要传：抓取客户端与更新下载源各自持有 Transport，漏掉任一个都会
+	// 出现「抓 feed 走代理、下更新包不走」这种一半生效的状态。
+	settingsSvc := api.NewSettingsService(st, sch, ft.Client(), updProxy)
 	webdavConfigSvc := api.NewWebDAVConfigService(st, cipher)
 	opmlSvc := api.NewOPMLService(st)
 	opmlBackupSvc := api.NewOPMLBackupService(st, webdavConfigSvc, opmlSvc)
@@ -597,12 +633,16 @@ func main() {
 		},
 	})
 
-	gh, err := github.New(github.Config{
+	// 更新下载源：包装 Wails 的 GitHub provider，加上断点续传、重试、停滞检测与代理。
+	// 直接用 github.New 会拿到一个 30 秒**整体**超时的客户端，~8 MB 的更新包在慢速
+	// 链路上必然中途失败；且它的 Download 无 Range、无重试，断一次就得从零重来。
+	gh, err := updatesrc.New(updatesrc.Config{
 		Repository:    repo,
 		ChecksumAsset: "SHA256SUMS",
+		Proxy:         updProxy,
 	})
 	if err != nil {
-		log.Fatalf("github.New: %v", err)
+		log.Fatalf("updatesrc.New: %v", err)
 	}
 
 	// langFn 每次现读设置里的语言（用户可能在运行时切换），建窗时注入更新窗口做 i18n。

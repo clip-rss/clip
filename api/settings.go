@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/clip-rss/clip/internal/fetcher"
 	"github.com/clip-rss/clip/internal/i18n"
 	"github.com/clip-rss/clip/internal/scheduler"
 	"github.com/clip-rss/clip/internal/store"
@@ -16,9 +15,13 @@ import (
 
 // SettingsService 应用设置相关的绑定方法。
 type SettingsService struct {
-	store      *store.Store
-	sched      *scheduler.Scheduler
-	httpClient *fetcher.Client
+	store *store.Store
+	sched *scheduler.Scheduler
+
+	// proxyAppliers 是代理设置的下游接收者：抓取用的 fetcher.Client，以及软件更新
+	// 用的 updatesrc.Proxy。两者都要收到变更，否则会出现「抓 feed 走代理、下更新包
+	// 不走」这种一半生效的状态。
+	proxyAppliers []ProxyApplier
 
 	// onChanged 设置变更后的观察者，由 SyncService 注入以触发 debounce 推送。
 	// 为 nil 表示没人关心（未配置同步、或单测里不需要）。
@@ -32,6 +35,13 @@ type SettingsService struct {
 	onChanged SettingsObserver
 }
 
+// ProxyApplier 接收代理设置变更的一方。
+//
+// *fetcher.Client 与 *updatesrc.Proxy 都以这个签名暴露 SetProxy，因此无需适配层。
+type ProxyApplier interface {
+	SetProxy(host string, port int)
+}
+
 // SettingsObserver 关心设置变更的一方。由 SyncService 实现。
 //
 // 方法有意不导出：同包内未导出方法即可满足接口，而导出方法会被 wails3
@@ -41,8 +51,10 @@ type SettingsObserver interface {
 }
 
 // NewSettingsService 创建 SettingsService。
-func NewSettingsService(st *store.Store, sch *scheduler.Scheduler, client *fetcher.Client) *SettingsService {
-	return &SettingsService{store: st, sched: sch, httpClient: client}
+//
+// appliers 是代理设置的接收者（抓取客户端、更新下载源），可传 nil 值，逐个跳过。
+func NewSettingsService(st *store.Store, sch *scheduler.Scheduler, appliers ...ProxyApplier) *SettingsService {
+	return &SettingsService{store: st, sched: sch, proxyAppliers: appliers}
 }
 
 // ObserveSettings 把 o 注册为 svc 的设置变更观察者。
@@ -80,8 +92,10 @@ func (s *SettingsService) UpdateSettings(settings store.Settings) error {
 	if s.sched != nil && settings.DefaultUpdateInterval >= 0 {
 		s.sched.SetDefaultInterval(time.Duration(settings.DefaultUpdateInterval) * time.Minute)
 	}
-	if s.httpClient != nil {
-		s.httpClient.SetProxy(settings.ProxyHost, settings.ProxyPort)
+	for _, applier := range s.proxyAppliers {
+		if applier != nil {
+			applier.SetProxy(settings.ProxyHost, settings.ProxyPort)
+		}
 	}
 	// 放在最后：只有设置确实落库并生效了才通知，否则会推送一份没保存成功的配置。
 	if s.onChanged != nil {
