@@ -15,6 +15,7 @@ import {
   openURL,
   exportOpmlToFile,
   importOpmlFromFile,
+  showToast,
   toApiError,
 } from '../../Utils'
 import type {
@@ -345,6 +346,7 @@ export function DataSection(): JSX.Element {
   function notify(msg: string, error = false): void {
     setFeedback(msg)
     setIsError(error)
+    showToast(msg, error ? 'error' : 'success')
   }
 
   async function handleClearCache(): Promise<void> {
@@ -672,6 +674,7 @@ export function ProxySection(): JSX.Element {
     const portNum = parseInt(port, 10)
     if (!host || !portNum) {
       setStatus({ ok: false, msg: t('settings.proxy.error') })
+      showToast(t('settings.proxy.error'), 'error')
       return
     }
     setTesting(true)
@@ -679,11 +682,11 @@ export function ProxySection(): JSX.Element {
     try {
       await SettingsService.TestProxy(host, portNum)
       setStatus({ ok: true, msg: t('settings.proxy.success') })
+      showToast(t('settings.proxy.success'), 'success')
     } catch (err) {
-      setStatus({
-        ok: false,
-        msg: `${t('settings.proxy.failed')}：${toApiError(err)}`,
-      })
+      const msg = `${t('settings.proxy.failed')}：${toApiError(err)}`
+      setStatus({ ok: false, msg })
+      showToast(msg, 'error')
     } finally {
       setTesting(false)
     }
@@ -696,11 +699,11 @@ export function ProxySection(): JSX.Element {
     try {
       await stored({ proxyHost: host, proxyPort: portNum })
       setStatus({ ok: true, msg: t('settings.proxy.saved') })
+      showToast(t('settings.proxy.saved'), 'success')
     } catch (err) {
-      setStatus({
-        ok: false,
-        msg: `${t('settings.proxy.saveError')}：${toApiError(err)}`,
-      })
+      const msg = `${t('settings.proxy.saveError')}：${toApiError(err)}`
+      setStatus({ ok: false, msg })
+      showToast(msg, 'error')
     } finally {
       setSaving(false)
     }

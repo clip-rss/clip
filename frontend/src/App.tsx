@@ -7,6 +7,7 @@ import {
   ReadingView,
   SettingsModal,
   Sidebar,
+  ToastContainer,
   Toolbar,
 } from './Components'
 import { useAppHotkeys, useDockBadge, useNotificationNavigation } from './Hooks'
@@ -123,6 +124,7 @@ function App() {
       <FocusMode />
       <AddFeedModal open={addOpen} onOpenChange={setAddOpen} />
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <ToastContainer />
     </>
   )
 }

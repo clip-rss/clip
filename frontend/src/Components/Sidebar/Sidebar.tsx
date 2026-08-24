@@ -10,6 +10,7 @@ import {
   latestUpdated,
   onFeedError,
   onItemsUpdated,
+  showToast,
 } from '../../Utils'
 import FolderItem from './FolderItem'
 import FeedItem from './FeedItem'
@@ -44,7 +45,15 @@ function Sidebar(props: SidebarProps): JSX.Element {
   useEffect(() => {
     load()
     const offItems = onItemsUpdated(() => load())
-    const offError = onFeedError(() => load())
+    const offError = onFeedError((payload) => {
+      // 从当前 store 中查出订阅源名称作为上下文
+      const feed = useSidebarStore
+        .getState()
+        .feeds.find((f) => f.id === payload.feedId)
+      const prefix = feed ? `「${feed.title}」` : ''
+      showToast(`${prefix}${t('sidebar.feedError')}：${payload.error}`, 'error')
+      load()
+    })
     return () => {
       offItems()
       offError()

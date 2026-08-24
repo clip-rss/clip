@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useBackupStore } from '../../Stores/BackupStore'
-import { formatRelativeTime, toApiError } from '../../Utils'
+import { formatRelativeTime, showToast, toApiError } from '../../Utils'
 import { SettingRow } from './Controls'
 import styles from './SettingsModal.module.scss'
 
@@ -102,22 +102,23 @@ export function BackupSection(): JSX.Element {
           ok: true,
           msg: t('settings.backup.webdav.testSuccess'),
         })
+        showToast(t('settings.backup.webdav.testSuccess'), 'success')
         return
       }
       const stepName = t(`settings.backup.webdav.steps.${res.step}`, {
         defaultValue: '',
       })
-      setWebdavFeedback({
-        ok: false,
-        msg: `${
-          stepName
-            ? t('settings.backup.webdav.stepFailed', { step: stepName })
-            : t('settings.backup.webdav.testFailed')
-        }：${res.message}`,
-        hint: res.hint,
-      })
+      const msg = `${
+        stepName
+          ? t('settings.backup.webdav.stepFailed', { step: stepName })
+          : t('settings.backup.webdav.testFailed')
+      }：${res.message}`
+      setWebdavFeedback({ ok: false, msg, hint: res.hint })
+      showToast(msg, 'error')
     } catch (err) {
-      setWebdavFeedback({ ok: false, msg: toApiError(err) })
+      const msg = toApiError(err)
+      setWebdavFeedback({ ok: false, msg })
+      showToast(msg, 'error')
     }
   }
 
@@ -125,12 +126,13 @@ export function BackupSection(): JSX.Element {
     setWebdavFeedback(null)
     try {
       await useBackupStore.getState().saveWebDAVConfig(webdavFormValues())
-      setWebdavFeedback({ ok: true, msg: t('settings.backup.webdav.saved') })
+      const msg = t('settings.backup.webdav.saved')
+      setWebdavFeedback({ ok: true, msg })
+      showToast(msg, 'success')
     } catch (err) {
-      setWebdavFeedback({
-        ok: false,
-        msg: `${t('settings.backup.webdav.saveError')}：${toApiError(err)}`,
-      })
+      const msg = `${t('settings.backup.webdav.saveError')}：${toApiError(err)}`
+      setWebdavFeedback({ ok: false, msg })
+      showToast(msg, 'error')
     }
   }
 
@@ -139,12 +141,13 @@ export function BackupSection(): JSX.Element {
     setWebdavFeedback(null)
     try {
       await useBackupStore.getState().clearWebDAVConfig()
-      setWebdavFeedback({ ok: true, msg: t('settings.backup.webdav.cleared') })
+      const msg = t('settings.backup.webdav.cleared')
+      setWebdavFeedback({ ok: true, msg })
+      showToast(msg, 'success')
     } catch (err) {
-      setWebdavFeedback({
-        ok: false,
-        msg: `${t('settings.backup.webdav.clearError')}：${toApiError(err)}`,
-      })
+      const msg = `${t('settings.backup.webdav.clearError')}：${toApiError(err)}`
+      setWebdavFeedback({ ok: false, msg })
+      showToast(msg, 'error')
     }
   }
 
@@ -153,12 +156,13 @@ export function BackupSection(): JSX.Element {
     try {
       const config: OPMLBackupConfig = { retention }
       await useBackupStore.getState().saveOPMLConfig(config)
-      setOpmlFeedback({ ok: true, msg: t('settings.backup.opml.saved') })
+      const msg = t('settings.backup.opml.saved')
+      setOpmlFeedback({ ok: true, msg })
+      showToast(msg, 'success')
     } catch (err) {
-      setOpmlFeedback({
-        ok: false,
-        msg: `${t('settings.backup.opml.saveError')}：${toApiError(err)}`,
-      })
+      const msg = `${t('settings.backup.opml.saveError')}：${toApiError(err)}`
+      setOpmlFeedback({ ok: false, msg })
+      showToast(msg, 'error')
     }
   }
 
@@ -166,14 +170,15 @@ export function BackupSection(): JSX.Element {
     setOpmlFeedback(null)
     try {
       const info = await useBackupStore.getState().backupOPML()
-      setOpmlFeedback({
-        ok: true,
-        msg: t('settings.backup.opml.backupSuccess', {
-          size: formatSize(info.size),
-        }),
+      const msg = t('settings.backup.opml.backupSuccess', {
+        size: formatSize(info.size),
       })
+      setOpmlFeedback({ ok: true, msg })
+      showToast(msg, 'success')
     } catch (err) {
-      setOpmlFeedback({ ok: false, msg: toApiError(err) })
+      const msg = toApiError(err)
+      setOpmlFeedback({ ok: false, msg })
+      showToast(msg, 'error')
     }
   }
 
@@ -182,7 +187,9 @@ export function BackupSection(): JSX.Element {
     try {
       await useBackupStore.getState().listOPMLBackups()
     } catch (err) {
-      setOpmlFeedback({ ok: false, msg: toApiError(err) })
+      const msg = toApiError(err)
+      setOpmlFeedback({ ok: false, msg })
+      showToast(msg, 'error')
     }
   }
 
@@ -191,18 +198,16 @@ export function BackupSection(): JSX.Element {
     setOpmlFeedback(null)
     try {
       const result = await useBackupStore.getState().restoreOPML(id)
-      setOpmlFeedback({
-        ok: true,
-        msg: t('settings.backup.opml.restoreSuccess', {
-          feeds: result.Feeds,
-          categories: result.Categories,
-        }),
+      const msg = t('settings.backup.opml.restoreSuccess', {
+        feeds: result.Feeds,
+        categories: result.Categories,
       })
+      setOpmlFeedback({ ok: true, msg })
+      showToast(msg, 'success')
     } catch (err) {
-      setOpmlFeedback({
-        ok: false,
-        msg: `${t('settings.backup.opml.restoreError')}：${toApiError(err)}`,
-      })
+      const msg = `${t('settings.backup.opml.restoreError')}：${toApiError(err)}`
+      setOpmlFeedback({ ok: false, msg })
+      showToast(msg, 'error')
     }
   }
 
@@ -210,15 +215,13 @@ export function BackupSection(): JSX.Element {
     setOpmlFeedback(null)
     try {
       await useBackupStore.getState().deleteOPMLBackup(id)
-      setOpmlFeedback({
-        ok: true,
-        msg: t('settings.backup.opml.deleteSuccess'),
-      })
+      const msg = t('settings.backup.opml.deleteSuccess')
+      setOpmlFeedback({ ok: true, msg })
+      showToast(msg, 'success')
     } catch (err) {
-      setOpmlFeedback({
-        ok: false,
-        msg: `${t('settings.backup.opml.deleteError')}：${toApiError(err)}`,
-      })
+      const msg = `${t('settings.backup.opml.deleteError')}：${toApiError(err)}`
+      setOpmlFeedback({ ok: false, msg })
+      showToast(msg, 'error')
     } finally {
       setPendingBackupAction(null)
     }

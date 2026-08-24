@@ -1,0 +1,179 @@
+/* ===== Toast 组件 ===== */
+/* 设计语言遵循 need/doc/design.md §2.4 卡片 + §5 交互规范 */
+
+.container {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  /* 不占文档流，浮在所有内容之上（含 modal z-index:100） */
+}
+
+/* ===== 单条 Toast ===== */
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  min-width: 320px;
+  max-width: 480px;
+  padding: 12px 14px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+  pointer-events: auto; /* 容器 pointer-events:none 之上恢复可点击 */
+  user-select: none;
+
+  /* === 入场动画：从顶部滑入 + 淡入 === */
+  animation: toastIn 0.25s ease forwards;
+}
+
+.toast.exiting {
+  /* === 出场动画：滑回顶部 + 淡出 === */
+  animation: toastOut 0.25s ease forwards;
+}
+
+@keyframes toastIn {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toastOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+/* ===== 图标（垂直居中） ===== */
+
+.icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+  align-self: center;
+}
+
+.iconSuccess {
+  color: var(--accent);
+}
+
+.iconError {
+  color: var(--danger);
+}
+
+.iconInfo {
+  color: var(--accent);
+}
+
+/* ===== 消息文案 ===== */
+
+.message {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+/* ===== 关闭按钮 ===== */
+
+.close {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin: -2px -4px 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  /* §5：按钮不用 pointer，用 hover 背景表示可点击 */
+  cursor: default;
+  padding: 0;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.close:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.close:active {
+  background: var(--bg-tertiary);
+}
+
+/* ===== 堆叠指示器（overflow 区域） ===== */
+
+.stackArea {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  pointer-events: none;
+}
+
+/* 堆叠装饰线：模拟下方还压着几张卡片 */
+.stackLine {
+  width: calc(100% - 8px);
+  height: 6px;
+  margin-top: -3px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  position: relative;
+  z-index: -1;
+}
+
+.stackLine + .stackLine {
+  width: calc(100% - 16px);
+  z-index: -2;
+}
+
+/* 数字指示器：位于堆叠条下方 */
+.stackCount {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-style: italic;
+  pointer-events: auto;
+  cursor: default;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+}
+
+.stackCount:hover {
+  background: var(--bg-secondary);
+}

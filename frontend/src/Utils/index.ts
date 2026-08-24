@@ -43,6 +43,9 @@ export { highlightText } from './Highlight'
 // 快捷键提示文案
 export { modKey, shortcutHint } from './Shortcut'
 
+// Toast 通知
+export { showToast } from './Toast'
+
 // 更新日志：Markdown → HTML
 export { markdownToHtml } from './Markdown'
 
