@@ -197,6 +197,9 @@ CREATE INDEX IF NOT EXISTS idx_feeds_status ON feeds(status);
 CREATE INDEX IF NOT EXISTS idx_feeds_last_updated ON feeds(last_updated);
 
 -- 文章条目表
+-- 注意：无 UNIQUE(feed_id, url) 约束。去重完全依赖 seen_items 表的指纹键，
+-- 因为 digest 型订阅源（如安妮薇看看）的所有条目共享同一链接，该约束会导致
+-- 仅第一条被入库。
 CREATE TABLE IF NOT EXISTS items (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	feed_id INTEGER NOT NULL,
@@ -214,8 +217,7 @@ CREATE TABLE IF NOT EXISTS items (
 	read_at DATETIME,
 	note TEXT,
 	created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (feed_id) REFERENCES feeds(id) ON DELETE CASCADE,
-	UNIQUE(feed_id, url)
+	FOREIGN KEY (feed_id) REFERENCES feeds(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_items_feed ON items(feed_id);
@@ -282,7 +284,10 @@ CREATE TABLE IF NOT EXISTS settings (
 	if err := s.migrateSchedulingMetadata(); err != nil {
 		return err
 	}
-	return s.migrateFTSTokenizer()
+	if err := s.migrateFTSTokenizer(); err != nil {
+		return err
+	}
+	return s.migrateDropFeedURLConstraint()
 }
 
 // migrateSchedulingMetadata 为旧数据库补充抓取尝试时间与已见文章表。
@@ -388,6 +393,89 @@ func (s *Store) migrateFTSTokenizer() error {
 	for _, stmt := range stmts {
 		if _, err := tx.Exec(stmt); err != nil {
 			return fmt.Errorf("fts migration step failed (%.40s...): %w", stmt, err)
+		}
+	}
+
+	return tx.Commit()
+}
+
+
+// migrateDropFeedURLConstraint removes the UNIQUE(feed_id, url) constraint from items.
+//
+// Digest format feeds (e.g. Anyway.Now) have all items sharing the same URL,
+// so this constraint causes only the first item to be stored. Dedup is already
+// handled by seen_items with fingerprint keys.
+//
+// SQLite does not support ALTER TABLE DROP CONSTRAINT, so we recreate the table.
+// The FTS5 external content table references items by name, which stays the same.
+// Gated on user_version < 2.
+func (s *Store) migrateDropFeedURLConstraint() error {
+	var version int
+	if err := s.db.QueryRow(`PRAGMA user_version`).Scan(&version); err != nil {
+		return fmt.Errorf("failed to read user_version: %w", err)
+	}
+	if version >= 2 {
+		return nil
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin drop-constraint migration: %w", err)
+	}
+	defer tx.Rollback()
+
+	stmts := []string{
+		`PRAGMA foreign_keys=OFF`,
+		`CREATE TABLE items_v2 (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			feed_id INTEGER NOT NULL,
+			title TEXT NOT NULL,
+			author TEXT,
+			published_at DATETIME NOT NULL,
+			updated_at DATETIME,
+			url TEXT NOT NULL,
+			content TEXT,
+			summary TEXT,
+			enclosure TEXT,
+			categories TEXT,
+			is_read BOOLEAN NOT NULL DEFAULT 0,
+			is_starred BOOLEAN NOT NULL DEFAULT 0,
+			read_at DATETIME,
+			note TEXT,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (feed_id) REFERENCES feeds(id) ON DELETE CASCADE
+		)`,
+		`INSERT INTO items_v2 SELECT * FROM items`,
+		`DROP TABLE items`,
+		`ALTER TABLE items_v2 RENAME TO items`,
+		`CREATE INDEX IF NOT EXISTS idx_items_feed ON items(feed_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_items_published ON items(published_at DESC)`,
+		`CREATE INDEX IF NOT EXISTS idx_items_read ON items(is_read)`,
+		`CREATE INDEX IF NOT EXISTS idx_items_starred ON items(is_starred)`,
+		`CREATE TRIGGER IF NOT EXISTS items_fts_insert AFTER INSERT ON items BEGIN
+			INSERT INTO items_fts(rowid, title, summary, note)
+			VALUES (new.id, new.title, new.summary, new.note);
+		END`,
+		`CREATE TRIGGER IF NOT EXISTS items_fts_update AFTER UPDATE ON items BEGIN
+			INSERT INTO items_fts(items_fts, rowid, title, summary, note)
+			VALUES ('delete', old.id, old.title, old.summary, old.note);
+			INSERT INTO items_fts(rowid, title, summary, note)
+			VALUES (new.id, new.title, new.summary, new.note);
+		END`,
+		`CREATE TRIGGER IF NOT EXISTS items_fts_delete AFTER DELETE ON items BEGIN
+			INSERT INTO items_fts(items_fts, rowid, title, summary, note)
+			VALUES ('delete', old.id, old.title, old.summary, old.note);
+		END`,
+		// Rebuild FTS index: the external content table's schema is preserved
+		// through DROP/RENAME, but the FTS index needs explicit rebuild.
+		`INSERT INTO items_fts(items_fts) VALUES('rebuild')`,
+		`PRAGMA foreign_key_check`,
+		`PRAGMA foreign_keys=ON`,
+		`PRAGMA user_version = 2`,
+	}
+	for _, stmt := range stmts {
+		if _, err := tx.Exec(stmt); err != nil {
+			return fmt.Errorf("drop-constraint migration step failed (%.60s...): %w", stmt, err)
 		}
 	}
 

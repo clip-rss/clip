@@ -9,9 +9,10 @@ import (
 )
 
 const (
-	// CurrentSchemaVersion 是当前可安全恢复的最高数据库版本。现有 user_version=1
-	// 表示 FTS trigram 迁移已完成；更高版本来自未来客户端，旧客户端不得覆盖打开。
-	CurrentSchemaVersion = 1
+	// CurrentSchemaVersion 是当前可安全恢复的最高数据库版本。现有 user_version=2
+	// 表示 items 表的 UNIQUE(feed_id, url) 约束已被移除；版本 1 表示 FTS trigram
+	// 迁移已完成；更高版本来自未来客户端，旧客户端不得覆盖打开。
+	CurrentSchemaVersion = 2
 
 	// applicationID 是 ASCII "CLIP"。旧数据库该值为 0，仍通过核心表检查兼容；
 	// 非零且不同则明确拒绝，避免把别的 SQLite 文件当作 Clip 备份。

@@ -608,13 +608,16 @@ func TestFTSMigrationRebuildsIndex(t *testing.T) {
 	if err := store.db.QueryRow(`PRAGMA user_version`).Scan(&version); err != nil {
 		t.Fatalf("read user_version: %v", err)
 	}
-	if version != 1 {
-		t.Errorf("user_version = %d, want 1", version)
+	if version != 2 {
+		t.Errorf("user_version = %d, want 2", version)
 	}
 
 	// 再次运行迁移应是 no-op（不报错、版本不变）。
 	if err := store.migrateFTSTokenizer(); err != nil {
 		t.Fatalf("re-run migrateFTSTokenizer: %v", err)
+	}
+	if err := store.migrateDropFeedURLConstraint(); err != nil {
+		t.Fatalf("re-run migrateDropFeedURLConstraint: %v", err)
 	}
 }
 

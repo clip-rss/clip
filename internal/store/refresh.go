@@ -117,20 +117,62 @@ func (s *Store) ApplyFeedRefresh(
 	return created, nil
 }
 
+// hasSeenItem 检查某篇文章此前是否已经入库。
+//
+// 优先使用 source:（指纹）键做决定性判定：只有 source: 键匹配时才认为 "已见"。
+// 仅当条目没有 source: 键（即缺少 GUID 且无法计算指纹）时，才退而使用 url: 键匹配。
+// 这避免了 digest 型订阅源（所有条目共享同一链接）被误判为重复。
 func hasSeenItem(tx *sql.Tx, feedID int64, keys []string) (bool, error) {
+	// 第一遍：查 source: 键（指纹）。
 	for _, key := range keys {
-		var one int
-		err := tx.QueryRow(
-			`SELECT 1 FROM seen_items WHERE feed_id = ? AND item_key = ?`,
-			feedID,
-			key,
-		).Scan(&one)
-		if err == nil {
+		if !strings.HasPrefix(key, "source:") {
+			continue
+		}
+		seen, err := checkKey(tx, feedID, key)
+		if err != nil {
+			return false, err
+		}
+		if seen {
 			return true, nil
 		}
-		if err != sql.ErrNoRows {
-			return false, fmt.Errorf("failed to check seen item: %w", err)
+	}
+	// 第二遍仅当条目没有任何 source: 键时，才回退到 url: 键。
+	hasSource := false
+	for _, key := range keys {
+		if strings.HasPrefix(key, "source:") {
+			hasSource = true
+			break
 		}
+	}
+	if !hasSource {
+		for _, key := range keys {
+			if !strings.HasPrefix(key, "url:") {
+				continue
+			}
+			seen, err := checkKey(tx, feedID, key)
+			if err != nil {
+				return false, err
+			}
+			if seen {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
+func checkKey(tx *sql.Tx, feedID int64, key string) (bool, error) {
+	var one int
+	err := tx.QueryRow(
+		`SELECT 1 FROM seen_items WHERE feed_id = ? AND item_key = ?`,
+		feedID,
+		key,
+	).Scan(&one)
+	if err == nil {
+		return true, nil
+	}
+	if err != sql.ErrNoRows {
+		return false, fmt.Errorf("failed to check seen item: %w", err)
 	}
 	return false, nil
 }
@@ -153,7 +195,6 @@ func insertRefreshItem(tx *sql.Tx, item *Item) (bool, error) {
 		INSERT INTO items (feed_id, title, author, published_at, updated_at, url, content, summary,
 		                   enclosure, categories, is_read, is_starred, note)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT(feed_id, url) DO NOTHING
 	`,
 		item.FeedID,
 		item.Title,
