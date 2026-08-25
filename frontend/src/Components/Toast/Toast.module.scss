@@ -7,12 +7,22 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 110;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  width: 480px;
+  max-width: calc(100vw - 24px);
   pointer-events: none;
+  /* 高度由 TS 按卡片实测高度内联指定，配合此过渡平滑展开/收拢 */
+  transition: height 0.25s ease;
   /* 不占文档流，浮在所有内容之上（含 modal z-index:100） */
+}
+
+/* 卡片定位外壳：绝对定位 + translateY。
+   堆叠与展开共用同一套偏移计算，靠 transition 在两种排布间平滑过渡 */
+.cardSlot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  transition: transform 0.25s ease;
 }
 
 /* ===== 单条 Toast ===== */
@@ -20,8 +30,6 @@
 .toast {
   display: flex;
   align-items: flex-start;
-  min-width: 320px;
-  max-width: 480px;
   padding: 12px 14px;
   background: var(--bg-primary);
   border: 1px solid var(--border);
@@ -130,50 +138,4 @@
 
 .close:active {
   background: var(--bg-tertiary);
-}
-
-/* ===== 堆叠指示器（overflow 区域） ===== */
-
-.stackArea {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  pointer-events: none;
-}
-
-/* 堆叠装饰线：模拟下方还压着几张卡片 */
-.stackLine {
-  width: calc(100% - 8px);
-  height: 6px;
-  margin-top: -3px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  position: relative;
-  z-index: -1;
-}
-
-.stackLine + .stackLine {
-  width: calc(100% - 16px);
-  z-index: -2;
-}
-
-/* 数字指示器：位于堆叠条下方 */
-.stackCount {
-  margin-top: 2px;
-  font-size: 11px;
-  color: var(--text-secondary);
-  font-style: italic;
-  pointer-events: auto;
-  cursor: default;
-  padding: 2px 8px;
-  border-radius: 4px;
-  transition: background-color 0.15s;
-}
-
-.stackCount:hover {
-  background: var(--bg-secondary);
 }

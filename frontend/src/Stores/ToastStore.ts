@@ -25,7 +25,7 @@ const dismissTimers = new Map<number, ReturnType<typeof setTimeout>>()
 
 interface ToastState {
   queue: ToastItem[]
-  /** 鼠标正悬浮在 toast 容器上方，暂停自动消失倒计时。 */
+  /** 鼠标正悬浮在 toast 容器上方：暂停自动消失倒计时，并展开堆叠。 */
   hovering: boolean
 
   addToast: (message: string, type?: ToastType, duration?: number) => void
@@ -91,7 +91,11 @@ export const useToastStore = create<ToastState>((set, get) => ({
 
   remove: (id) => {
     dismissTimers.delete(id)
-    set((s) => ({ queue: s.queue.filter((t) => t.id !== id) }))
+    set((s) => ({
+      // 队列清空时鼠标早已不在容器上，重置 hovering 避免下一条 toast 误判为展开态
+      hovering: s.queue.length <= 1 ? false : s.hovering,
+      queue: s.queue.filter((t) => t.id !== id),
+    }))
   },
 
   pauseAll: () => {
