@@ -4,7 +4,12 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { Clipboard } from '@wailsio/runtime'
 import clsx from 'clsx'
 import { useSidebarStore } from '../../Stores'
-import { FeedService, flattenCategories, toApiError } from '../../Utils'
+import {
+  FeedService,
+  flattenCategories,
+  showToast,
+  toApiError,
+} from '../../Utils'
 import type { FeedPreview } from '../../Types'
 import styles from './AddFeedModal.module.scss'
 
@@ -27,7 +32,6 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
   const [preview, setPreview] = useState<FeedPreview | null>(null)
   const [name, setName] = useState('')
   const [categoryId, setCategoryId] = useState(0)
-  const [errorMsg, setErrorMsg] = useState('')
 
   // 每次打开弹窗时重置全部状态。
   useEffect(() => {
@@ -44,7 +48,6 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
     setPreview(null)
     setName('')
     setCategoryId(0)
-    setErrorMsg('')
   }
 
   function handleUrlChange(value: string): void {
@@ -53,7 +56,6 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
     if (status !== 'idle') {
       setStatus('idle')
       setPreview(null)
-      setErrorMsg('')
     }
   }
 
@@ -66,8 +68,7 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
     try {
       handleUrlChange(await Clipboard.Text())
     } catch {
-      setErrorMsg(t('feed.add.pasteFailed'))
-      setStatus('error')
+      showToast(t('feed.add.pasteFailed'), 'error')
     }
     urlInputRef.current?.focus()
   }
@@ -76,15 +77,15 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
     const trimmed = url.trim()
     if (!trimmed || status === 'detecting') return
     setStatus('detecting')
-    setErrorMsg('')
     try {
       const result = await FeedService.PreviewFeed(trimmed)
-      if (!result) throw new Error('未在该地址找到可订阅的源')
+      if (!result) throw new Error(t('feed.add.searchFailed'))
       setPreview(result)
       setName(result.title)
       setStatus('detected')
     } catch (err) {
-      setErrorMsg(toApiError(err))
+      // 后端报错细节走 toast，弹窗内只留通用状态条。
+      showToast(toApiError(err), 'error')
       setStatus('error')
     }
   }
@@ -101,7 +102,7 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
       await reload()
       onOpenChange(false)
     } catch (err) {
-      setErrorMsg(toApiError(err))
+      showToast(toApiError(err), 'error')
       setStatus('detected') // 退回可重试态
     }
   }
@@ -214,7 +215,7 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
             {status === 'error' ? (
               <div className={clsx(styles.resultBar, styles.resultError)}>
                 <CrossIcon />
-                <span>{errorMsg || t('feed.add.searchFailed')}</span>
+                <span>{t('feed.add.searchFailed')}</span>
               </div>
             ) : null}
 
@@ -260,10 +261,6 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
                     ))}
                   </select>
                 </div>
-
-                {errorMsg ? (
-                  <p className={styles.inlineError}>{errorMsg}</p>
-                ) : null}
               </>
             ) : null}
           </div>

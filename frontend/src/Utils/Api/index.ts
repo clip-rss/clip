@@ -23,11 +23,28 @@ export { onItemsUpdated, onFeedError, onNotificationOpen } from './Events'
 
 import { Browser } from '@wailsio/runtime'
 
-/** 将后端调用 reject 的错误归一化为可读字符串。 */
+/**
+ * 将后端调用 reject 的错误归一化为可读字符串。
+ *
+ * 绑定调用失败时 Wails 运行时把整个响应体原样塞进 `Error.message`，也就是后端
+ * `CallError` 的 JSON：`{"message":…,"cause":…,"kind":"RuntimeError"}`。
+ * 其中 `message` 是 Go 那侧的错误文案，`cause`（默认序列化多为 `{}`）和 `kind`
+ * 对用户毫无意义，因此这里剥出 `message`；不是这种 JSON 时原样返回。
+ */
 export function toApiError(err: unknown): string {
-  if (err instanceof Error) return err.message
-  if (typeof err === 'string') return err
-  return String(err)
+  const raw =
+    err instanceof Error
+      ? err.message
+      : typeof err === 'string'
+        ? err
+        : String(err)
+  try {
+    const message: unknown = JSON.parse(raw)?.message
+    if (typeof message === 'string' && message) return message
+  } catch {
+    /* 不是 JSON，按原样返回 */
+  }
+  return raw
 }
 
 /** 在系统默认浏览器中打开外部链接（Wails 运行时，兜底 window.open）。 */

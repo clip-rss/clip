@@ -676,13 +676,6 @@
   color: var(--text-secondary);
 }
 
-/* 可操作建议：与失败原因同段但另起一行，字号一致、颜色更弱。 */
-.feedbackHint {
-  display: block;
-  margin-top: 4px;
-  color: var(--text-secondary);
-}
-
 /* 备份列表与条目 */
 .backupList {
   display: flex;

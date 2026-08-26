@@ -12,13 +12,7 @@ import type {
   OPMLImportResult,
 } from '../../Types'
 
-/** 一次操作后的反馈。ok 决定用普通色还是危险色。 */
-interface Feedback {
-  ok: boolean
-  msg: string
-  hint?: string
-}
-
+/** 待确认的破坏性操作。操作结果只走 toast，界面上不留反馈文案。 */
 interface PendingBackupAction {
   id: string
   kind: 'restore' | 'delete'
@@ -60,12 +54,10 @@ export function BackupSection(): JSX.Element {
   const [url, setUrl] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [webdavFeedback, setWebdavFeedback] = useState<Feedback | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
 
   // OPML 配置状态。自动备份已移除，配置只剩「保留版本数」。
   const [retention, setRetention] = useState(7)
-  const [opmlFeedback, setOpmlFeedback] = useState<Feedback | null>(null)
   const [pendingBackupAction, setPendingBackupAction] =
     useState<PendingBackupAction | null>(null)
 
@@ -92,16 +84,11 @@ export function BackupSection(): JSX.Element {
   }
 
   async function handleTestWebDAV(): Promise<void> {
-    setWebdavFeedback(null)
     try {
       const res = await useBackupStore
         .getState()
         .testWebDAVConnection(webdavFormValues())
       if (res.ok) {
-        setWebdavFeedback({
-          ok: true,
-          msg: t('settings.backup.webdav.testSuccess'),
-        })
         showToast(t('settings.backup.webdav.testSuccess'), 'success')
         return
       }
@@ -113,115 +100,101 @@ export function BackupSection(): JSX.Element {
           ? t('settings.backup.webdav.stepFailed', { step: stepName })
           : t('settings.backup.webdav.testFailed')
       }：${res.message}`
-      setWebdavFeedback({ ok: false, msg, hint: res.hint })
-      showToast(msg, 'error')
+      // hint 是后端给的可操作建议，换行接在报错后面（.message 用 pre-line 渲染）。
+      showToast(res.hint ? `${msg}\n${res.hint}` : msg, 'error')
     } catch (err) {
-      const msg = toApiError(err)
-      setWebdavFeedback({ ok: false, msg })
-      showToast(msg, 'error')
+      showToast(toApiError(err), 'error')
     }
   }
 
   async function handleSaveWebDAV(): Promise<void> {
-    setWebdavFeedback(null)
     try {
       await useBackupStore.getState().saveWebDAVConfig(webdavFormValues())
-      const msg = t('settings.backup.webdav.saved')
-      setWebdavFeedback({ ok: true, msg })
-      showToast(msg, 'success')
+      showToast(t('settings.backup.webdav.saved'), 'success')
     } catch (err) {
-      const msg = `${t('settings.backup.webdav.saveError')}：${toApiError(err)}`
-      setWebdavFeedback({ ok: false, msg })
-      showToast(msg, 'error')
+      showToast(
+        `${t('settings.backup.webdav.saveError')}：${toApiError(err)}`,
+        'error',
+      )
     }
   }
 
   async function handleClearWebDAV(): Promise<void> {
     setConfirmClear(false)
-    setWebdavFeedback(null)
     try {
       await useBackupStore.getState().clearWebDAVConfig()
-      const msg = t('settings.backup.webdav.cleared')
-      setWebdavFeedback({ ok: true, msg })
-      showToast(msg, 'success')
+      showToast(t('settings.backup.webdav.cleared'), 'success')
     } catch (err) {
-      const msg = `${t('settings.backup.webdav.clearError')}：${toApiError(err)}`
-      setWebdavFeedback({ ok: false, msg })
-      showToast(msg, 'error')
+      showToast(
+        `${t('settings.backup.webdav.clearError')}：${toApiError(err)}`,
+        'error',
+      )
     }
   }
 
   async function handleSaveOPMLConfig(): Promise<void> {
-    setOpmlFeedback(null)
     try {
       const config: OPMLBackupConfig = { retention }
       await useBackupStore.getState().saveOPMLConfig(config)
-      const msg = t('settings.backup.opml.saved')
-      setOpmlFeedback({ ok: true, msg })
-      showToast(msg, 'success')
+      showToast(t('settings.backup.opml.saved'), 'success')
     } catch (err) {
-      const msg = `${t('settings.backup.opml.saveError')}：${toApiError(err)}`
-      setOpmlFeedback({ ok: false, msg })
-      showToast(msg, 'error')
+      showToast(
+        `${t('settings.backup.opml.saveError')}：${toApiError(err)}`,
+        'error',
+      )
     }
   }
 
   async function handleBackupNow(): Promise<void> {
-    setOpmlFeedback(null)
     try {
       const info = await useBackupStore.getState().backupOPML()
-      const msg = t('settings.backup.opml.backupSuccess', {
-        size: formatSize(info.size),
-      })
-      setOpmlFeedback({ ok: true, msg })
-      showToast(msg, 'success')
+      showToast(
+        t('settings.backup.opml.backupSuccess', {
+          size: formatSize(info.size),
+        }),
+        'success',
+      )
     } catch (err) {
-      const msg = toApiError(err)
-      setOpmlFeedback({ ok: false, msg })
-      showToast(msg, 'error')
+      showToast(toApiError(err), 'error')
     }
   }
 
   async function handleRefreshBackups(): Promise<void> {
-    setOpmlFeedback(null)
     try {
       await useBackupStore.getState().listOPMLBackups()
     } catch (err) {
-      const msg = toApiError(err)
-      setOpmlFeedback({ ok: false, msg })
-      showToast(msg, 'error')
+      showToast(toApiError(err), 'error')
     }
   }
 
   async function handleRestore(id: string): Promise<void> {
     setPendingBackupAction(null)
-    setOpmlFeedback(null)
     try {
       const result = await useBackupStore.getState().restoreOPML(id)
-      const msg = t('settings.backup.opml.restoreSuccess', {
-        feeds: result.Feeds,
-        categories: result.Categories,
-      })
-      setOpmlFeedback({ ok: true, msg })
-      showToast(msg, 'success')
+      showToast(
+        t('settings.backup.opml.restoreSuccess', {
+          feeds: result.Feeds,
+          categories: result.Categories,
+        }),
+        'success',
+      )
     } catch (err) {
-      const msg = `${t('settings.backup.opml.restoreError')}：${toApiError(err)}`
-      setOpmlFeedback({ ok: false, msg })
-      showToast(msg, 'error')
+      showToast(
+        `${t('settings.backup.opml.restoreError')}：${toApiError(err)}`,
+        'error',
+      )
     }
   }
 
   async function handleDeleteBackup(id: string): Promise<void> {
-    setOpmlFeedback(null)
     try {
       await useBackupStore.getState().deleteOPMLBackup(id)
-      const msg = t('settings.backup.opml.deleteSuccess')
-      setOpmlFeedback({ ok: true, msg })
-      showToast(msg, 'success')
+      showToast(t('settings.backup.opml.deleteSuccess'), 'success')
     } catch (err) {
-      const msg = `${t('settings.backup.opml.deleteError')}：${toApiError(err)}`
-      setOpmlFeedback({ ok: false, msg })
-      showToast(msg, 'error')
+      showToast(
+        `${t('settings.backup.opml.deleteError')}：${toApiError(err)}`,
+        'error',
+      )
     } finally {
       setPendingBackupAction(null)
     }
@@ -320,17 +293,6 @@ export function BackupSection(): JSX.Element {
             : t('settings.backup.webdav.save')}
         </button>
       </div>
-
-      {webdavFeedback ? (
-        <p
-          className={`${styles.feedback} ${webdavFeedback.ok ? '' : styles.feedbackError}`}
-        >
-          {webdavFeedback.msg}
-          {webdavFeedback.hint ? (
-            <span className={styles.feedbackHint}>{webdavFeedback.hint}</span>
-          ) : null}
-        </p>
-      ) : null}
 
       {configured ? (
         <SettingRow
@@ -437,14 +399,6 @@ export function BackupSection(): JSX.Element {
                 : t('settings.backup.opml.backupNow')}
             </button>
           </SettingRow>
-
-          {opmlFeedback ? (
-            <p
-              className={`${styles.feedback} ${opmlFeedback.ok ? '' : styles.feedbackError}`}
-            >
-              {opmlFeedback.msg}
-            </p>
-          ) : null}
 
           {/* 备份历史 */}
           <h4 className={styles.sectionSubtitle}>

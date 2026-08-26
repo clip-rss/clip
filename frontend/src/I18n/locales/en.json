@@ -389,6 +389,7 @@
       "interval": "Update interval (minutes)",
       "maxItems": "Max items retained",
       "save": "Save",
+      "saveError": "Save failed",
       "cancel": "Cancel",
       "delete": "Delete Feed",
       "deleteConfirm": "Are you sure you want to delete this feed and all its articles? This cannot be undone."

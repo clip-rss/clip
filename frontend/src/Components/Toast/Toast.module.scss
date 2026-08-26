@@ -1,18 +1,18 @@
 /* ===== Toast 组件 ===== */
-/* 设计语言遵循 need/doc/design.md §2.4 卡片 + §5 交互规范 */
 
 .container {
   position: fixed;
   top: 12px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 110;
+  z-index: 300;
   width: 480px;
   max-width: calc(100vw - 24px);
   pointer-events: none;
   /* 高度由 TS 按卡片实测高度内联指定，配合此过渡平滑展开/收拢 */
   transition: height 0.25s ease;
-  /* 不占文档流，浮在所有内容之上（含 modal z-index:100） */
+  /* 不占文档流，浮在所有内容之上：普通 modal 100/101、更新日志弹窗 110/111、
+     阅读视图图片灯箱 200，全站最大值 200，故取 300 */
 }
 
 /* 卡片定位外壳：绝对定位 + translateY。
@@ -94,6 +94,8 @@
   line-height: 1.5;
   color: var(--text-primary);
   word-break: break-word;
+  /* 消息里的 \n 要成行：后端 errors.Join 多错误、WebDAV 报错后附的建议都靠它分行 */
+  white-space: pre-line;
 }
 
 /* ===== 关闭按钮 ===== */

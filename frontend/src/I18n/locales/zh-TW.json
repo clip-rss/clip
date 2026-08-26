@@ -389,6 +389,7 @@
                               "interval":  "更新间隔（分钟）",
                               "maxItems":  "保留文章上限",
                               "save":  "儲存",
+                              "saveError":  "儲存失敗",
                               "cancel":  "取消",
                               "delete":  "刪除訂閱",
                               "deleteConfirm":  "確定要刪除此訂閱來源及其所有文章吗？此操作不可撤销。"

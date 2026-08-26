@@ -319,8 +319,6 @@ export function DataSection(): JSX.Element {
   const [cacheCount, setCacheCount] = useState<number | null>(null)
   const [estimatedMB, setEstimatedMB] = useState<number | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
-  const [feedback, setFeedback] = useState('')
-  const [isError, setIsError] = useState(false)
   const [busy, setBusy] = useState(false)
   const importRef = useRef<HTMLInputElement>(null)
 
@@ -343,12 +341,7 @@ export function DataSection(): JSX.Element {
     loadCacheStats()
   }, [t])
 
-  function notify(msg: string, error = false): void {
-    setFeedback(msg)
-    setIsError(error)
-    showToast(msg, error ? 'error' : 'success')
-  }
-
+  // 操作结果只走 toast，界面上不留反馈文案。
   async function handleClearCache(): Promise<void> {
     setConfirmClear(false)
     setBusy(true)
@@ -357,9 +350,15 @@ export function DataSection(): JSX.Element {
       await useArticleStore.getState().reload()
       await useSidebarStore.getState().load()
       loadCacheStats()
-      notify(t('settings.data.clearCacheResult', { count: removed }))
+      showToast(
+        t('settings.data.clearCacheResult', { count: removed }),
+        'success',
+      )
     } catch (err) {
-      notify(`${t('settings.data.clearCacheError')}：${toApiError(err)}`, true)
+      showToast(
+        `${t('settings.data.clearCacheError')}：${toApiError(err)}`,
+        'error',
+      )
     } finally {
       setBusy(false)
     }
@@ -375,15 +374,19 @@ export function DataSection(): JSX.Element {
     try {
       const res = await importOpmlFromFile(file)
       await useSidebarStore.getState().load()
-      notify(
+      showToast(
         t('settings.data.importSuccess', {
           feeds: res.feeds,
           skipped: res.skipped,
           categories: res.categories,
         }),
+        'success',
       )
     } catch (err) {
-      notify(`${t('settings.data.importError')}：${toApiError(err)}`, true)
+      showToast(
+        `${t('settings.data.importError')}：${toApiError(err)}`,
+        'error',
+      )
     } finally {
       setBusy(false)
     }
@@ -392,13 +395,14 @@ export function DataSection(): JSX.Element {
   async function handleExportOpml(): Promise<void> {
     try {
       const ok = await exportOpmlToFile()
-      notify(
-        ok
-          ? t('settings.data.exportSuccess')
-          : t('settings.data.exportCancelled'),
-      )
+      // 用户在系统保存框里取消既不是成功也不是失败，用 info（备份/恢复同理）。
+      if (ok) showToast(t('settings.data.exportSuccess'), 'success')
+      else showToast(t('settings.data.exportCancelled'), 'info')
     } catch (err) {
-      notify(`${t('settings.data.exportError')}：${toApiError(err)}`, true)
+      showToast(
+        `${t('settings.data.exportError')}：${toApiError(err)}`,
+        'error',
+      )
     }
   }
 
@@ -406,13 +410,13 @@ export function DataSection(): JSX.Element {
     setBusy(true)
     try {
       const ok = await SettingsService.BackupDatabase()
-      notify(
-        ok
-          ? t('settings.data.backupSuccess')
-          : t('settings.data.backupCancelled'),
-      )
+      if (ok) showToast(t('settings.data.backupSuccess'), 'success')
+      else showToast(t('settings.data.backupCancelled'), 'info')
     } catch (err) {
-      notify(`${t('settings.data.backupError')}：${toApiError(err)}`, true)
+      showToast(
+        `${t('settings.data.backupError')}：${toApiError(err)}`,
+        'error',
+      )
     } finally {
       setBusy(false)
     }
@@ -422,13 +426,13 @@ export function DataSection(): JSX.Element {
     setBusy(true)
     try {
       const ok = await SettingsService.RestoreDatabase()
-      notify(
-        ok
-          ? t('settings.data.restoreSuccess')
-          : t('settings.data.restoreCancelled'),
-      )
+      if (ok) showToast(t('settings.data.restoreSuccess'), 'success')
+      else showToast(t('settings.data.restoreCancelled'), 'info')
     } catch (err) {
-      notify(`${t('settings.data.restoreError')}：${toApiError(err)}`, true)
+      showToast(
+        `${t('settings.data.restoreError')}：${toApiError(err)}`,
+        'error',
+      )
     } finally {
       setBusy(false)
     }
@@ -539,14 +543,6 @@ export function DataSection(): JSX.Element {
           </button>
         </div>
       </SettingRow>
-
-      {feedback ? (
-        <p
-          className={`${styles.feedback} ${isError ? styles.feedbackError : ''}`}
-        >
-          {feedback}
-        </p>
-      ) : null}
     </div>
   )
 }
@@ -661,32 +657,25 @@ export function ProxySection(): JSX.Element {
   const [port, setPort] = useState(settings?.proxyPort?.toString() ?? '')
   const [testing, setTesting] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(
-    null,
-  )
 
   useEffect(() => {
     setHost(settings?.proxyHost ?? '')
     setPort(settings?.proxyPort?.toString() ?? '')
   }, [settings?.proxyHost, settings?.proxyPort])
 
+  // 测试/保存结果只走 toast，界面上不留反馈文案。
   async function handleTest(): Promise<void> {
     const portNum = parseInt(port, 10)
     if (!host || !portNum) {
-      setStatus({ ok: false, msg: t('settings.proxy.error') })
       showToast(t('settings.proxy.error'), 'error')
       return
     }
     setTesting(true)
-    setStatus(null)
     try {
       await SettingsService.TestProxy(host, portNum)
-      setStatus({ ok: true, msg: t('settings.proxy.success') })
       showToast(t('settings.proxy.success'), 'success')
     } catch (err) {
-      const msg = `${t('settings.proxy.failed')}：${toApiError(err)}`
-      setStatus({ ok: false, msg })
-      showToast(msg, 'error')
+      showToast(`${t('settings.proxy.failed')}：${toApiError(err)}`, 'error')
     } finally {
       setTesting(false)
     }
@@ -695,15 +684,11 @@ export function ProxySection(): JSX.Element {
   async function handleSave(): Promise<void> {
     const portNum = parseInt(port, 10) || 0
     setSaving(true)
-    setStatus(null)
     try {
       await stored({ proxyHost: host, proxyPort: portNum })
-      setStatus({ ok: true, msg: t('settings.proxy.saved') })
       showToast(t('settings.proxy.saved'), 'success')
     } catch (err) {
-      const msg = `${t('settings.proxy.saveError')}：${toApiError(err)}`
-      setStatus({ ok: false, msg })
-      showToast(msg, 'error')
+      showToast(`${t('settings.proxy.saveError')}：${toApiError(err)}`, 'error')
     } finally {
       setSaving(false)
     }
@@ -752,14 +737,6 @@ export function ProxySection(): JSX.Element {
           {saving ? t('settings.proxy.saving') : t('settings.proxy.save')}
         </button>
       </div>
-
-      {status ? (
-        <p
-          className={`${styles.feedback} ${status.ok ? '' : styles.feedbackError}`}
-        >
-          {status.msg}
-        </p>
-      ) : null}
     </div>
   )
 }

@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useSidebarStore } from '../../Stores'
-import { FeedService, flattenCategories, toApiError } from '../../Utils'
+import {
+  FeedService,
+  flattenCategories,
+  showToast,
+  toApiError,
+} from '../../Utils'
 import type { FeedWithUnread } from '../../Types'
 import styles from './EditFeedModal.module.scss'
 
@@ -24,7 +29,7 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
   const [updateInterval, setUpdateInterval] = useState(feed.updateInterval)
   const [maxItems, setMaxItems] = useState(feed.maxItems)
   const [saving, setSaving] = useState(false)
-  const [errorMsg, setErrorMsg] = useState('')
+  const [failed, setFailed] = useState(false)
 
   // 每次打开时用最新 feed 初始化表单。
   useEffect(() => {
@@ -35,7 +40,7 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
       setUpdateInterval(feed.updateInterval)
       setMaxItems(feed.maxItems)
       setSaving(false)
-      setErrorMsg('')
+      setFailed(false)
     }
   }, [open, feed])
 
@@ -46,7 +51,7 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
     const finalTitle = title.trim()
     if (!finalUrl || !finalTitle || saving) return
     setSaving(true)
-    setErrorMsg('')
+    setFailed(false)
     try {
       await FeedService.UpdateFeed({
         ...feed,
@@ -59,7 +64,9 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
       await reload()
       onOpenChange(false)
     } catch (err) {
-      setErrorMsg(toApiError(err))
+      // 后端报错细节走 toast，弹窗内只留通用状态（弹窗不关，可继续改）。
+      showToast(`${t('feed.edit.saveError')}：${toApiError(err)}`, 'error')
+      setFailed(true)
       setSaving(false)
     }
   }
@@ -165,7 +172,9 @@ function EditFeedModal(props: EditFeedModalProps): JSX.Element {
               </div>
             </div>
 
-            {errorMsg ? <p className={styles.inlineError}>{errorMsg}</p> : null}
+            {failed ? (
+              <p className={styles.inlineError}>{t('feed.edit.saveError')}</p>
+            ) : null}
           </div>
 
           <footer className={styles.footer}>

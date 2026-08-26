@@ -4,6 +4,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import {
   markdownToHtml,
   sanitizeHtml,
+  showToast,
   SystemService,
   toApiError,
 } from '../../Utils'
@@ -36,13 +37,13 @@ export function ChangelogModal(props: ChangelogModalProps): JSX.Element {
   const { open, onOpenChange } = props
   const [html, setHtml] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
     if (!open) return
     // 重置状态并立即进入 loading（避免打开瞬间闪空白内容）
     setHtml('')
-    setError('')
+    setFailed(false)
     setLoading(true)
 
     SystemService.FetchChangelog()
@@ -50,7 +51,12 @@ export function ChangelogModal(props: ChangelogModalProps): JSX.Element {
         setHtml(sanitizeHtml(markdownToHtml(md)))
       })
       .catch((err: unknown) => {
-        setError(toApiError(err))
+        // 后端报错细节走 toast，弹窗内只留通用文案。
+        setFailed(true)
+        showToast(
+          `${t('settings.about.changelogError')}：${toApiError(err)}`,
+          'error',
+        )
       })
       .finally(() => setLoading(false))
   }, [open])
@@ -96,10 +102,9 @@ export function ChangelogModal(props: ChangelogModalProps): JSX.Element {
               <Skeleton width="70%" height={14} />
               <Skeleton width="55%" height={14} />
             </div>
-          ) : error ? (
+          ) : failed ? (
             <div className={styles.errorMsg}>
-              {t('settings.about.changelogError', 'Failed to load changelog')}:{' '}
-              {error}
+              {t('settings.about.changelogError')}
             </div>
           ) : (
             <div

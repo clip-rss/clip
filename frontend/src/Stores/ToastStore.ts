@@ -16,7 +16,7 @@ export interface ToastItem {
   exiting: boolean
 }
 
-const DEFAULT_DURATION = 4000
+const DEFAULT_DURATION = 6000
 
 let nextId = 1
 
