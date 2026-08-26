@@ -69,31 +69,20 @@
   }
 }
 
-/* ===== 图标（垂直居中） ===== */
-
-.icon {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  margin-right: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  line-height: 1;
-  align-self: center;
+/* ===== 类型背景色与边框色 ===== */
+.toastInfo {
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-primary));
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--bg-primary));
 }
 
-.iconSuccess {
-  color: var(--accent);
+.toastSuccess {
+  background: color-mix(in srgb, var(--success) 12%, var(--bg-primary));
+  border-color: color-mix(in srgb, var(--success) 40%, var(--bg-primary));
 }
 
-.iconError {
-  color: var(--danger);
-}
-
-.iconInfo {
-  color: var(--accent);
+.toastError {
+  background: color-mix(in srgb, var(--danger) 12%, var(--bg-primary));
+  border-color: color-mix(in srgb, var(--danger) 40%, var(--bg-primary));
 }
 
 /* ===== 消息文案 ===== */

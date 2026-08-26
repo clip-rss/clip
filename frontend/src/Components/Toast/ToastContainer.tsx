@@ -81,15 +81,13 @@ function ToastContainer(): JSX.Element | null {
       role="status"
     >
       {queue.map((t, i) => {
-        /* 类型对应的图标与颜色 */
-        const iconClass =
+        /* 类型对应的背景色调 */
+        const typeClass =
           t.type === 'error'
-            ? styles.iconError
+            ? styles.toastError
             : t.type === 'success'
-              ? styles.iconSuccess
-              : styles.iconInfo
-
-        const icon = t.type === 'error' ? '✕' : t.type === 'success' ? '✓' : 'ℹ'
+              ? styles.toastSuccess
+              : styles.toastInfo
 
         return (
           <div
@@ -105,15 +103,9 @@ function ToastContainer(): JSX.Element | null {
             }}
           >
             <div
-              className={`${styles.toast} ${t.exiting ? styles.exiting : ''}`}
+              className={`${styles.toast} ${typeClass} ${t.exiting ? styles.exiting : ''}`}
               role="alert"
             >
-              <span
-                className={`${styles.icon} ${iconClass}`}
-                aria-hidden="true"
-              >
-                {icon}
-              </span>
               <span className={styles.message}>{t.message}</span>
               <button
                 className={styles.close}
