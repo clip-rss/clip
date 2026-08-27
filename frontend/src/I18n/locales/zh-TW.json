@@ -23,13 +23,19 @@
                                         "refresh":  "重新整理訂閱",
                                         "delete":  "刪除",
                                         "pause":  "暫停更新",
-                                        "resume":  "還原更新"
+                                        "resume":  "還原更新",
+                                        "deleteBatch":  "批次刪除"
                                     },
                     "deleteFeed":  {
                                        "title":  "刪除訂閱來源",
                                        "description":  "確定刪除「{{title}}」吗？该來源下的全部文章也会被刪除，此操作不可撤销。",
+                                       "batchDescription":  "確定刪除選中的 {{count}} 個訂閱來源嗎？其全部文章也会被刪除，此操作不可撤銷。",
                                        "confirm":  "刪除"
                                    },
+                    "batchDelete":  {
+                                        "button":  "刪除 ({{count}})",
+                                        "cancel":  "取消"
+                                    },
                     "deleteFolder":  {
                                          "title":  "刪除資料夾",
                                          "description":  "確定刪除資料夾「{{name}}」吗？其子資料夾也会被刪除，資料夾内的訂閱來源将变为未分類。",
@@ -41,7 +47,8 @@
                                 },
                     "feedError":  "訂閱來源取得失敗",
                     "refresh":  "手动更新 (R)",
-                    "addMenu":  "新增菜单"
+                    "addMenu":  "新增菜单",
+                    "toggleMultiSelect":  "選擇或取消選擇，用於批次操作"
                 },
     "article":  {
                     "filter":  {

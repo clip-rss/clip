@@ -23,12 +23,18 @@
       "refresh": "刷新订阅",
       "delete": "删除",
       "pause": "暂停更新",
-      "resume": "恢复更新"
+      "resume": "恢复更新",
+      "deleteBatch": "批量删除"
     },
     "deleteFeed": {
       "title": "删除订阅源",
       "description": "确定删除「{{title}}」吗？该源下的全部文章也会被删除，此操作不可撤销。",
+      "batchDescription": "确定删除选中的 {{count}} 个订阅源吗？其全部文章也会被删除，此操作不可撤销。",
       "confirm": "删除"
+    },
+    "batchDelete": {
+      "button": "删除 ({{count}})",
+      "cancel": "取消"
     },
     "deleteFolder": {
       "title": "删除文件夹",
@@ -41,7 +47,8 @@
     },
     "feedError": "订阅源获取失败",
     "refresh": "手动更新 (R)",
-    "addMenu": "添加菜单"
+    "addMenu": "添加菜单",
+    "toggleMultiSelect": "选择或取消选择，用于批量操作"
   },
   "article": {
     "filter": {

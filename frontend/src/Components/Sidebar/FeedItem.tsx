@@ -30,6 +30,10 @@ function FeedItem(props: FeedItemProps): JSX.Element {
   const pauseFeed = useSidebarStore((s) => s.pauseFeed)
   const resumeFeed = useSidebarStore((s) => s.resumeFeed)
   const refreshFeed = useSidebarStore((s) => s.refreshFeed)
+  const batchMode = useSidebarStore((s) => s.batchMode)
+  const enterBatchMode = useSidebarStore((s) => s.enterBatchMode)
+  const multiSelected = useSidebarStore((s) => s.multiSelectIds.has(feed.id))
+  const toggleMultiSelect = useSidebarStore((s) => s.toggleMultiSelect)
 
   const [editing, setEditing] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -53,6 +57,7 @@ function FeedItem(props: FeedItemProps): JSX.Element {
               styles.row,
               styles.feedRow,
               selected && styles.selected,
+              multiSelected && styles.multiSelected,
             )}
             style={{ paddingLeft: rowPaddingLeft(depth) }}
             draggable={!editing}
@@ -70,7 +75,19 @@ function FeedItem(props: FeedItemProps): JSX.Element {
             title={feed.title}
             tabIndex={0}
           >
-            <span className={styles.chevronSlot} />
+            <span className={styles.chevronSlot}>
+              {batchMode ? (
+                <input
+                  type="checkbox"
+                  className={styles.multiSelectCheckbox}
+                  checked={multiSelected}
+                  onChange={() => toggleMultiSelect(feed.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  aria-label={t('sidebar.toggleMultiSelect')}
+                />
+              ) : null}
+            </span>
             <FeedFavicon icon={feed.icon} title={feed.title} />
             {editing ? (
               <RenameInput
@@ -137,6 +154,12 @@ function FeedItem(props: FeedItemProps): JSX.Element {
               onSelect={() => setConfirmOpen(true)}
             >
               {t('sidebar.contextMenu.delete')}
+            </ContextMenu.Item>
+            <ContextMenu.Item
+              className={clsx(styles.menuItem, styles.menuItemDanger)}
+              onSelect={() => enterBatchMode()}
+            >
+              {t('sidebar.contextMenu.deleteBatch')}
             </ContextMenu.Item>
           </ContextMenu.Content>
         </ContextMenu.Portal>

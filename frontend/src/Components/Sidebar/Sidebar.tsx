@@ -16,6 +16,7 @@ import FolderItem from './FolderItem'
 import FeedItem from './FeedItem'
 import UnreadBadge from './UnreadBadge'
 import RenameInput from './RenameInput'
+import ConfirmDialog from './ConfirmDialog'
 import { InboxIcon, PlusIcon, RefreshIcon } from './Icons'
 import { rowPaddingLeft, FEED_DRAG_TYPE } from './layout'
 import styles from './Sidebar.module.scss'
@@ -36,10 +37,15 @@ function Sidebar(props: SidebarProps): JSX.Element {
   const addCategory = useSidebarStore((s) => s.addCategory)
   const moveFeed = useSidebarStore((s) => s.moveFeed)
   const refreshSelected = useSidebarStore((s) => s.refreshSelected)
+  const batchMode = useSidebarStore((s) => s.batchMode)
+  const multiCount = useSidebarStore((s) => s.multiSelectIds.size)
+  const deleteFeeds = useSidebarStore((s) => s.deleteFeeds)
+  const exitBatchMode = useSidebarStore((s) => s.exitBatchMode)
 
   const [creatingFolder, setCreatingFolder] = useState(false)
   const [uncatDragOver, setUncatDragOver] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const [batchConfirmOpen, setBatchConfirmOpen] = useState(false)
 
   // 初次加载 + 订阅后端事件，新文章/抓取错误时刷新未读与结构
   useEffect(() => {
@@ -98,10 +104,35 @@ function Sidebar(props: SidebarProps): JSX.Element {
     >
       <header className={styles.header}>
         <span className={styles.headerTitle}>{t('sidebar.title')}</span>
-        <AddMenu
-          onNewFolder={() => setCreatingFolder(true)}
-          onAddFeed={onAddFeed}
-        />
+        <div className={styles.headerRight}>
+          {batchMode ? (
+            <>
+              <button
+                type="button"
+                className={clsx(styles.batchButton, styles.batchDelete)}
+                onClick={() => setBatchConfirmOpen(true)}
+                disabled={multiCount === 0}
+                aria-label={t('sidebar.batchDelete.button', {
+                  count: multiCount,
+                })}
+              >
+                {t('sidebar.batchDelete.button', { count: multiCount })}
+              </button>
+              <button
+                type="button"
+                className={styles.batchButton}
+                onClick={exitBatchMode}
+                aria-label={t('sidebar.batchDelete.cancel')}
+              >
+                {t('sidebar.batchDelete.cancel')}
+              </button>
+            </>
+          ) : null}
+          <AddMenu
+            onNewFolder={() => setCreatingFolder(true)}
+            onAddFeed={onAddFeed}
+          />
+        </div>
       </header>
 
       <div className={styles.tree} role="tree" aria-label={t('sidebar.title')}>
@@ -184,6 +215,20 @@ function Sidebar(props: SidebarProps): JSX.Element {
           </IconAction>
         </div>
       </footer>
+
+      <ConfirmDialog
+        open={batchConfirmOpen}
+        onOpenChange={setBatchConfirmOpen}
+        title={t('sidebar.deleteFeed.title')}
+        description={t('sidebar.deleteFeed.batchDescription', {
+          count: multiCount,
+        })}
+        confirmText={t('sidebar.deleteFeed.confirm')}
+        danger
+        onConfirm={() =>
+          deleteFeeds([...useSidebarStore.getState().multiSelectIds])
+        }
+      />
     </div>
   )
 

@@ -9,6 +9,10 @@ interface SidebarState {
   selection: Selection
   /** 已展开的分类 id 集合（持久化）。 */
   expanded: Set<number>
+  /** 批量勾选（复选框多选）的订阅源 id 集合，与单选 selection 解耦。 */
+  multiSelectIds: Set<number>
+  /** 批量选择模式：开启后 feed 行显示复选框，顶部出现「删除(n)/取消」。 */
+  batchMode: boolean
   loading: boolean
   error: string | null
 
@@ -18,12 +22,20 @@ interface SidebarState {
   toggleExpand: (categoryId: number) => void
   isExpanded: (categoryId: number) => boolean
 
+  toggleMultiSelect: (id: number) => void
+  /** 进入批量选择模式（重置勾选）。 */
+  enterBatchMode: () => void
+  /** 退出批量选择模式（清空勾选）。 */
+  exitBatchMode: () => void
+
   addCategory: (name: string) => Promise<void>
   renameCategory: (id: number, name: string) => Promise<void>
   deleteCategory: (id: number) => Promise<void>
 
   renameFeed: (id: number, title: string) => Promise<void>
   deleteFeed: (id: number) => Promise<void>
+  /** 批量删除订阅源；不引入后端批量接口，循环调单条 DeleteFeed。 */
+  deleteFeeds: (ids: number[]) => Promise<void>
   pauseFeed: (id: number) => Promise<void>
   resumeFeed: (id: number) => Promise<void>
   refreshFeed: (id: number) => Promise<void>
@@ -43,6 +55,8 @@ export const useSidebarStore = create<SidebarState>()(
       feeds: [],
       selection: { kind: 'all' },
       expanded: new Set<number>(),
+      multiSelectIds: new Set<number>(),
+      batchMode: false,
       loading: false,
       error: null,
 
@@ -76,6 +90,21 @@ export const useSidebarStore = create<SidebarState>()(
 
       isExpanded(categoryId) {
         return get().expanded.has(categoryId)
+      },
+
+      toggleMultiSelect(id) {
+        const next = new Set(get().multiSelectIds)
+        if (next.has(id)) next.delete(id)
+        else next.add(id)
+        set({ multiSelectIds: next })
+      },
+
+      enterBatchMode() {
+        set({ batchMode: true, multiSelectIds: new Set<number>() })
+      },
+
+      exitBatchMode() {
+        set({ batchMode: false, multiSelectIds: new Set<number>() })
       },
 
       async addCategory(name) {
@@ -131,6 +160,17 @@ export const useSidebarStore = create<SidebarState>()(
           await FeedService.DeleteFeed(id)
           resetSelectionIfMatches(get, set, 'feed', id)
           await get().load()
+        } catch (err) {
+          set({ error: toApiError(err) })
+        }
+      },
+
+      async deleteFeeds(ids) {
+        try {
+          await Promise.all(ids.map((id) => FeedService.DeleteFeed(id)))
+          resetSelectionIfMatchesAny(get, set, ids)
+          await get().load()
+          set({ batchMode: false, multiSelectIds: new Set<number>() })
         } catch (err) {
           set({ error: toApiError(err) })
         }
@@ -212,6 +252,18 @@ function resetSelectionIfMatches(
 ): void {
   const { selection } = get()
   if (selection.kind === kind && selection.id === id) {
+    set({ selection: { kind: 'all' } })
+  }
+}
+
+/** 批量版：若当前选中的订阅源属于被删集合，回退到「全部文章」。 */
+function resetSelectionIfMatchesAny(
+  get: () => SidebarState,
+  set: (partial: Partial<SidebarState>) => void,
+  ids: number[],
+): void {
+  const { selection } = get()
+  if (selection.kind === 'feed' && ids.includes(selection.id)) {
     set({ selection: { kind: 'all' } })
   }
 }

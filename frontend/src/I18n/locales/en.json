@@ -23,12 +23,18 @@
       "refresh": "Refresh Feed",
       "delete": "Delete",
       "pause": "Pause Updates",
-      "resume": "Resume Updates"
+      "resume": "Resume Updates",
+      "deleteBatch": "Batch Delete"
     },
     "deleteFeed": {
       "title": "Delete Feed",
       "description": "Are you sure you want to delete \"{{title}}\"? All articles from this feed will also be deleted. This action cannot be undone.",
+      "batchDescription": "Are you sure you want to delete the {{count}} selected feeds? All their articles will also be deleted. This action cannot be undone.",
       "confirm": "Delete"
+    },
+    "batchDelete": {
+      "button": "Delete ({{count}})",
+      "cancel": "Cancel"
     },
     "deleteFolder": {
       "title": "Delete Folder",
@@ -41,7 +47,8 @@
     },
     "feedError": "Failed to fetch feed",
     "refresh": "Refresh (R)",
-    "addMenu": "Add menu"
+    "addMenu": "Add menu",
+    "toggleMultiSelect": "Toggle multi-select for batch actions"
   },
   "article": {
     "filter": {
