@@ -15,9 +15,22 @@ function compareFeed(a: FeedWithUnread, b: FeedWithUnread): number {
 }
 
 /**
+ * 连续失败达到该次数的订阅源视为「已失效」。
+ * 后端按 2ⁿ 指数退避重试（封顶 24h），默认 30 min 间隔下约 3.5 h 连续失败触达阈值；
+ * 任意一次成功即清零计数出组，因此误伤（服务端临时故障）会自愈。
+ */
+export const DEAD_FEED_THRESHOLD = 3
+
+/** 是否归入「已失效」分组。暂停的源不再被抓取、计数冻结，不参与判死。 */
+export function isDeadFeed(f: FeedWithUnread): boolean {
+  return f.status !== 'paused' && f.errorCount >= DEAD_FEED_THRESHOLD
+}
+
+/**
  * 构建左侧栏树。
  * - 分类按 parentId 形成多级嵌套；parentId 为 null 或指向不存在的父级时视为根。
- * - 订阅源 categoryId 为 null/0 归入 uncategorized。
+ * - 连续失败的源归入 dead 并从分类/未分类中移出（恢复后自动回到原位）。
+ * - 其余订阅源 categoryId 为 null/0 归入 uncategorized。
  * - 每个分类节点的 unreadCount 递归累加自身直属源与全部子孙分类的未读数。
  */
 export function buildFeedTree(
@@ -36,10 +49,15 @@ export function buildFeedTree(
     else childrenOf.set(parent, [c])
   }
 
-  // 订阅源按分类分组（null/0 视为未分类）
+  // 订阅源按分类分组（死源移出，null/0 视为未分类）
   const feedsOf = new Map<number, FeedWithUnread[]>()
   const uncategorized: FeedWithUnread[] = []
+  const dead: FeedWithUnread[] = []
   for (const f of feeds) {
+    if (isDeadFeed(f)) {
+      dead.push(f)
+      continue
+    }
     const cid = f.categoryId
     if (cid === null || cid === 0 || !validIds.has(cid)) {
       uncategorized.push(f)
@@ -76,7 +94,12 @@ export function buildFeedTree(
   let totalUnread = 0
   for (const f of feeds) totalUnread += f.unreadCount
 
-  return { roots, uncategorized: uncategorized.sort(compareFeed), totalUnread }
+  return {
+    roots,
+    uncategorized: uncategorized.sort(compareFeed),
+    dead: dead.sort(compareFeed),
+    totalUnread,
+  }
 }
 
 /** 归属文件夹下拉用的分类项：按树前序展开，depth 用于缩进。 */

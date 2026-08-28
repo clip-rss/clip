@@ -195,6 +195,24 @@ function Sidebar(props: SidebarProps): JSX.Element {
             <FeedItem key={`f-${feed.id}`} feed={feed} depth={0} />
           ))}
         </div>
+
+        {tree.dead.length > 0 ? (
+          <div className={styles.deadGroup}>
+            {/* 纯标签组头：分区边界，不可选中；组内源各自可点。 */}
+            <div className={styles.deadGroupHeader}>
+              <span className={styles.errorMark} aria-hidden="true">
+                ⚠
+              </span>
+              <span className={styles.deadGroupTitle}>
+                {t('sidebar.deadFeeds')}
+              </span>
+              <span className={styles.deadGroupCount}>{tree.dead.length}</span>
+            </div>
+            {tree.dead.map((feed) => (
+              <FeedItem key={`d-${feed.id}`} feed={feed} depth={0} />
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <footer className={styles.footer}>

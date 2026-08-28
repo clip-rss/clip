@@ -23,6 +23,8 @@ export interface FeedTree {
   roots: FeedTreeNode[]
   /** 未归类的订阅源（categoryId 为 null/0）。 */
   uncategorized: FeedWithUnread[]
+  /** 连续失败达到阈值的订阅源（已从分类与未分类中移出）。 */
+  dead: FeedWithUnread[]
   /** 全部订阅源的未读总数。 */
   totalUnread: number
 }

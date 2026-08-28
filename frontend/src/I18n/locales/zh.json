@@ -13,6 +13,7 @@
   "sidebar": {
     "title": "源",
     "allArticles": "全部文章",
+    "deadFeeds": "已失效",
     "newFolder": "新建文件夹",
     "lastUpdated": "上次更新：",
     "contextMenu": {
