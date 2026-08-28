@@ -445,6 +445,51 @@
   gap: 8px;
 }
 
+/* 「导入」下拉的触发按钮：文字 + chevron 并排。 */
+.btnMenu {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===== 下拉菜单（OPML 导入方式选择） =====
+   菜单样式在本仓库是各 module 各自一份（ArticleList / Sidebar / ReadingView 已各有一套）。
+   注意 z-index 必须高于设置弹窗的 overlay(100) 与 content(101)，否则会被盖住。 */
+.menuContent {
+  min-width: 140px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background-color: var(--bg-primary);
+  box-shadow: var(--shadow);
+  z-index: 110;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--radius-button);
+  font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+  user-select: none;
+
+  /* 按钮不改光标，靠高亮背景表示可点。 */
+  &[data-highlighted] {
+    background-color: var(--bg-secondary);
+  }
+}
+
+/* 远程导入的行内输入区：地址在上，操作按钮在下。 */
+.remoteImport {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
 .feedback {
   margin-top: 8px;
   font-size: 12px;
@@ -579,6 +624,11 @@
       margin: 0;
     }
   }
+}
+
+/* URL 输入框：默认的 160px 装不下一条完整地址。 */
+.inputUrl {
+  width: 280px;
 }
 
 /* ===== 按钮行 ===== */

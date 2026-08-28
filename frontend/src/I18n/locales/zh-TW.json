@@ -1,470 +1,474 @@
 {
-    "toolbar":  {
-                    "search":  {
-                                   "placeholder":  "搜尋文章、筆記…"
-                               },
-                    "addFeed":  "＋ 訂閱",
-                    "focusMode":  "專注模式",
-                    "settings":  "設定",
-                    "clearSearch":  "清除搜尋",
-                    "searchHistory":  "最近搜尋",
-                    "clearSearchHistory":  "清除歷史"
-                },
-    "sidebar":  {
-                    "title":  "來源",
-                    "allArticles":  "全部文章",
-                    "newFolder":  "新增資料夾",
-                    "lastUpdated":  "上次更新：",
-                    "contextMenu":  {
-                                        "newFolder":  "新增資料夾",
-                                        "addFeed":  "新增訂閱",
-                                        "rename":  "重新命名",
-                                        "edit":  "編輯…",
-                                        "refresh":  "重新整理訂閱",
-                                        "delete":  "刪除",
-                                        "pause":  "暫停更新",
-                                        "resume":  "還原更新",
-                                        "deleteBatch":  "批次刪除"
-                                    },
-                    "deleteFeed":  {
-                                       "title":  "刪除訂閱來源",
-                                       "description":  "確定刪除「{{title}}」吗？该來源下的全部文章也会被刪除，此操作不可撤销。",
-                                       "batchDescription":  "確定刪除選中的 {{count}} 個訂閱來源嗎？其全部文章也会被刪除，此操作不可撤銷。",
-                                       "confirm":  "刪除"
-                                   },
-                    "batchDelete":  {
-                                        "button":  "刪除 ({{count}})",
-                                        "cancel":  "取消"
-                                    },
-                    "deleteFolder":  {
-                                         "title":  "刪除資料夾",
-                                         "description":  "確定刪除資料夾「{{name}}」吗？其子資料夾也会被刪除，資料夾内的訂閱來源将变为未分類。",
-                                         "confirm":  "刪除"
-                                     },
-                    "chevron":  {
-                                    "expand":  "展开",
-                                    "collapse":  "折叠"
-                                },
-                    "feedError":  "訂閱來源取得失敗",
-                    "refresh":  "手动更新 (R)",
-                    "addMenu":  "新增菜单",
-                    "toggleMultiSelect":  "選擇或取消選擇，用於批次操作"
-                },
-    "article":  {
-                    "filter":  {
-                                   "all":  "全部",
-                                   "unread":  "未讀",
-                                   "read":  "已讀",
-                                   "starred":  "星标",
-                                   "today":  "今日"
-                               },
-                    "sort":  {
-                                 "time":  "時间",
-                                 "source":  "來源",
-                                 "byTime":  "按時间排序",
-                                 "bySource":  "按來源排序"
-                             },
-                    "actions":  {
-                                    "markAllRead":  "全部標記为已讀",
-                                    "batchStar":  "批量星标"
-                                },
-                    "searchResult":  "找到 {{count}} 篇文章",
-                    "empty":  {
-                                  "noArticles":  "暂无文章",
-                                  "noUnread":  "暂无未讀文章",
-                                  "noRead":  "暂无已讀文章",
-                                  "noStarred":  "暂无星标文章",
-                                  "noToday":  "今日暂无文章",
-                                  "noMatch":  "未找到匹配「{{query}}」的文章"
-                              }
-                },
-    "reader":  {
-                   "toolbar":  {
-                                   "markUnread":  "標記为未讀",
-                                   "markRead":  "標記为已讀",
-                                   "star":  "星标",
-                                   "unstar":  "取消星标",
-                                   "note":  "新增筆記",
-                                   "viewNote":  "查看筆記",
-                                   "closeNote":  "關閉筆記",
-                                   "openInBrowser":  "在浏览器打开"
-                               },
-                   "settings":  {
-                                    "title":  "閱讀設定",
-                                    "font":  "字型",
-                                    "fontSize":  "字号",
-                                    "lineHeight":  "行高",
-                                    "width":  "宽度",
-                                    "background":  "閱讀背景"
-                                },
-                   "font":  {
-                                "sans":  "无衬线",
-                                "serif":  "衬线",
-                                "mono":  "等宽"
-                            },
-                   "size":  {
-                                "small":  "小",
-                                "medium":  "中",
-                                "large":  "大"
-                            },
-                   "lineHeight":  {
-                                      "compact":  "紧凑",
-                                      "moderate":  "適中",
-                                      "loose":  "宽松"
-                                  },
-                   "width":  {
-                                 "narrow":  "窄",
-                                 "wide":  "宽",
-                                 "full":  "全宽"
-                             },
-                   "background":  {
-                                      "default":  "跟隨",
-                                      "light":  "亮",
-                                      "sepia":  "护眼",
-                                      "dark":  "暗"
-                                  },
-                   "backgroundDesc":  "閱讀区独立背景色，可与全局主題不同",
-                   "empty":  "選擇一篇文章以閱讀",
-                   "loadingContent":  "正在載入內容…",
-                   "endOfContent":  "已是全部內容",
-                   "lightbox":  {
-                                    "close":  "關閉",
-                                    "zoomOut":  "缩小",
-                                    "zoomIn":  "放大",
-                                    "rotate":  "逆時针旋转",
-                                    "reset":  "复位",
-                                    "download":  "下載圖片",
-                                    "saved":  "已儲存",
-                                    "failed":  "下載失敗"
-                                }
-               },
-    "focus":  {
-                  "exit":  "登出專注",
-                  "empty":  "未選擇文章"
-              },
-    "settings":  {
-                     "title":  "設定",
-                     "tabs":  {
-                                  "general":  "一般",
-                                  "reading":  "閱讀",
-                                  "theme":  "主題",
-                                  "notification":  "通知",
-                                  "proxy":  "代理伺服器",
-                                  "shortcuts":  "快速鍵",
-                                  "backup":  "備份",
-                                  "data":  "資料管理",
-                                  "about":  "關於"
-                              },
-                     "general":  {
-                                     "title":  "一般",
-                                     "updateInterval":  "訂閱來源全局更新间隔",
-                                     "updateIntervalDesc":  "统一設定所有訂閱來源的自动重新整理周期；选「手动」则全部停止自动重新整理",
-                                     "updateIntervalOptions":  {
-                                                                   "15m":  "15 分钟",
-                                                                   "30m":  "30 分钟",
-                                                                   "1h":  "1 小時",
-                                                                   "manual":  "手动"
-                                                               },
-                                     "maxItems":  "每來源最大条目",
-                                     "maxItemsDesc":  "新訂閱來源預設保留的最大文章数",
-                                     "itemsUnit":  "篇",
-                                     "reduceMotion":  "减弱动画效果",
-                                     "reduceMotionDesc":  "關閉介面动画和过渡效果，提升无障碍体验",
-                                     "showFocusIndicator":  "显示焦点指示器",
-                                     "showFocusIndicatorDesc":  "键盤导航時显示焦点边框，帮助识别当前聚焦的元素",
-                                     "language":  "语言",
-                                     "languageDesc":  "介面显示语言"
-                                 },
-                     "reading":  {
-                                     "autoMarkRead":  "自动標記已讀",
-                                     "autoMarkReadDesc":  "文章打开後自动標記为已讀的延迟時间",
-                                     "autoMark":  {
-                                                      "immediate":  "立即",
-                                                      "2s":  "2 秒",
-                                                      "5s":  "5 秒",
-                                                      "off":  "關閉"
-                                                  }
-                                 },
-                     "theme":  {
-                                   "title":  "主題",
-                                   "theme":  "外观",
-                                   "themeDesc":  "選擇 App 的外观",
-                                   "mode":  {
-                                                "system":  "跟隨系統",
-                                                "light":  "亮色",
-                                                "dark":  "暗色"
-                                            }
-                               },
-                     "notification":  {
-                                          "title":  "新文章通知",
-                                          "titleSection":  "通知",
-                                          "modeDesc":  "每篇：每条新文章一条；摘要：每次重新整理一条汇总",
-                                          "each":  "每篇",
-                                          "summary":  "摘要",
-                                          "off":  "關閉",
-                                          "unreadBadge":  "未讀角标",
-                                          "unreadBadgeDesc":  "在程序坞图标上显示未讀文章数量",
-                                          "unreadBadgeWin":  "讨人嫌的红点",
-                                          "unreadBadgeWinDesc":  "有未讀文章時，在任务栏图标上显示一个红点"
-                                      },
-                     "proxy":  {
-                                   "title":  "代理伺服器",
-                                   "host":  "代理伺服器位址",
-                                   "hostDesc":  "HTTP 代理伺服器的 IP 或主機名",
-                                   "port":  "連接埠",
-                                   "test":  "测试連線",
-                                   "testBtn":  "测试",
-                                   "testing":  "测试中…",
-                                   "success":  "連線成功",
-                                   "failed":  "連線失敗",
-                                   "error":  "代理伺服器位址或連接埠無效",
-                                   "save":  "儲存並應用程式",
-                                   "saving":  "儲存中…",
-                                   "saved":  "已儲存",
-                                   "saveError":  "儲存失敗"
-                               },
-                     "shortcuts":  {
-                                       "title":  "快速鍵",
-                                       "groups":  {
-                                                      "general":  "一般",
-                                                      "reading":  "閱讀",
-                                                      "filter":  "筛选"
-                                                  },
-                                       "addFeed":  "新增訂閱",
-                                       "openSettings":  "打开設定",
-                                       "refreshSelected":  "手动更新选中的訂閱來源",
-                                       "forceRefresh":  "强制重新整理全部訂閱來源",
-                                       "focusSearch":  "聚焦搜尋框",
-                                       "nextArticle":  "下一篇文章（專注模式）",
-                                       "prevArticle":  "上一篇文章（專注模式）",
-                                       "scrollDown":  "向下翻页",
-                                       "scrollUp":  "向上翻页",
-                                       "toggleFocus":  "切换專注模式",
-                                       "exitFocus":  "登出專注模式 / 關閉弹窗",
-                                       "filterAll":  "全部文章",
-                                       "filterUnread":  "未讀文章",
-                                       "filterStarred":  "收藏文章"
-                                   },
-                     "backup":  {
-                                    "title":  "訂閱備份",
-                                    "intro":  "将訂閱列表備份到你自己的 WebDAV 伺服器。",
-                                    "webdav":  {
-                                                   "title":  "WebDAV 配置",
-                                                   "url":  "伺服器位址",
-                                                   "urlDesc":  "必须以 https:// 开头，填到 WebDAV 根目錄（如 Nextcloud 形如 https://\u003c域名\u003e/remote.php/dav/files/\u003c使用者名\u003e/）",
-                                                   "username":  "使用者名",
-                                                   "password":  "密碼",
-                                                   "passwordDesc":  "坚果云与开了两步驗證的 Nextcloud 需要應用程式密碼，不能用登入密碼",
-                                                   "passwordPlaceholder":  "輸入密碼",
-                                                   "passwordKeep":  "已儲存，留空则不修改",
-                                                   "test":  "测试連線",
-                                                   "testing":  "测试中…",
-                                                   "testSuccess":  "連線正常",
-                                                   "testFailed":  "連線失敗",
-                                                   "steps":  {
-                                                                 "connect":  "連線伺服器",
-                                                                 "mkcol":  "建立備份目錄",
-                                                                 "write":  "写入测试檔案"
-                                                             },
-                                                   "stepFailed":  "{{step}}失敗",
-                                                   "save":  "儲存配置",
-                                                   "saving":  "儲存中…",
-                                                   "saved":  "已儲存",
-                                                   "saveError":  "儲存失敗",
-                                                   "clear":  "清除配置",
-                                                   "clearConfirm":  "確認清除",
-                                                   "clearDesc":  "刪除伺服器位址与密碼。遠端已備份的檔案不会被刪除。",
-                                                   "cleared":  "已清除配置",
-                                                   "clearError":  "清除失敗"
-                                               },
-                                    "opml":  {
-                                                 "title":  "訂閱云備份",
-                                                 "intro":  "将訂閱列表手动備份为版本化快照，儲存到你的 WebDAV 伺服器。",
-                                                 "retention":  "保留版本",
-                                                 "retentionDesc":  "每次備份後刪除超出数量的旧版本",
-                                                 "retentionCount":  "{{count}} 份",
-                                                 "save":  "儲存備份設定",
-                                                 "saving":  "儲存中…",
-                                                 "saved":  "備份設定已儲存",
-                                                 "saveError":  "儲存失敗",
-                                                 "backupNow":  "立即備份",
-                                                 "backingUp":  "正在備份…",
-                                                 "backupSuccess":  "訂閱已備份",
-                                                 "pathNote":  "備份檔案会存到 {{path}}",
-                                                 "unavailable":  "請先在上方儲存 WebDAV 位址和密碼",
-                                                 "lastBackup":  "上次備份",
-                                                 "never":  "從未備份",
-                                                 "lastError":  "上次備份失敗：{{message}}",
-                                                 "history":  "可還原版本",
-                                                 "historyEmpty":  "遠端还没有可還原的備份。",
-                                                 "refresh":  "重新整理列表",
-                                                 "refreshing":  "重新整理中…",
-                                                 "unknownTime":  "未知時间",
-                                                 "restore":  "還原",
-                                                 "restoreWarning":  "将覆盖当前所有訂閱來源和分類，此操作不可撤销。",
-                                                 "restoreConfirm":  "確認還原",
-                                                 "restoring":  "正在還原…",
-                                                 "restoreSuccess":  "已還原 {{feeds}} 个訂閱來源，{{categories}} 个分類",
-                                                 "restoreError":  "還原備份失敗",
-                                                 "delete":  "刪除",
-                                                 "deleteWarning":  "此備份将從遠端永久刪除，無法還原。",
-                                                 "deleteConfirm":  "確認刪除",
-                                                 "deleting":  "正在刪除…",
-                                                 "deleteSuccess":  "遠端備份已刪除",
-                                                 "deleteError":  "刪除遠端備份失敗"
-                                             }
-                                },
-                     "data":  {
-                                  "title":  "資料管理",
-                                  "dbPath":  "資料庫位置",
-                                  "dbPathDesc":  "應用程式資料存储路徑",
-                                  "loading":  "載入中…",
-                                  "unavailable":  "（無法取得路徑）",
-                                  "clearCache":  "清理快取",
-                                  "clearCacheDesc":  "移除已讀且未星标的文章以释放空間",
-                                  "cacheEstimate":  "预计可释放 {{mb}} MB",
-                                  "clearCacheBtn":  "清理",
-                                  "clearCacheConfirm":  "確認清理",
-                                  "clearCacheResult":  "已清理 {{count}} 篇文章",
-                                  "clearCacheError":  "清理失敗",
-                                  "opml":  "OPML 訂閱",
-                                  "opmlDesc":  "匯入或匯出訂閱來源列表（不含文章）",
-                                  "import":  "匯入",
-                                  "export":  "匯出",
-                                  "importSuccess":  "匯入完成：新增 {{feeds}} 个訂閱來源，跳过 {{skipped}} 个重复，新增 {{categories}} 个資料夾。",
-                                  "importError":  "OPML 匯入失敗",
-                                  "exportSuccess":  "已匯出 OPML 訂閱檔案。",
-                                  "exportCancelled":  "已取消匯出。",
-                                  "exportError":  "OPML 匯出失敗",
-                                  "backup":  "匯出資料庫",
-                                  "backupDesc":  "匯出或還原完整資料庫（含文章、筆記、已讀狀態）",
-                                  "backupBtn":  "匯出",
-                                  "backupSuccess":  "資料庫已匯出。",
-                                  "backupCancelled":  "已取消匯出。",
-                                  "backupError":  "匯出失敗",
-                                  "restore":  "還原資料庫",
-                                  "restoreDesc":  "從備份檔案還原資料（将覆盖当前資料）",
-                                  "restoreBtn":  "還原",
-                                  "restoreSuccess":  "已匯入備份，請重新啟動應用程式以生效。",
-                                  "restoreCancelled":  "已取消還原。",
-                                  "restoreError":  "還原失敗"
-                              },
-                     "about":  {
-                                   "appName":  "Clip",
-                                   "version":  "版本 {{version}}",
-                                   "desc":  "簡單好用的跨平台 RSS 閱讀器",
-                                   "updateAvailable":  "新版本可用",
-                                   "changelogError":  "更新日志載入失敗",
-                                   "links":  {
-                                                 "sourceCode":  "Source Code (Github)",
-                                                 "reportBug":  "Report Bug",
-                                                 "license":  "MIT License",
-                                                 "changelog":  "Change Log"
-                                             }
-                               }
-                 },
-    "note":  {
-                 "title":  "筆記",
-                 "placeholder":  "写点筆記…（纯文本，支援 Markdown）",
-                 "saving":  "儲存中…",
-                 "saved":  "已儲存"
-             },
-    "feed":  {
-                 "add":  {
-                             "title":  "新增訂閱",
-                             "url":  "RSS / Atom 訂閱位址",
-                             "label":  "显示名稱",
-                             "folder":  "所属資料夾",
-                             "interval":  "更新间隔",
-                             "maxItems":  "最大条目数",
-                             "urlPlaceholder":  "輸入 RSS/Atom 位址或網站 URL",
-                             "paste":  "從剪貼簿貼上",
-                             "pasteFailed":  "無法读取剪貼簿內容",
-                             "clearUrl":  "清除链接",
-                             "labelPlaceholder":  "留空则使用來源名稱",
-                             "searching":  "正在查找訂閱來源…",
-                             "searchOk":  "已找到訂閱來源",
-                             "searchFailed":  "未找到訂閱來源",
-                             "adding":  "正在新增…",
-                             "added":  "新增成功"
-                         },
-                 "edit":  {
-                              "title":  "編輯訂閱來源",
-                              "url":  "訂閱位址",
-                              "label":  "標題",
-                              "folder":  "所属資料夾",
-                              "interval":  "更新间隔（分钟）",
-                              "maxItems":  "保留文章上限",
-                              "save":  "儲存",
-                              "saveError":  "儲存失敗",
-                              "cancel":  "取消",
-                              "delete":  "刪除訂閱",
-                              "deleteConfirm":  "確定要刪除此訂閱來源及其所有文章吗？此操作不可撤销。"
-                          }
-             },
-    "confirm":  {
-                    "confirm":  "確認",
-                    "cancel":  "取消"
-                },
-    "theme":  {
-                  "light":  "亮色",
-                  "dark":  "暗色",
-                  "sepia":  "护眼",
-                  "system":  "跟隨系統",
-                  "ariaLabel":  "当前主題：{{label}}，点击切换"
-              },
-    "key":  {
-                "space":  "空格",
-                "shiftSpace":  "Shift + 空格"
-            },
-    "time":  {
-                 "never":  "從未",
-                 "justNow":  "刚刚",
-                 "minutesAgo":  "{{count}} 分钟前",
-                 "hoursAgo":  "{{count}} 小時前",
-                 "daysAgo":  "{{count}} 天前"
-             },
-    "updater":  {
-                    "checking":  "正在檢查更新…",
-                    "contactingServer":  "正在連線更新伺服器…",
-                    "updateAvailable":  "有可用更新",
-                    "upToDate":  "已是最新版本",
-                    "downloading":  "正在下載更新",
-                    "startingDownload":  "開始下載…",
-                    "downloadProgress":  "{{pct}}% · {{written}} / {{total}}",
-                    "downloaded":  "已下載 {{written}}",
-                    "verifying":  "正在驗證更新",
-                    "checkingSignature":  "正在驗證簽章…",
-                    "installing":  "正在安裝更新",
-                    "unpacking":  "正在解壓縮並部署…",
-                    "updateReady":  "更新已就緒",
-                    "updateFailed":  "更新失敗",
-                    "errorOccurred":  "出現錯誤。",
-                    "close":  "關閉",
-                    "installUpdate":  "安裝更新",
-    "restartApply":  "重新啟動並套用",
-                    "tryAgain":  "重試",
-                    "openInBrowser":  "用瀏覽器下載",
-    "errorDuring":  "{{stage}}時發生錯誤：{{message}}",
-                    "errors":  {
-                                   "networkError":  "網路連線失敗，請檢查您的網路連線。",
-                                   "downloadFailed":  "下載更新套件失敗。",
-                                   "checksumMismatch":  "更新套件驗證失敗，檔案可能已損壞。",
-                   "invalidRelease":  "從伺服器收到的版本資訊無效。",
-                   "noAssets":  "找不到適用於您平台的更新套件。",
-                                   "permissionDenied":  "權限不足，請檢查檔案存取權限。",
-                                   "diskFull":  "磁碟空間不足，無法下載更新。",
-                                   "timeout":  "操作逾時，請稍後重試。"
-                               },
-                    "stages":  {
-                                   "check":  "檢查更新",
-                                   "download":  "下載",
-                                   "verify":  "驗證",
-                                   "install":  "安裝"
-                               }
-                },
-    "offline":  {
-                    "banner":  "离线模式 – 訂閱更新已暫停"
-                }
+  "toolbar": {
+    "search": {
+      "placeholder": "搜尋文章、筆記…"
+    },
+    "addFeed": "＋ 訂閱",
+    "focusMode": "專注模式",
+    "settings": "設定",
+    "clearSearch": "清除搜尋",
+    "searchHistory": "最近搜尋",
+    "clearSearchHistory": "清除歷史"
+  },
+  "sidebar": {
+    "title": "來源",
+    "allArticles": "全部文章",
+    "newFolder": "新增資料夾",
+    "lastUpdated": "上次更新：",
+    "contextMenu": {
+      "newFolder": "新增資料夾",
+      "addFeed": "新增訂閱",
+      "rename": "重新命名",
+      "edit": "編輯…",
+      "refresh": "重新整理訂閱",
+      "delete": "刪除",
+      "pause": "暫停更新",
+      "resume": "還原更新",
+      "deleteBatch": "批次刪除"
+    },
+    "deleteFeed": {
+      "title": "刪除訂閱來源",
+      "description": "確定刪除「{{title}}」吗？该來源下的全部文章也会被刪除，此操作不可撤销。",
+      "batchDescription": "確定刪除選中的 {{count}} 個訂閱來源嗎？其全部文章也会被刪除，此操作不可撤銷。",
+      "confirm": "刪除"
+    },
+    "batchDelete": {
+      "button": "刪除 ({{count}})",
+      "cancel": "取消"
+    },
+    "deleteFolder": {
+      "title": "刪除資料夾",
+      "description": "確定刪除資料夾「{{name}}」吗？其子資料夾也会被刪除，資料夾内的訂閱來源将变为未分類。",
+      "confirm": "刪除"
+    },
+    "chevron": {
+      "expand": "展开",
+      "collapse": "折叠"
+    },
+    "feedError": "訂閱來源取得失敗",
+    "refresh": "手动更新 (R)",
+    "addMenu": "新增菜单",
+    "toggleMultiSelect": "選擇或取消選擇，用於批次操作"
+  },
+  "article": {
+    "filter": {
+      "all": "全部",
+      "unread": "未讀",
+      "read": "已讀",
+      "starred": "星标",
+      "today": "今日"
+    },
+    "sort": {
+      "time": "時间",
+      "source": "來源",
+      "byTime": "按時间排序",
+      "bySource": "按來源排序"
+    },
+    "actions": {
+      "markAllRead": "全部標記为已讀",
+      "batchStar": "批量星标"
+    },
+    "searchResult": "找到 {{count}} 篇文章",
+    "empty": {
+      "noArticles": "暂无文章",
+      "noUnread": "暂无未讀文章",
+      "noRead": "暂无已讀文章",
+      "noStarred": "暂无星标文章",
+      "noToday": "今日暂无文章",
+      "noMatch": "未找到匹配「{{query}}」的文章"
+    }
+  },
+  "reader": {
+    "toolbar": {
+      "markUnread": "標記为未讀",
+      "markRead": "標記为已讀",
+      "star": "星标",
+      "unstar": "取消星标",
+      "note": "新增筆記",
+      "viewNote": "查看筆記",
+      "closeNote": "關閉筆記",
+      "openInBrowser": "在浏览器打开"
+    },
+    "settings": {
+      "title": "閱讀設定",
+      "font": "字型",
+      "fontSize": "字号",
+      "lineHeight": "行高",
+      "width": "宽度",
+      "background": "閱讀背景"
+    },
+    "font": {
+      "sans": "无衬线",
+      "serif": "衬线",
+      "mono": "等宽"
+    },
+    "size": {
+      "small": "小",
+      "medium": "中",
+      "large": "大"
+    },
+    "lineHeight": {
+      "compact": "紧凑",
+      "moderate": "適中",
+      "loose": "宽松"
+    },
+    "width": {
+      "narrow": "窄",
+      "wide": "宽",
+      "full": "全宽"
+    },
+    "background": {
+      "default": "跟隨",
+      "light": "亮",
+      "sepia": "护眼",
+      "dark": "暗"
+    },
+    "backgroundDesc": "閱讀区独立背景色，可与全局主題不同",
+    "empty": "選擇一篇文章以閱讀",
+    "loadingContent": "正在載入內容…",
+    "endOfContent": "已是全部內容",
+    "lightbox": {
+      "close": "關閉",
+      "zoomOut": "缩小",
+      "zoomIn": "放大",
+      "rotate": "逆時针旋转",
+      "reset": "复位",
+      "download": "下載圖片",
+      "saved": "已儲存",
+      "failed": "下載失敗"
+    }
+  },
+  "focus": {
+    "exit": "登出專注",
+    "empty": "未選擇文章"
+  },
+  "settings": {
+    "title": "設定",
+    "tabs": {
+      "general": "一般",
+      "reading": "閱讀",
+      "theme": "主題",
+      "notification": "通知",
+      "proxy": "代理伺服器",
+      "shortcuts": "快速鍵",
+      "backup": "備份",
+      "data": "資料管理",
+      "about": "關於"
+    },
+    "general": {
+      "title": "一般",
+      "updateInterval": "訂閱來源全局更新间隔",
+      "updateIntervalDesc": "统一設定所有訂閱來源的自动重新整理周期；选「手动」则全部停止自动重新整理",
+      "updateIntervalOptions": {
+        "15m": "15 分钟",
+        "30m": "30 分钟",
+        "1h": "1 小時",
+        "manual": "手动"
+      },
+      "maxItems": "每來源最大条目",
+      "maxItemsDesc": "新訂閱來源預設保留的最大文章数",
+      "itemsUnit": "篇",
+      "reduceMotion": "减弱动画效果",
+      "reduceMotionDesc": "關閉介面动画和过渡效果，提升无障碍体验",
+      "showFocusIndicator": "显示焦点指示器",
+      "showFocusIndicatorDesc": "键盤导航時显示焦点边框，帮助识别当前聚焦的元素",
+      "language": "语言",
+      "languageDesc": "介面显示语言"
+    },
+    "reading": {
+      "autoMarkRead": "自动標記已讀",
+      "autoMarkReadDesc": "文章打开後自动標記为已讀的延迟時间",
+      "autoMark": {
+        "immediate": "立即",
+        "2s": "2 秒",
+        "5s": "5 秒",
+        "off": "關閉"
+      }
+    },
+    "theme": {
+      "title": "主題",
+      "theme": "外观",
+      "themeDesc": "選擇 App 的外观",
+      "mode": {
+        "system": "跟隨系統",
+        "light": "亮色",
+        "dark": "暗色"
+      }
+    },
+    "notification": {
+      "title": "新文章通知",
+      "titleSection": "通知",
+      "modeDesc": "每篇：每条新文章一条；摘要：每次重新整理一条汇总",
+      "each": "每篇",
+      "summary": "摘要",
+      "off": "關閉",
+      "unreadBadge": "未讀角标",
+      "unreadBadgeDesc": "在程序坞图标上显示未讀文章数量",
+      "unreadBadgeWin": "讨人嫌的红点",
+      "unreadBadgeWinDesc": "有未讀文章時，在任务栏图标上显示一个红点"
+    },
+    "proxy": {
+      "title": "代理伺服器",
+      "host": "代理伺服器位址",
+      "hostDesc": "HTTP 代理伺服器的 IP 或主機名",
+      "port": "連接埠",
+      "test": "测试連線",
+      "testBtn": "测试",
+      "testing": "测试中…",
+      "success": "連線成功",
+      "failed": "連線失敗",
+      "error": "代理伺服器位址或連接埠無效",
+      "save": "儲存並應用程式",
+      "saving": "儲存中…",
+      "saved": "已儲存",
+      "saveError": "儲存失敗"
+    },
+    "shortcuts": {
+      "title": "快速鍵",
+      "groups": {
+        "general": "一般",
+        "reading": "閱讀",
+        "filter": "筛选"
+      },
+      "addFeed": "新增訂閱",
+      "openSettings": "打开設定",
+      "refreshSelected": "手动更新选中的訂閱來源",
+      "forceRefresh": "强制重新整理全部訂閱來源",
+      "focusSearch": "聚焦搜尋框",
+      "nextArticle": "下一篇文章（專注模式）",
+      "prevArticle": "上一篇文章（專注模式）",
+      "scrollDown": "向下翻页",
+      "scrollUp": "向上翻页",
+      "toggleFocus": "切换專注模式",
+      "exitFocus": "登出專注模式 / 關閉弹窗",
+      "filterAll": "全部文章",
+      "filterUnread": "未讀文章",
+      "filterStarred": "收藏文章"
+    },
+    "backup": {
+      "title": "訂閱備份",
+      "intro": "将訂閱列表備份到你自己的 WebDAV 伺服器。",
+      "webdav": {
+        "title": "WebDAV 配置",
+        "url": "伺服器位址",
+        "urlDesc": "必须以 https:// 开头，填到 WebDAV 根目錄（如 Nextcloud 形如 https://\u003c域名\u003e/remote.php/dav/files/\u003c使用者名\u003e/）",
+        "username": "使用者名",
+        "password": "密碼",
+        "passwordDesc": "坚果云与开了两步驗證的 Nextcloud 需要應用程式密碼，不能用登入密碼",
+        "passwordPlaceholder": "輸入密碼",
+        "passwordKeep": "已儲存，留空则不修改",
+        "test": "测试連線",
+        "testing": "测试中…",
+        "testSuccess": "連線正常",
+        "testFailed": "連線失敗",
+        "steps": {
+          "connect": "連線伺服器",
+          "mkcol": "建立備份目錄",
+          "write": "写入测试檔案"
+        },
+        "stepFailed": "{{step}}失敗",
+        "save": "儲存配置",
+        "saving": "儲存中…",
+        "saved": "已儲存",
+        "saveError": "儲存失敗",
+        "clear": "清除配置",
+        "clearConfirm": "確認清除",
+        "clearDesc": "刪除伺服器位址与密碼。遠端已備份的檔案不会被刪除。",
+        "cleared": "已清除配置",
+        "clearError": "清除失敗"
+      },
+      "opml": {
+        "title": "訂閱云備份",
+        "intro": "将訂閱列表手动備份为版本化快照，儲存到你的 WebDAV 伺服器。",
+        "retention": "保留版本",
+        "retentionDesc": "每次備份後刪除超出数量的旧版本",
+        "retentionCount": "{{count}} 份",
+        "save": "儲存備份設定",
+        "saving": "儲存中…",
+        "saved": "備份設定已儲存",
+        "saveError": "儲存失敗",
+        "backupNow": "立即備份",
+        "backingUp": "正在備份…",
+        "backupSuccess": "訂閱已備份",
+        "pathNote": "備份檔案会存到 {{path}}",
+        "unavailable": "請先在上方儲存 WebDAV 位址和密碼",
+        "lastBackup": "上次備份",
+        "never": "從未備份",
+        "lastError": "上次備份失敗：{{message}}",
+        "history": "可還原版本",
+        "historyEmpty": "遠端还没有可還原的備份。",
+        "refresh": "重新整理列表",
+        "refreshing": "重新整理中…",
+        "unknownTime": "未知時间",
+        "restore": "還原",
+        "restoreWarning": "将覆盖当前所有訂閱來源和分類，此操作不可撤销。",
+        "restoreConfirm": "確認還原",
+        "restoring": "正在還原…",
+        "restoreSuccess": "已還原 {{feeds}} 个訂閱來源，{{categories}} 个分類",
+        "restoreError": "還原備份失敗",
+        "delete": "刪除",
+        "deleteWarning": "此備份将從遠端永久刪除，無法還原。",
+        "deleteConfirm": "確認刪除",
+        "deleting": "正在刪除…",
+        "deleteSuccess": "遠端備份已刪除",
+        "deleteError": "刪除遠端備份失敗"
+      }
+    },
+    "data": {
+      "title": "資料管理",
+      "dbPath": "資料庫位置",
+      "dbPathDesc": "應用程式資料存储路徑",
+      "loading": "載入中…",
+      "unavailable": "（無法取得路徑）",
+      "clearCache": "清理快取",
+      "clearCacheDesc": "移除已讀且未星标的文章以释放空間",
+      "cacheEstimate": "预计可释放 {{mb}} MB",
+      "clearCacheBtn": "清理",
+      "clearCacheConfirm": "確認清理",
+      "clearCacheResult": "已清理 {{count}} 篇文章",
+      "clearCacheError": "清理失敗",
+      "opml": "OPML 訂閱",
+      "opmlDesc": "匯入或匯出訂閱來源列表（不含文章）",
+      "import": "匯入",
+      "export": "匯出",
+      "importLocal": "本機檔案",
+      "importRemote": "遠端連結",
+      "importUrlLabel": "遠端 OPML 位址",
+      "importUrlDesc": "輸入 .opml 檔案的直接連結",
+      "importUrlPlaceholder": "https://example.com/feeds.opml",
+      "importSuccess": "匯入完成：新增 {{feeds}} 个訂閱來源，跳过 {{skipped}} 个重复，新增 {{categories}} 个資料夾。",
+      "importError": "OPML 匯入失敗",
+      "exportSuccess": "已匯出 OPML 訂閱檔案。",
+      "exportCancelled": "已取消匯出。",
+      "exportError": "OPML 匯出失敗",
+      "backup": "匯出資料庫",
+      "backupDesc": "匯出或還原完整資料庫（含文章、筆記、已讀狀態）",
+      "backupBtn": "匯出",
+      "backupSuccess": "資料庫已匯出。",
+      "backupCancelled": "已取消匯出。",
+      "backupError": "匯出失敗",
+      "restore": "還原資料庫",
+      "restoreDesc": "從備份檔案還原資料（将覆盖当前資料）",
+      "restoreBtn": "還原",
+      "restoreSuccess": "已匯入備份，請重新啟動應用程式以生效。",
+      "restoreCancelled": "已取消還原。",
+      "restoreError": "還原失敗"
+    },
+    "about": {
+      "appName": "Clip",
+      "version": "版本 {{version}}",
+      "desc": "簡單好用的跨平台 RSS 閱讀器",
+      "updateAvailable": "新版本可用",
+      "changelogError": "更新日志載入失敗",
+      "links": {
+        "sourceCode": "Source Code (Github)",
+        "reportBug": "Report Bug",
+        "license": "MIT License",
+        "changelog": "Change Log"
+      }
+    }
+  },
+  "note": {
+    "title": "筆記",
+    "placeholder": "写点筆記…（纯文本，支援 Markdown）",
+    "saving": "儲存中…",
+    "saved": "已儲存"
+  },
+  "feed": {
+    "add": {
+      "title": "新增訂閱",
+      "url": "RSS / Atom 訂閱位址",
+      "label": "显示名稱",
+      "folder": "所属資料夾",
+      "interval": "更新间隔",
+      "maxItems": "最大条目数",
+      "urlPlaceholder": "輸入 RSS/Atom 位址或網站 URL",
+      "paste": "從剪貼簿貼上",
+      "pasteFailed": "無法读取剪貼簿內容",
+      "clearUrl": "清除链接",
+      "labelPlaceholder": "留空则使用來源名稱",
+      "searching": "正在查找訂閱來源…",
+      "searchOk": "已找到訂閱來源",
+      "searchFailed": "未找到訂閱來源",
+      "adding": "正在新增…",
+      "added": "新增成功"
+    },
+    "edit": {
+      "title": "編輯訂閱來源",
+      "url": "訂閱位址",
+      "label": "標題",
+      "folder": "所属資料夾",
+      "interval": "更新间隔（分钟）",
+      "maxItems": "保留文章上限",
+      "save": "儲存",
+      "saveError": "儲存失敗",
+      "cancel": "取消",
+      "delete": "刪除訂閱",
+      "deleteConfirm": "確定要刪除此訂閱來源及其所有文章吗？此操作不可撤销。"
+    }
+  },
+  "confirm": {
+    "confirm": "確認",
+    "cancel": "取消"
+  },
+  "theme": {
+    "light": "亮色",
+    "dark": "暗色",
+    "sepia": "护眼",
+    "system": "跟隨系統",
+    "ariaLabel": "当前主題：{{label}}，点击切换"
+  },
+  "key": {
+    "space": "空格",
+    "shiftSpace": "Shift + 空格"
+  },
+  "time": {
+    "never": "從未",
+    "justNow": "刚刚",
+    "minutesAgo": "{{count}} 分钟前",
+    "hoursAgo": "{{count}} 小時前",
+    "daysAgo": "{{count}} 天前"
+  },
+  "updater": {
+    "checking": "正在檢查更新…",
+    "contactingServer": "正在連線更新伺服器…",
+    "updateAvailable": "有可用更新",
+    "upToDate": "已是最新版本",
+    "downloading": "正在下載更新",
+    "startingDownload": "開始下載…",
+    "downloadProgress": "{{pct}}% · {{written}} / {{total}}",
+    "downloaded": "已下載 {{written}}",
+    "verifying": "正在驗證更新",
+    "checkingSignature": "正在驗證簽章…",
+    "installing": "正在安裝更新",
+    "unpacking": "正在解壓縮並部署…",
+    "updateReady": "更新已就緒",
+    "updateFailed": "更新失敗",
+    "errorOccurred": "出現錯誤。",
+    "close": "關閉",
+    "installUpdate": "安裝更新",
+    "restartApply": "重新啟動並套用",
+    "tryAgain": "重試",
+    "openInBrowser": "用瀏覽器下載",
+    "errorDuring": "{{stage}}時發生錯誤：{{message}}",
+    "errors": {
+      "networkError": "網路連線失敗，請檢查您的網路連線。",
+      "downloadFailed": "下載更新套件失敗。",
+      "checksumMismatch": "更新套件驗證失敗，檔案可能已損壞。",
+      "invalidRelease": "從伺服器收到的版本資訊無效。",
+      "noAssets": "找不到適用於您平台的更新套件。",
+      "permissionDenied": "權限不足，請檢查檔案存取權限。",
+      "diskFull": "磁碟空間不足，無法下載更新。",
+      "timeout": "操作逾時，請稍後重試。"
+    },
+    "stages": {
+      "check": "檢查更新",
+      "download": "下載",
+      "verify": "驗證",
+      "install": "安裝"
+    }
+  },
+  "offline": {
+    "banner": "离线模式 – 訂閱更新已暫停"
+  }
 }
-

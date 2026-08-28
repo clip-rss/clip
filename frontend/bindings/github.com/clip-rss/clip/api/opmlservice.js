@@ -44,5 +44,22 @@ export function ImportOPML(content) {
     }));
 }
 
+/**
+ * ImportOPMLFromURL 拉取远程 OPML 文件并导入。
+ * 
+ * 与 ImportOPML 只差内容来源：取到文本后交给 ImportOPML 走同一条导入路径，
+ * 因此解析、建分类、去重跳过的语义完全一致。
+ * 
+ * 用 Client.Fetch 而非 Client.Get：前者的 Accept 头含 application/xml、text/xml
+ * （OPML 是 XML），且 10 MiB 的响应上限对订阅列表足够；后者面向图片下载。
+ * @param {string} rawURL
+ * @returns {$CancellablePromise<$models.ImportResult>}
+ */
+export function ImportOPMLFromURL(rawURL) {
+    return $Call.ByID(293801034, rawURL).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType0($result);
+    }));
+}
+
 // Private type creation functions
 const $$createType0 = $models.ImportResult.createFrom;

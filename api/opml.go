@@ -1,24 +1,34 @@
 package api
 
 import (
+	"context"
 	"errors"
+	"net/url"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/clip-rss/clip/internal/fetcher"
 	"github.com/clip-rss/clip/internal/i18n"
 	"github.com/clip-rss/clip/internal/opml"
 	"github.com/clip-rss/clip/internal/store"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
+// opmlFetchTimeout 远程拉取 OPML 的整体超时（含 Client 内部的退避重试）。
+const opmlFetchTimeout = 30 * time.Second
+
 // OPMLService OPML 导入导出相关的绑定方法。
 type OPMLService struct {
 	store *store.Store
+	// http 用于拉取远程 OPML 文件。复用抓取用的客户端以共享超时、重试、代理与响应体上限；
+	// 为 nil 时（如单测）远程导入不可用，本地导入不受影响。
+	http *fetcher.Client
 }
 
 // NewOPMLService 创建 OPMLService。
-func NewOPMLService(st *store.Store) *OPMLService {
-	return &OPMLService{store: st}
+func NewOPMLService(st *store.Store, client *fetcher.Client) *OPMLService {
+	return &OPMLService{store: st, http: client}
 }
 
 // ImportResult 导入结果统计。
@@ -45,6 +55,45 @@ func (s *OPMLService) ImportOPML(content string) (ImportResult, error) {
 		return res, err
 	}
 	return res, nil
+}
+
+// ImportOPMLFromURL 拉取远程 OPML 文件并导入。
+//
+// 与 ImportOPML 只差内容来源：取到文本后交给 ImportOPML 走同一条导入路径，
+// 因此解析、建分类、去重跳过的语义完全一致。
+//
+// 用 Client.Fetch 而非 Client.Get：前者的 Accept 头含 application/xml、text/xml
+// （OPML 是 XML），且 10 MiB 的响应上限对订阅列表足够；后者面向图片下载。
+func (s *OPMLService) ImportOPMLFromURL(rawURL string) (ImportResult, error) {
+	lang := backendLanguage(s.store)
+	rawURL = strings.TrimSpace(rawURL)
+	if rawURL == "" {
+		return ImportResult{}, errors.New(i18n.T(lang, "opml.urlEmpty"))
+	}
+	if !isHTTPURL(rawURL) {
+		return ImportResult{}, errors.New(i18n.T(lang, "opml.urlInvalid"))
+	}
+	if s.http == nil {
+		return ImportResult{}, errors.New(i18n.T(lang, "opml.clientUnavailable"))
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), opmlFetchTimeout)
+	defer cancel()
+	res, err := s.http.Fetch(ctx, rawURL, fetcher.ConditionalHeaders{})
+	if err != nil {
+		return ImportResult{}, i18n.Error(lang, "opml.fetchFailed", err)
+	}
+	// 空响应（含服务端无视空校验头硬回 304 的情形）交给 ImportOPML 的空内容分支报错。
+	return s.ImportOPML(string(res.Body))
+}
+
+// isHTTPURL 仅接受带主机名的 http/https 地址，挡掉 file:// 等本地协议与相对路径。
+func isHTTPURL(raw string) bool {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return false
+	}
+	return (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
 }
 
 // importOutlines 递归导入大纲：feed 节点建源，分组节点建分类后递归其子节点。

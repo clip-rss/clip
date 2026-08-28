@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from 'i18next'
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import {
   useArticleStore,
   useReaderStore,
@@ -15,10 +16,12 @@ import {
   openURL,
   exportOpmlToFile,
   importOpmlFromFile,
+  importOpmlFromURL,
   showToast,
   toApiError,
 } from '../../Utils'
 import type {
+  ImportResult,
   ReaderBackground,
   ReaderFontFamily,
   ReaderFontSize,
@@ -313,6 +316,25 @@ export function NotificationSection(): JSX.Element {
 
 /* ============================ 数据管理 ============================ */
 
+/** 「导入」下拉触发器的展开提示。按钮不改光标，靠这个图标表明可展开。 */
+function ChevronDownIcon(): JSX.Element {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  )
+}
+
 export function DataSection(): JSX.Element {
   const { t } = useTranslation()
   const [dbPath, setDbPath] = useState('')
@@ -321,6 +343,9 @@ export function DataSection(): JSX.Element {
   const [confirmClear, setConfirmClear] = useState(false)
   const [busy, setBusy] = useState(false)
   const importRef = useRef<HTMLInputElement>(null)
+  // 远程导入的地址只存组件 state：不持久化，关闭设置即丢弃。
+  const [remoteOpen, setRemoteOpen] = useState(false)
+  const [remoteUrl, setRemoteUrl] = useState('')
 
   function loadCacheStats(): void {
     SettingsService.GetCacheStats()
@@ -364,15 +389,13 @@ export function DataSection(): JSX.Element {
     }
   }
 
-  async function handleImportFile(
-    e: React.ChangeEvent<HTMLInputElement>,
-  ): Promise<void> {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
+  // 本地文件与远程地址两条导入路径的公共尾巴：刷新侧栏 + 统一的成功/失败 toast。
+  async function runImport(
+    importer: () => Promise<ImportResult>,
+  ): Promise<boolean> {
     setBusy(true)
     try {
-      const res = await importOpmlFromFile(file)
+      const res = await importer()
       await useSidebarStore.getState().load()
       showToast(
         t('settings.data.importSuccess', {
@@ -382,14 +405,39 @@ export function DataSection(): JSX.Element {
         }),
         'success',
       )
+      return true
     } catch (err) {
       showToast(
         `${t('settings.data.importError')}：${toApiError(err)}`,
         'error',
       )
+      return false
     } finally {
       setBusy(false)
     }
+  }
+
+  async function handleImportFile(
+    e: React.ChangeEvent<HTMLInputElement>,
+  ): Promise<void> {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    await runImport(() => importOpmlFromFile(file))
+  }
+
+  async function handleImportRemote(): Promise<void> {
+    const url = remoteUrl.trim()
+    if (!url) return
+    // 失败时保留输入内容，方便用户改地址重试。
+    if (await runImport(() => importOpmlFromURL(url))) {
+      closeRemoteImport()
+    }
+  }
+
+  function closeRemoteImport(): void {
+    setRemoteOpen(false)
+    setRemoteUrl('')
   }
 
   async function handleExportOpml(): Promise<void> {
@@ -494,14 +542,42 @@ export function DataSection(): JSX.Element {
         description={t('settings.data.opmlDesc')}
       >
         <div className={styles.btnGroup}>
-          <button
-            type="button"
-            className={styles.btn}
-            onClick={() => importRef.current?.click()}
-            disabled={busy}
-          >
-            {t('settings.data.import')}
-          </button>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnMenu}`}
+                disabled={busy}
+              >
+                {t('settings.data.import')}
+                <ChevronDownIcon />
+              </button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                className={styles.menuContent}
+                align="start"
+                sideOffset={4}
+              >
+                <DropdownMenu.Item
+                  className={styles.menuItem}
+                  // 延后一帧再点隐藏的 file input：菜单在 onSelect 同一 tick 里卸载并
+                  // 把焦点还给 trigger，同步触发有可能让原生文件对话框被吞掉。
+                  onSelect={() =>
+                    requestAnimationFrame(() => importRef.current?.click())
+                  }
+                >
+                  {t('settings.data.importLocal')}
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className={styles.menuItem}
+                  onSelect={() => setRemoteOpen(true)}
+                >
+                  {t('settings.data.importRemote')}
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
           <button
             type="button"
             className={styles.btn}
@@ -519,6 +595,55 @@ export function DataSection(): JSX.Element {
           onChange={handleImportFile}
         />
       </SettingRow>
+
+      {remoteOpen ? (
+        <SettingRow
+          label={t('settings.data.importUrlLabel')}
+          description={t('settings.data.importUrlDesc')}
+        >
+          <div className={styles.remoteImport}>
+            <input
+              className={`${styles.input} ${styles.inputUrl}`}
+              type="url"
+              value={remoteUrl}
+              onChange={(e) => setRemoteUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  void handleImportRemote()
+                  return
+                }
+                if (e.key === 'Escape') {
+                  // 必须拦住冒泡：否则 Escape 会一路传到 Radix Dialog 把设置面板关掉。
+                  e.stopPropagation()
+                  closeRemoteImport()
+                }
+              }}
+              placeholder={t('settings.data.importUrlPlaceholder')}
+              spellCheck={false}
+              autoComplete="off"
+              autoFocus
+            />
+            <div className={styles.btnGroup}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={handleImportRemote}
+                disabled={busy || !remoteUrl.trim()}
+              >
+                {t('settings.data.import')}
+              </button>
+              <button
+                type="button"
+                className={styles.btn}
+                onClick={closeRemoteImport}
+                disabled={busy}
+              >
+                {t('confirm.cancel')}
+              </button>
+            </div>
+          </div>
+        </SettingRow>
+      ) : null}
 
       <SettingRow
         label={t('settings.data.backup')}

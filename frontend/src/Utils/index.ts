@@ -19,7 +19,7 @@ export {
 } from './Api'
 
 // OPML 订阅导入/导出
-export { importOpmlFromFile, exportOpmlToFile } from './Opml'
+export { importOpmlFromFile, importOpmlFromURL, exportOpmlToFile } from './Opml'
 
 // 树构建与时间格式化
 export { buildFeedTree, flattenCategories } from './FeedTree'

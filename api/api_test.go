@@ -488,7 +488,7 @@ const importOPML = `<?xml version="1.0"?>
 
 func TestOPMLImportExportRoundTrip(t *testing.T) {
 	st := newTestStore(t)
-	svc := NewOPMLService(st)
+	svc := NewOPMLService(st, nil)
 
 	res, err := svc.ImportOPML(importOPML)
 	if err != nil {
@@ -509,7 +509,7 @@ func TestOPMLImportExportRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("buildOPML: %v", err)
 	}
-	reimport := NewOPMLService(newTestStore(t))
+	reimport := NewOPMLService(newTestStore(t), nil)
 	back, err := reimport.ImportOPML(out)
 	if err != nil {
 		t.Fatalf("re-parse exported OPML: %v", err)
@@ -521,6 +521,76 @@ func TestOPMLImportExportRoundTrip(t *testing.T) {
 	if _, err := svc.ImportOPML("   "); err == nil {
 		t.Error("expected empty content error")
 	}
+}
+
+// TestImportOPMLFromURL 覆盖远程导入：正常直链复用本地导入的统计语义，
+// 非法地址在发请求前就被挡住，失败路径都返回错误而不是 panic。
+func TestImportOPMLFromURL(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/feeds.opml", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/xml")
+		_, _ = w.Write([]byte(importOPML))
+	})
+	mux.HandleFunc("/empty.opml", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	t.Run("valid url imports", func(t *testing.T) {
+		svc := NewOPMLService(newTestStore(t), fetcher.NewClient())
+		res, err := svc.ImportOPMLFromURL(srv.URL + "/feeds.opml")
+		if err != nil {
+			t.Fatalf("ImportOPMLFromURL: %v", err)
+		}
+		if res.Categories != 1 || res.Feeds != 2 || res.Skipped != 0 {
+			t.Errorf("import result = %+v, want 1 cat / 2 feeds / 0 skipped", res)
+		}
+
+		// 再次导入同一地址应全部跳过，与本地导入语义一致。
+		again, err := svc.ImportOPMLFromURL(srv.URL + "/feeds.opml")
+		if err != nil {
+			t.Fatalf("re-import: %v", err)
+		}
+		if again.Feeds != 0 || again.Skipped != 2 {
+			t.Errorf("re-import = %+v, want 0 feeds / 2 skipped", again)
+		}
+	})
+
+	t.Run("rejects bad urls", func(t *testing.T) {
+		svc := NewOPMLService(newTestStore(t), fetcher.NewClient())
+		for _, raw := range []string{
+			"", "   ",
+			"file:///etc/passwd",
+			"ftp://example.com/feeds.opml",
+			"not-a-url",
+			"https://", // 缺主机名
+		} {
+			if _, err := svc.ImportOPMLFromURL(raw); err == nil {
+				t.Errorf("ImportOPMLFromURL(%q) should fail", raw)
+			}
+		}
+	})
+
+	t.Run("propagates fetch and parse failures", func(t *testing.T) {
+		svc := NewOPMLService(newTestStore(t), fetcher.NewClient())
+		if _, err := svc.ImportOPMLFromURL(srv.URL + "/missing.opml"); err == nil {
+			t.Error("expected error for 404 response")
+		}
+		if _, err := svc.ImportOPMLFromURL(srv.URL + "/empty.opml"); err == nil {
+			t.Error("expected error for empty body")
+		}
+	})
+
+	t.Run("nil client reports unavailable", func(t *testing.T) {
+		svc := NewOPMLService(newTestStore(t), nil)
+		if _, err := svc.ImportOPMLFromURL(srv.URL + "/feeds.opml"); err == nil {
+			t.Error("expected error when HTTP client is missing")
+		}
+	})
 }
 
 func TestSystemServiceSetOnline(t *testing.T) {
