@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from 'i18next'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
+import { Clipboard } from '@wailsio/runtime'
 import {
   useArticleStore,
   useReaderStore,
@@ -335,6 +336,23 @@ function ChevronDownIcon(): JSX.Element {
   )
 }
 
+function CloseIcon(): JSX.Element {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  )
+}
+
 export function DataSection(): JSX.Element {
   const { t } = useTranslation()
   const [dbPath, setDbPath] = useState('')
@@ -346,6 +364,21 @@ export function DataSection(): JSX.Element {
   // 远程导入的地址只存组件 state：不持久化，关闭设置即丢弃。
   const [remoteOpen, setRemoteOpen] = useState(false)
   const [remoteUrl, setRemoteUrl] = useState('')
+  const remoteUrlRef = useRef<HTMLInputElement>(null)
+
+  function clearRemoteUrl(): void {
+    setRemoteUrl('')
+    remoteUrlRef.current?.focus()
+  }
+
+  async function pasteRemoteUrl(): Promise<void> {
+    try {
+      setRemoteUrl(await Clipboard.Text())
+    } catch {
+      showToast(t('feed.add.pasteFailed'), 'error')
+    }
+    remoteUrlRef.current?.focus()
+  }
 
   function loadCacheStats(): void {
     SettingsService.GetCacheStats()
@@ -439,7 +472,6 @@ export function DataSection(): JSX.Element {
     setRemoteOpen(false)
     setRemoteUrl('')
   }
-
   async function handleExportOpml(): Promise<void> {
     try {
       const ok = await exportOpmlToFile()
@@ -602,27 +634,53 @@ export function DataSection(): JSX.Element {
           description={t('settings.data.importUrlDesc')}
         >
           <div className={styles.remoteImport}>
-            <input
-              className={`${styles.input} ${styles.inputUrl}`}
-              type="url"
-              value={remoteUrl}
-              onChange={(e) => setRemoteUrl(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  void handleImportRemote()
-                  return
-                }
-                if (e.key === 'Escape') {
-                  // 必须拦住冒泡：否则 Escape 会一路传到 Radix Dialog 把设置面板关掉。
-                  e.stopPropagation()
-                  closeRemoteImport()
-                }
-              }}
-              placeholder={t('settings.data.importUrlPlaceholder')}
-              spellCheck={false}
-              autoComplete="off"
-              autoFocus
-            />
+            <div className={styles.urlInputWrap}>
+              <input
+                ref={remoteUrlRef}
+                className={`${styles.input} ${styles.inputUrl}`}
+                type="url"
+                value={remoteUrl}
+                onChange={(e) => setRemoteUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    void handleImportRemote()
+                    return
+                  }
+                  if (e.key === 'Escape') {
+                    // 必须拦住冒泡：否则 Escape 会一路传到 Radix Dialog 把设置面板关掉。
+                    e.stopPropagation()
+                    closeRemoteImport()
+                  }
+                }}
+                placeholder={t('settings.data.importUrlPlaceholder')}
+                spellCheck={false}
+                autoComplete="off"
+                autoFocus
+              />
+              {remoteUrl ? (
+                <button
+                  type="button"
+                  className={styles.urlAction}
+                  onClick={clearRemoteUrl}
+                  disabled={busy}
+                  title={t('feed.add.clearUrl')}
+                  aria-label={t('feed.add.clearUrl')}
+                >
+                  <CloseIcon />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.urlAction}
+                  onClick={() => void pasteRemoteUrl()}
+                  disabled={busy}
+                  title={t('feed.add.paste')}
+                  aria-label={t('feed.add.paste')}
+                >
+                  <span className={styles.clipboardIcon} aria-hidden="true" />
+                </button>
+              )}
+            </div>
             <div className={styles.btnGroup}>
               <button
                 type="button"

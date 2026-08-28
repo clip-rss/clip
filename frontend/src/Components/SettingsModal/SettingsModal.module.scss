@@ -490,6 +490,55 @@
   align-items: flex-end;
 }
 
+/* URL 输入框的包裹层：给粘贴/清空按钮留定位基准。 */
+.urlInputWrap {
+  position: relative;
+  width: 100%;
+}
+
+.urlAction {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  transform: translateY(-50%);
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+
+  &:hover:not(:disabled) {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+}
+
+.clipboardIcon {
+  width: 15px;
+  height: 15px;
+  background-color: currentColor;
+  -webkit-mask: url('/clipboard.svg') center / contain no-repeat;
+  mask: url('/clipboard.svg') center / contain no-repeat;
+}
+
 .feedback {
   margin-top: 8px;
   font-size: 12px;
@@ -626,9 +675,10 @@
   }
 }
 
-/* URL 输入框：默认的 160px 装不下一条完整地址。 */
+/* URL 输入框：默认的 160px 装不下一条完整地址；右侧留给粘贴/清空按钮。 */
 .inputUrl {
-  width: 280px;
+  width: 100%;
+  padding-right: 44px;
 }
 
 /* ===== 按钮行 ===== */
