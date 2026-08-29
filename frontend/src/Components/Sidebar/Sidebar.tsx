@@ -200,9 +200,6 @@ function Sidebar(props: SidebarProps): JSX.Element {
           <div className={styles.deadGroup}>
             {/* 纯标签组头：分区边界，不可选中；组内源各自可点。 */}
             <div className={styles.deadGroupHeader}>
-              <span className={styles.errorMark} aria-hidden="true">
-                ⚠
-              </span>
               <span className={styles.deadGroupTitle}>
                 {t('sidebar.deadFeeds')}
               </span>

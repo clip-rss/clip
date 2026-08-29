@@ -19,7 +19,7 @@ interface LayoutState {
   closeNotePanel: () => void
 }
 
-const SIDEBAR_MIN = 180
+const SIDEBAR_MIN = 200
 const SIDEBAR_MAX = 400
 const SIDEBAR_DEFAULT = 260
 
