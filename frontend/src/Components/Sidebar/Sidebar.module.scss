@@ -258,47 +258,6 @@
   border-radius: var(--radius-button);
 }
 
-/* 无法更新的源分组：danger 色调描边的独立容器，与正常订阅在视觉上隔离；
-   组头是纯标签（不可选中），组内源各自可点。 */
-.deadGroup {
-  margin: 6px 4px 4px;
-  padding: 2px 4px 4px;
-  border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
-  border-radius: var(--radius-button);
-}
-
-.deadGroupHeader {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px 4px;
-  font-style: italic;
-  user-select: none;
-
-}
-
-.deadGroupTitle {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--danger);
-}
-
-.deadGroupCount {
-  flex-shrink: 0;
-  padding: 0 6px;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--danger);
-  background-color: color-mix(in srgb, var(--danger) 10%, transparent);
-  border-radius: 999px;
-  line-height: 16px;
-}
-
 /* ===== 底部状态栏 ===== */
 .footer {
   display: flex;

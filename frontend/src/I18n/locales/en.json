@@ -13,7 +13,6 @@
   "sidebar": {
     "title": "Feeds",
     "allArticles": "All Articles",
-    "deadFeeds": "Unreachable Feeds",
     "newFolder": "New Folder",
     "lastUpdated": "Last updated: ",
     "contextMenu": {

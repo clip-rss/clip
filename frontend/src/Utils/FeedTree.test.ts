@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  buildFeedTree,
-  flattenCategories,
-  DEAD_FEED_THRESHOLD,
-  isDeadFeed,
-} from './FeedTree'
+import { buildFeedTree, flattenCategories } from './FeedTree'
 import type { Category, FeedWithUnread } from '../Types'
 
 function cat(
@@ -119,40 +114,6 @@ describe('buildFeedTree', () => {
     const tree = buildFeedTree(categories, feeds)
     const titles = tree.roots[0].feeds.map((f) => f.title)
     expect(titles).toEqual(['苹果', '香蕉'].sort((a, b) => a.localeCompare(b)))
-  })
-
-  it('连续失败达阈值的源移入 dead，并从分类与未分类中消失', () => {
-    const categories = [cat(1, '科技')]
-    const feeds = [
-      { ...feed(1, '死源', 1, 4), errorCount: DEAD_FEED_THRESHOLD },
-      feed(2, '活源', 1, 5),
-      { ...feed(3, '死掉的未分类源', null, 1), errorCount: 9 },
-    ]
-    const tree = buildFeedTree(categories, feeds)
-
-    expect(tree.dead.map((f) => f.id).sort()).toEqual([1, 3])
-    expect(tree.roots[0].feeds.map((f) => f.id)).toEqual([2])
-    // 科技未读不再含死源的 4；总数仍含全部未读
-    expect(tree.roots[0].unreadCount).toBe(5)
-    expect(tree.totalUnread).toBe(10)
-  })
-
-  it('未达阈值或已暂停的源不判死', () => {
-    const below = {
-      ...feed(1, '差点', 0, 0),
-      errorCount: DEAD_FEED_THRESHOLD - 1,
-    }
-    const paused = {
-      ...feed(2, '暂停', 0, 0),
-      errorCount: 99,
-      status: 'paused',
-    }
-    expect(isDeadFeed(below)).toBe(false)
-    expect(isDeadFeed(paused)).toBe(false)
-
-    const tree = buildFeedTree([], [below, paused])
-    expect(tree.dead).toHaveLength(0)
-    expect(tree.uncategorized).toHaveLength(2)
   })
 })
 
