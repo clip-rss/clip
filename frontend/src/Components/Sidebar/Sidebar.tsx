@@ -9,9 +9,11 @@ import {
   formatRelativeTime,
   latestUpdated,
   onFeedError,
+  onFeedRefreshing,
   onItemsUpdated,
   showToast,
 } from '../../Utils'
+import type { FeedRefreshingPayload } from '../../Types/Events'
 import FolderItem from './FolderItem'
 import FeedItem from './FeedItem'
 import UnreadBadge from './UnreadBadge'
@@ -50,8 +52,12 @@ function Sidebar(props: SidebarProps): JSX.Element {
   // 初次加载 + 订阅后端事件，新文章/抓取错误时刷新未读与结构
   useEffect(() => {
     load()
-    const offItems = onItemsUpdated(() => load())
+    const offItems = onItemsUpdated((payload) => {
+      useSidebarStore.getState().stopRefreshing(payload.feedId)
+      load()
+    })
     const offError = onFeedError((payload) => {
+      useSidebarStore.getState().stopRefreshing(payload.feedId)
       // 从当前 store 中查出订阅源名称作为上下文
       const feed = useSidebarStore
         .getState()
@@ -60,9 +66,13 @@ function Sidebar(props: SidebarProps): JSX.Element {
       showToast(`${prefix}${t('sidebar.feedError')}：${payload.error}`, 'error')
       load()
     })
+    const offRefreshing = onFeedRefreshing((payload: FeedRefreshingPayload) => {
+      useSidebarStore.getState().startRefreshing(payload.feedId)
+    })
     return () => {
       offItems()
       offError()
+      offRefreshing()
     }
   }, [load])
 

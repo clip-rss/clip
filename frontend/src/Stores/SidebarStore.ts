@@ -13,6 +13,8 @@ interface SidebarState {
   multiSelectIds: Set<number>
   /** 批量选择模式：开启后 feed 行显示复选框，顶部出现「删除(n)/取消」。 */
   batchMode: boolean
+  /** 当前正在刷新的订阅源 id 集合。 */
+  refreshingFeeds: Set<number>
   loading: boolean
   error: string | null
 
@@ -39,6 +41,10 @@ interface SidebarState {
   pauseFeed: (id: number) => Promise<void>
   resumeFeed: (id: number) => Promise<void>
   refreshFeed: (id: number) => Promise<void>
+  /** 标记某订阅源开始刷新（由 feed:refreshing 事件触发）。 */
+  startRefreshing: (id: number) => void
+  /** 标记某订阅源刷新结束。 */
+  stopRefreshing: (id: number) => void
   /** 把订阅源移入分类；categoryId 为 0 表示移出到「未分类」。 */
   moveFeed: (feedId: number, categoryId: number) => Promise<void>
 
@@ -47,6 +53,12 @@ interface SidebarState {
   /** 强制全量刷新（忽略条件 GET）。 */
   forceRefreshAll: () => Promise<void>
 }
+
+/** 超时 30 秒后自动清除正在刷新的标记，防止 spinner 卡死。 */
+const REFRESH_TIMEOUT_MS = 30_000
+
+/** feed.id → timer handle，用于超时自动清除 refreshingFeeds。 */
+const refreshingTimers = new Map<number, ReturnType<typeof setTimeout>>()
 
 export const useSidebarStore = create<SidebarState>()(
   persist(
@@ -57,6 +69,7 @@ export const useSidebarStore = create<SidebarState>()(
       expanded: new Set<number>(),
       multiSelectIds: new Set<number>(),
       batchMode: false,
+      refreshingFeeds: new Set<number>(),
       loading: false,
       error: null,
 
@@ -229,6 +242,39 @@ export const useSidebarStore = create<SidebarState>()(
         } catch (err) {
           set({ error: toApiError(err) })
         }
+      },
+
+      startRefreshing(id) {
+        // 清除前一次可能残留的超时（例如后端 304 后未发事件，人工二次刷新）
+        const existing = refreshingTimers.get(id)
+        if (existing) clearTimeout(existing)
+
+        refreshingTimers.set(
+          id,
+          setTimeout(() => {
+            get().stopRefreshing(id)
+          }, REFRESH_TIMEOUT_MS),
+        )
+
+        set((s) => {
+          const next = new Set(s.refreshingFeeds)
+          next.add(id)
+          return { refreshingFeeds: next }
+        })
+      },
+
+      stopRefreshing(id) {
+        const timer = refreshingTimers.get(id)
+        if (timer) {
+          clearTimeout(timer)
+          refreshingTimers.delete(id)
+        }
+
+        set((s) => {
+          const next = new Set(s.refreshingFeeds)
+          next.delete(id)
+          return { refreshingFeeds: next }
+        })
       },
     }),
     {

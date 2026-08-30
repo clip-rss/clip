@@ -8,7 +8,7 @@ import { EditFeedModal } from '../EditFeedModal'
 import UnreadBadge from './UnreadBadge'
 import ConfirmDialog from './ConfirmDialog'
 import RenameInput from './RenameInput'
-import { GlobeIcon, PauseIcon } from './Icons'
+import { GlobeIcon, PauseIcon, SpinnerIcon } from './Icons'
 import { rowPaddingLeft, FEED_DRAG_TYPE } from './layout'
 import styles from './Sidebar.module.scss'
 
@@ -42,6 +42,7 @@ function FeedItem(props: FeedItemProps): JSX.Element {
   const paused = feed.status === 'paused'
   const hasError =
     feed.status === 'error' || (feed.errorCount > 0 && feed.lastError)
+  const refreshing = useSidebarStore((s) => s.refreshingFeeds.has(feed.id))
 
   function handleDragStart(e: React.DragEvent): void {
     e.dataTransfer.setData(FEED_DRAG_TYPE, String(feed.id))
@@ -88,7 +89,11 @@ function FeedItem(props: FeedItemProps): JSX.Element {
                 />
               ) : null}
             </span>
-            <FeedFavicon icon={feed.icon} title={feed.title} />
+            {refreshing ? (
+              <SpinnerIcon size={16} className={styles.spinning} />
+            ) : (
+              <FeedFavicon icon={feed.icon} title={feed.title} />
+            )}
             {editing ? (
               <RenameInput
                 initialValue={feed.title}

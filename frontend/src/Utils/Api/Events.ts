@@ -3,9 +3,11 @@ import { Events } from '@wailsio/runtime'
 import {
   ItemsUpdatedEvent,
   FeedErrorEvent,
+  FeedRefreshingEvent,
   NotificationOpenEvent,
   type ItemsUpdatedPayload,
   type FeedErrorPayload,
+  type FeedRefreshingPayload,
   type NotificationOpenPayload,
 } from '../../Types/Events'
 
@@ -29,6 +31,18 @@ export function onFeedError(
   handler: (payload: FeedErrorPayload) => void,
 ): () => void {
   return Events.On(FeedErrorEvent, (ev) => handler(ev.data as FeedErrorPayload))
+}
+
+/**
+ * 订阅"订阅源开始刷新"事件。
+ * @returns 取消订阅函数，组件卸载时调用。
+ */
+export function onFeedRefreshing(
+  handler: (payload: FeedRefreshingPayload) => void,
+): () => void {
+  return Events.On(FeedRefreshingEvent, (ev) =>
+    handler(ev.data as FeedRefreshingPayload),
+  )
 }
 
 /** 订阅「点击通知」事件，返回取消订阅函数。 */

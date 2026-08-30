@@ -13,6 +13,7 @@ export {
   DockService,
   onItemsUpdated,
   onFeedError,
+  onFeedRefreshing,
   onNotificationOpen,
   toApiError,
   openURL,

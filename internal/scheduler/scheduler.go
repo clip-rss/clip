@@ -22,6 +22,8 @@ const (
 	ItemsUpdatedEvent = "items:updated"
 	// FeedErrorEvent 订阅源抓取失败时推送给前端的事件名。
 	FeedErrorEvent = "feed:error"
+	// FeedRefreshingEvent 订阅源开始刷新时推送给前端的事件名。
+	FeedRefreshingEvent = "feed:refreshing"
 
 	defaultPollInterval = time.Minute
 	defaultInterval     = 30 * time.Minute
@@ -397,6 +399,9 @@ func (s *Scheduler) refreshConcurrently(ctx context.Context, feeds []store.Feed,
 
 // refreshFeed 抓取并持久化单个订阅源，更新其状态与退避计数。
 func (s *Scheduler) refreshFeed(ctx context.Context, feed store.Feed, force bool) RefreshResult {
+	s.emitter.Emit(FeedRefreshingEvent, map[string]any{
+		"feedId": feed.ID,
+	})
 	res := RefreshResult{FeedID: feed.ID}
 	releaseFeed, err := s.acquireFeed(ctx, feed.ID)
 	if err != nil {
@@ -452,6 +457,10 @@ func (s *Scheduler) refreshFeed(ctx context.Context, feed store.Feed, force bool
 		if err := s.store.MarkFeedNotModified(feed.ID, checkedAt); err != nil {
 			return s.recordFailure(feed.ID, checkedAt, err)
 		}
+		s.emitter.Emit(ItemsUpdatedEvent, map[string]any{
+			"feedId":   feed.ID,
+			"newItems": 0,
+		})
 		return res
 	}
 	if parsed == nil {
@@ -479,15 +488,13 @@ func (s *Scheduler) refreshFeed(ctx context.Context, feed store.Feed, force bool
 		createdItems[i] = NewItem{ID: item.ID, Title: item.Title}
 	}
 	res.NewItems = len(createdItems)
-	if res.NewItems > 0 {
-		s.emitter.Emit(ItemsUpdatedEvent, map[string]any{
-			"feedId":   feed.ID,
-			"newItems": res.NewItems,
-		})
-		// 首次抓取（last_updated 为空）不通知，避免订阅时刷屏。
-		if feed.LastUpdated != nil {
-			s.notifier.Notify(ctx, feed, createdItems)
-		}
+	s.emitter.Emit(ItemsUpdatedEvent, map[string]any{
+		"feedId":   feed.ID,
+		"newItems": res.NewItems,
+	})
+	// 首次抓取（last_updated 为空）不通知，避免订阅时刷屏。
+	if res.NewItems > 0 && feed.LastUpdated != nil {
+		s.notifier.Notify(ctx, feed, createdItems)
 	}
 	return res
 }

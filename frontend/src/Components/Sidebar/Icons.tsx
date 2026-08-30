@@ -117,6 +117,22 @@ export function RefreshIcon(props: IconProps): JSX.Element {
   )
 }
 
+/** 正在刷新的旋转圆环。 */
+export function SpinnerIcon(props: IconProps): JSX.Element {
+  return (
+    <svg
+      {...base(props)}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+    >
+      <path d="M12 2a10 10 0 0 1 10 10" />
+    </svg>
+  )
+}
+
 /** 暂停状态标记。 */
 export function PauseIcon(props: IconProps): JSX.Element {
   return (

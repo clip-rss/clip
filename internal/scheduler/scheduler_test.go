@@ -313,21 +313,24 @@ func TestRefreshFeedPersistsAndEmits(t *testing.T) {
 	if _, ok := st.lastUpdated[1]; !ok {
 		t.Error("lastUpdated should be set")
 	}
-	if em.count() != 1 {
-		t.Fatalf("emitted events = %d, want 1", em.count())
+	if em.count() != 2 {
+		t.Fatalf("emitted events = %d, want 2 (refreshing + items:updated)", em.count())
 	}
-	data, ok := em.events[0].data.(map[string]any)
-	if em.events[0].name != ItemsUpdatedEvent || !ok || data["feedId"] != int64(1) || data["newItems"] != 2 {
-		t.Errorf("event payload wrong: %+v", em.events[0])
+	if em.events[0].name != FeedRefreshingEvent {
+		t.Errorf("first event should be feed:refreshing, got %s", em.events[0].name)
+	}
+	data, ok := em.events[1].data.(map[string]any)
+	if em.events[1].name != ItemsUpdatedEvent || !ok || data["feedId"] != int64(1) || data["newItems"] != 2 {
+		t.Errorf("event payload wrong: %+v", em.events[1])
 	}
 
-	// 二次刷新：全部重复，无新文章、无事件。
+	// 二次刷新：全部重复，无新文章，只有 feed:refreshing。
 	res2, _ := s.RefreshFeed(context.Background(), 1)
 	if res2.NewItems != 0 {
 		t.Errorf("second refresh new items = %d, want 0", res2.NewItems)
 	}
-	if em.count() != 1 {
-		t.Errorf("no new event expected, got %d", em.count())
+	if em.count() != 4 {
+		t.Errorf("expected 4 events total (2 from first + 2 from second), got %d", em.count())
 	}
 }
 
@@ -377,11 +380,11 @@ func TestRefreshErrorRecordsFailure(t *testing.T) {
 	if st.resets[1] != 0 {
 		t.Errorf("failed refresh must not reset backoff, resets = %d", st.resets[1])
 	}
-	if em.count() != 1 || em.events[0].name != FeedErrorEvent {
-		t.Fatalf("expected one %q event, got %+v", FeedErrorEvent, em.events)
+	if em.count() != 2 || em.events[1].name != FeedErrorEvent {
+		t.Fatalf("expected two %q event, got %+v", FeedErrorEvent, em.events)
 	}
-	if data, ok := em.events[0].data.(map[string]any); !ok || data["feedId"] != int64(1) {
-		t.Errorf("feed:error payload wrong: %+v", em.events[0].data)
+	if data, ok := em.events[1].data.(map[string]any); !ok || data["feedId"] != int64(1) {
+		t.Errorf("feed:error payload wrong: %+v", em.events[1].data)
 	}
 }
 
@@ -617,8 +620,8 @@ func TestPersistenceFailureIsReported(t *testing.T) {
 	if st.errorUpdates[1] != 1 {
 		t.Fatalf("persistence failure attempts = %d, want 1", st.errorUpdates[1])
 	}
-	if em.count() != 1 || em.events[0].name != FeedErrorEvent {
-		t.Fatalf("expected persistence failure event, got %+v", em.events)
+	if em.count() != 2 || em.events[1].name != FeedErrorEvent {
+		t.Fatalf("expected 2 events (refreshing + failure), got %+v", em.events)
 	}
 }
 

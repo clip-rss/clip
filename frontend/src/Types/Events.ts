@@ -6,6 +6,9 @@ export const ItemsUpdatedEvent = 'items:updated'
 /** 订阅源抓取失败事件名（对应 scheduler.FeedErrorEvent）。 */
 export const FeedErrorEvent = 'feed:error'
 
+/** 订阅源开始刷新事件名（对应 scheduler.FeedRefreshingEvent）。 */
+export const FeedRefreshingEvent = 'feed:refreshing'
+
 /** items:updated 事件负载：某订阅源新增了文章。 */
 export interface ItemsUpdatedPayload {
   feedId: number
@@ -16,6 +19,11 @@ export interface ItemsUpdatedPayload {
 export interface FeedErrorPayload {
   feedId: number
   error: string
+}
+
+/** feed:refreshing 事件负载：某订阅源开始刷新。 */
+export interface FeedRefreshingPayload {
+  feedId: number
 }
 
 /** 点击通知时推送的事件名（对应 main.go notification:open）。 */
