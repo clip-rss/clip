@@ -19,7 +19,12 @@ export {
 
 export { DockService } from '../../../bindings/github.com/wailsapp/wails/v3/pkg/services/dock'
 
-export { onItemsUpdated, onFeedError, onFeedRefreshing, onNotificationOpen } from './Events'
+export {
+  onItemsUpdated,
+  onFeedError,
+  onFeedRefreshing,
+  onNotificationOpen,
+} from './Events'
 
 import { Browser } from '@wailsio/runtime'
 

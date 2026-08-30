@@ -113,7 +113,10 @@ function Sidebar(props: SidebarProps): JSX.Element {
       aria-label={t('sidebar.title')}
     >
       <header className={styles.header}>
-        <span className={styles.headerTitle}>{t('sidebar.title')}</span>
+        <span className={styles.headerTitle}>
+          {t('sidebar.title')}
+          {feeds.length > 0 ? `(${feeds.length})` : null}
+        </span>
         <div className={styles.headerRight}>
           {batchMode ? (
             <>
@@ -205,7 +208,6 @@ function Sidebar(props: SidebarProps): JSX.Element {
             <FeedItem key={`f-${feed.id}`} feed={feed} depth={0} />
           ))}
         </div>
-
       </div>
 
       <footer className={styles.footer}>
