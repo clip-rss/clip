@@ -174,6 +174,21 @@ export class ImportResult {
              */
             this["skipped"] = 0;
         }
+        if (!("newFeeds" in $$source)) {
+            /**
+             * 新建的订阅源与分类详情，供前端增量追加（无需全量 reload）。
+             * @member
+             * @type {NewFeed[]}
+             */
+            this["newFeeds"] = [];
+        }
+        if (!("newCategories" in $$source)) {
+            /**
+             * @member
+             * @type {NewCategory[]}
+             */
+            this["newCategories"] = [];
+        }
 
         Object.assign(this, $$source);
     }
@@ -184,8 +199,165 @@ export class ImportResult {
      * @returns {ImportResult}
      */
     static createFrom($$source = {}) {
+        const $$createField3_0 = $$createType1;
+        const $$createField4_0 = $$createType3;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("newFeeds" in $$parsedSource) {
+            $$parsedSource["newFeeds"] = $$createField3_0($$parsedSource["newFeeds"]);
+        }
+        if ("newCategories" in $$parsedSource) {
+            $$parsedSource["newCategories"] = $$createField4_0($$parsedSource["newCategories"]);
+        }
         return new ImportResult(/** @type {Partial<ImportResult>} */($$parsedSource));
+    }
+}
+
+/**
+ * NewCategory 新建分类概要（供前端增量追加到 Store）。
+ */
+export class NewCategory {
+    /**
+     * Creates a new NewCategory instance.
+     * @param {Partial<NewCategory>} [$$source = {}] - The source object to create the NewCategory.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["id"] = 0;
+        }
+        if (!("name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("parentId" in $$source)) {
+            /**
+             * @member
+             * @type {number | null}
+             */
+            this["parentId"] = null;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new NewCategory instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {NewCategory}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new NewCategory(/** @type {Partial<NewCategory>} */($$parsedSource));
+    }
+}
+
+/**
+ * NewFeed 新建订阅源概要（供前端增量追加到 Store）。
+ */
+export class NewFeed {
+    /**
+     * Creates a new NewFeed instance.
+     * @param {Partial<NewFeed>} [$$source = {}] - The source object to create the NewFeed.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["id"] = 0;
+        }
+        if (!("url" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["url"] = "";
+        }
+        if (!("title" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["title"] = "";
+        }
+        if (!("link" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["link"] = "";
+        }
+        if (!("categoryId" in $$source)) {
+            /**
+             * @member
+             * @type {number | null}
+             */
+            this["categoryId"] = null;
+        }
+        if (!("updateInterval" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["updateInterval"] = 0;
+        }
+        if (!("maxItems" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["maxItems"] = 0;
+        }
+        if (!("status" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["status"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new NewFeed instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {NewFeed}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new NewFeed(/** @type {Partial<NewFeed>} */($$parsedSource));
+    }
+}
+
+/**
+ * OPMLService OPML 导入导出相关的绑定方法。
+ */
+export class OPMLService {
+    /**
+     * Creates a new OPMLService instance.
+     * @param {Partial<OPMLService>} [$$source = {}] - The source object to create the OPMLService.
+     */
+    constructor($$source = {}) {
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new OPMLService instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {OPMLService}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new OPMLService(/** @type {Partial<OPMLService>} */($$parsedSource));
     }
 }
 
@@ -331,3 +503,9 @@ export class WebDAVView {
         return new WebDAVView(/** @type {Partial<WebDAVView>} */($$parsedSource));
     }
 }
+
+// Private type creation functions
+const $$createType0 = NewFeed.createFrom;
+const $$createType1 = $Create.Array($$createType0);
+const $$createType2 = NewCategory.createFrom;
+const $$createType3 = $Create.Array($$createType2);

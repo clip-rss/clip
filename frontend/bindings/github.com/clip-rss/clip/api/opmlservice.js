@@ -35,6 +35,7 @@ export function ExportOPML() {
 /**
  * ImportOPML 解析 OPML 文本并导入分类与订阅源。
  * 导入仅根据 OPML 元信息建源，不发起网络抓取；文章将在下次调度或手动刷新时拉取。
+ * 整个导入过程在一个数据库事务中完成。
  * @param {string} content
  * @returns {$CancellablePromise<$models.ImportResult>}
  */
@@ -61,5 +62,18 @@ export function ImportOPMLFromURL(rawURL) {
     }));
 }
 
+/**
+ * WithEmitter 设置进度事件推送函数。参数签名与 scheduler.Emitter.Emit 一致。
+ * @param {any} emit
+ * @returns {$CancellablePromise<$models.OPMLService | null>}
+ */
+export function WithEmitter(emit) {
+    return $Call.ByID(3245577020, emit).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType2($result);
+    }));
+}
+
 // Private type creation functions
 const $$createType0 = $models.ImportResult.createFrom;
+const $$createType1 = $models.OPMLService.createFrom;
+const $$createType2 = $Create.Nullable($$createType1);

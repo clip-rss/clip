@@ -25,6 +25,8 @@ export {
     ConnectionTestResult,
     FeedPreview,
     ImportResult,
+    NewCategory,
+    NewFeed,
     RefreshOutcome,
     WebDAVInput,
     WebDAVView

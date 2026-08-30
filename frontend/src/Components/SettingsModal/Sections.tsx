@@ -18,10 +18,14 @@ import {
   exportOpmlToFile,
   importOpmlFromFile,
   importOpmlFromURL,
+  onOPMLImportProgress,
   showToast,
   toApiError,
 } from '../../Utils'
+import type { OPMLImportProgressPayload } from '../../Types/Events'
 import type {
+  Category,
+  FeedWithUnread,
   ImportResult,
   ReaderBackground,
   ReaderFontFamily,
@@ -360,6 +364,9 @@ export function DataSection(): JSX.Element {
   const [estimatedMB, setEstimatedMB] = useState<number | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
   const [busy, setBusy] = useState(false)
+  // OPML 导入进度：null 表示不在导入中，非 null 时显示进度条。
+  const [importProgress, setImportProgress] =
+    useState<OPMLImportProgressPayload | null>(null)
   const importRef = useRef<HTMLInputElement>(null)
   // 远程导入的地址只存组件 state：不持久化，关闭设置即丢弃。
   const [remoteOpen, setRemoteOpen] = useState(false)
@@ -399,6 +406,12 @@ export function DataSection(): JSX.Element {
     loadCacheStats()
   }, [t])
 
+  // 订阅 OPML 导入进度事件，组件卸载时取消订阅。
+  useEffect(() => {
+    const unsub = onOPMLImportProgress(setImportProgress)
+    return unsub
+  }, [])
+
   // 操作结果只走 toast，界面上不留反馈文案。
   async function handleClearCache(): Promise<void> {
     setConfirmClear(false)
@@ -427,9 +440,55 @@ export function DataSection(): JSX.Element {
     importer: () => Promise<ImportResult>,
   ): Promise<boolean> {
     setBusy(true)
+    setImportProgress(null)
     try {
       const res = await importer()
-      await useSidebarStore.getState().load()
+      // 增量合并：用后端返回的新建数据追加到 Store，避免全量 reload。
+      if (res.newFeeds?.length > 0 || res.newCategories?.length > 0) {
+        const { feeds, categories } = useSidebarStore.getState()
+        useSidebarStore.setState({
+          feeds: feeds.concat(
+            res.newFeeds.map(
+              (f) =>
+                ({
+                  id: f.id,
+                  url: f.url,
+                  title: f.title,
+                  link: f.link ?? '',
+                  categoryId: f.categoryId,
+                  updateInterval: f.updateInterval,
+                  maxItems: f.maxItems,
+                  status: f.status,
+                  description: '',
+                  icon: '',
+                  unreadCount: 0,
+                  errorCount: 0,
+                  lastUpdated: null,
+                  lastAttempted: null,
+                  lastError: null,
+                  createdAt: '',
+                  updatedAt: '',
+                }) as FeedWithUnread,
+            ),
+          ),
+          categories: categories.concat(
+            (res.newCategories ?? []).map(
+              (c) =>
+                ({
+                  id: c.id,
+                  name: c.name,
+                  parentId: c.parentId,
+                  sortOrder: 0,
+                  createdAt: '',
+                  updatedAt: '',
+                }) as Category,
+            ),
+          ),
+        })
+      } else {
+        // 没有增量数据时回退全量 reload（理论上不会发生）。
+        await useSidebarStore.getState().load()
+      }
       showToast(
         t('settings.data.importSuccess', {
           feeds: res.feeds,
@@ -447,6 +506,7 @@ export function DataSection(): JSX.Element {
       return false
     } finally {
       setBusy(false)
+      setImportProgress(null)
     }
   }
 
@@ -699,6 +759,32 @@ export function DataSection(): JSX.Element {
                 {t('confirm.cancel')}
               </button>
             </div>
+          </div>
+        </SettingRow>
+      ) : null}
+
+      {importProgress && importProgress.total > 0 ? (
+        <SettingRow
+          label={t('settings.data.opml')}
+          description={t('settings.data.importProgress')}
+        >
+          <div className={styles.importProgress}>
+            <div className={styles.progressTrack}>
+              <div
+                className={styles.progressBar}
+                style={{
+                  width: `${Math.round((importProgress.processed / importProgress.total) * 100)}%`,
+                }}
+              />
+            </div>
+            <span className={styles.progressText}>
+              {t('settings.data.importProgressCount', {
+                processed: importProgress.processed,
+                total: importProgress.total,
+                feeds: importProgress.feeds,
+                skipped: importProgress.skipped,
+              })}
+            </span>
           </div>
         </SettingRow>
       ) : null}

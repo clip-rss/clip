@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -102,6 +103,104 @@ func (s *Store) GetFeedByURL(url string) (*Feed, error) {
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get feed: %w", err)
+	}
+	return feed, nil
+}
+
+// TxCreateFeed 在事务中创建新订阅源。
+func TxCreateFeed(tx *sql.Tx, feed *Feed) error {
+	query := `
+		INSERT INTO feeds (url, title, description, link, icon, category_id, update_interval, max_items, status)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`
+	result, err := tx.Exec(query,
+		feed.URL,
+		feed.Title,
+		feed.Description,
+		feed.Link,
+		feed.Icon,
+		feed.CategoryID,
+		feed.UpdateInterval,
+		feed.MaxItems,
+		feed.Status,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create feed: %w", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get feed id: %w", err)
+	}
+
+	feed.ID = id
+	return nil
+}
+
+// BulkCreateFeeds 在事务中批量创建订阅源，回填各 feed 的 ID。
+func BulkCreateFeeds(tx *sql.Tx, feeds []Feed) error {
+	if len(feeds) == 0 {
+		return nil
+	}
+
+	// 构建多行 VALUES。
+	placeholders := make([]string, 0, len(feeds))
+	args := make([]any, 0, len(feeds)*9)
+	for _, f := range feeds {
+		placeholders = append(placeholders, "(?, ?, ?, ?, ?, ?, ?, ?, ?)")
+		args = append(args, f.URL, f.Title, f.Description, f.Link, f.Icon, f.CategoryID, f.UpdateInterval, f.MaxItems, f.Status)
+	}
+	fullQuery := `INSERT INTO feeds (url, title, description, link, icon, category_id, update_interval, max_items, status) VALUES ` +
+		strings.Join(placeholders, ", ")
+
+	result, err := tx.Exec(fullQuery, args...)
+	if err != nil {
+		return fmt.Errorf("failed to bulk create feeds: %w", err)
+	}
+
+	// LastInsertId 返回批处理中第一行的 ID，后续行依次递增。
+	baseID, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get last insert id: %w", err)
+	}
+	for i := range feeds {
+		feeds[i].ID = baseID + int64(i)
+	}
+	return nil
+}
+
+// TxGetFeedByURL 在事务中根据 URL 查找订阅源。
+// 未找到时返回 (nil, nil)，调用方据此判断是否已存在。
+func TxGetFeedByURL(tx *sql.Tx, url string) (*Feed, error) {
+	query := `
+		SELECT id, url, title, description, link, icon, category_id, update_interval, max_items,
+		       last_updated, last_attempted, error_count, last_error, status, created_at, updated_at
+		FROM feeds WHERE url = ?
+	`
+	feed := &Feed{}
+	err := tx.QueryRow(query, url).Scan(
+		&feed.ID,
+		&feed.URL,
+		&feed.Title,
+		&feed.Description,
+		&feed.Link,
+		&feed.Icon,
+		&feed.CategoryID,
+		&feed.UpdateInterval,
+		&feed.MaxItems,
+		&feed.LastUpdated,
+		&feed.LastAttempted,
+		&feed.ErrorCount,
+		&feed.LastError,
+		&feed.Status,
+		&feed.CreatedAt,
+		&feed.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get feed by url: %w", err)
 	}
 	return feed, nil
 }

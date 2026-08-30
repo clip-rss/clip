@@ -15,6 +15,7 @@ export {
   onFeedError,
   onFeedRefreshing,
   onNotificationOpen,
+  onOPMLImportProgress,
   toApiError,
   openURL,
 } from './Api'

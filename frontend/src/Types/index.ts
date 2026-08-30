@@ -12,6 +12,8 @@ export type {
   Settings,
   RefreshOutcome,
   ImportResult,
+  NewFeed,
+  NewCategory,
   FeedPreview,
   WebDAVView,
   WebDAVInput,

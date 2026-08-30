@@ -338,6 +338,8 @@
       "importUrlPlaceholder": "https://example.com/feeds.opml",
       "importSuccess": "Import complete: {{feeds}} feeds added, {{skipped}} duplicates skipped, {{categories}} categories created.",
       "importError": "OPML import failed",
+      "importProgress": "Importing feeds…",
+      "importProgressCount": "{{processed}}/{{total}} feeds ({{feeds}} new, {{skipped}} skipped)",
       "exportSuccess": "OPML exported.",
       "exportCancelled": "Export cancelled.",
       "exportError": "OPML export failed",
