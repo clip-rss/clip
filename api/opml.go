@@ -34,15 +34,12 @@ type OPMLService struct {
 	emitter func(name string, data any) // 进度事件推送，nil 时不推送
 }
 
-// NewOPMLService 创建 OPMLService。
-func NewOPMLService(st *store.Store, client *fetcher.Client) *OPMLService {
-	return &OPMLService{store: st, http: client}
-}
-
-// WithEmitter 设置进度事件推送函数。参数签名与 scheduler.Emitter.Emit 一致。
-func (s *OPMLService) WithEmitter(emit func(name string, data any)) *OPMLService {
-	s.emitter = emit
-	return s
+// NewOPMLService 创建 OPMLService。emit 为进度事件推送函数（与 scheduler.Emitter.Emit
+// 签名一致），可为 nil。emitter 通过构造参数而非导出方法注入：导出方法会被 wails3 绑定，
+// 其 *OPMLService 返回值会让该类型同时被当作 service 和 model，生成的 index.js
+// 出现重复导出导致前端构建失败。
+func NewOPMLService(st *store.Store, client *fetcher.Client, emit func(name string, data any)) *OPMLService {
+	return &OPMLService{store: st, http: client, emitter: emit}
 }
 
 // ImportResult 导入结果统计。

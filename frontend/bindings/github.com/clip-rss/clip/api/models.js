@@ -338,30 +338,6 @@ export class NewFeed {
 }
 
 /**
- * OPMLService OPML 导入导出相关的绑定方法。
- */
-export class OPMLService {
-    /**
-     * Creates a new OPMLService instance.
-     * @param {Partial<OPMLService>} [$$source = {}] - The source object to create the OPMLService.
-     */
-    constructor($$source = {}) {
-
-        Object.assign(this, $$source);
-    }
-
-    /**
-     * Creates a new OPMLService instance from a string or object.
-     * @param {any} [$$source = {}]
-     * @returns {OPMLService}
-     */
-    static createFrom($$source = {}) {
-        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
-        return new OPMLService(/** @type {Partial<OPMLService>} */($$parsedSource));
-    }
-}
-
-/**
  * RefreshOutcome 单个订阅源刷新结果（对前端友好的可序列化形态）。
  */
 export class RefreshOutcome {

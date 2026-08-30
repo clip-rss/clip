@@ -62,18 +62,5 @@ export function ImportOPMLFromURL(rawURL) {
     }));
 }
 
-/**
- * WithEmitter 设置进度事件推送函数。参数签名与 scheduler.Emitter.Emit 一致。
- * @param {any} emit
- * @returns {$CancellablePromise<$models.OPMLService | null>}
- */
-export function WithEmitter(emit) {
-    return $Call.ByID(3245577020, emit).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType2($result);
-    }));
-}
-
 // Private type creation functions
 const $$createType0 = $models.ImportResult.createFrom;
-const $$createType1 = $models.OPMLService.createFrom;
-const $$createType2 = $Create.Nullable($$createType1);
