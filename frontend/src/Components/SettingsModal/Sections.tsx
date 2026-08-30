@@ -45,9 +45,9 @@ export function GeneralSection(): JSX.Element {
   const update = useSettingsStore((s) => s.update)
 
   const intervalOptions = [
-    { value: 15, label: t('settings.general.updateIntervalOptions.15m') },
     { value: 30, label: t('settings.general.updateIntervalOptions.30m') },
     { value: 60, label: t('settings.general.updateIntervalOptions.1h') },
+    { value: 120, label: t('settings.general.updateIntervalOptions.2h') },
     { value: 0, label: t('settings.general.updateIntervalOptions.manual') },
   ]
 

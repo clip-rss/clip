@@ -64,7 +64,7 @@ func TestSettingsRoundTrip(t *testing.T) {
 	want := Settings{
 		Theme:                 "dark",
 		Language:              "en",
-		DefaultUpdateInterval: 15,
+		DefaultUpdateInterval: 30,
 		DefaultMaxItems:       50,
 		NotificationMode:      NotifyOff,
 		AutoMarkReadDelay:     2000,

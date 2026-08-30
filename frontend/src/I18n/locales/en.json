@@ -160,9 +160,9 @@
       "updateInterval": "Global update interval",
       "updateIntervalDesc": "Set the auto-refresh interval for all feeds; select \"Manual\" to disable all automatic refreshes",
       "updateIntervalOptions": {
-        "15m": "15 min",
         "30m": "30 min",
         "1h": "1 hour",
+        "2h": "2 hours",
         "manual": "Manual"
       },
       "maxItems": "Max items per feed",

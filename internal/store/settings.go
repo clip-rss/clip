@@ -68,7 +68,7 @@ func DefaultSettings() Settings {
 
 func validGlobalUpdateInterval(interval int) bool {
 	switch interval {
-	case 0, 15, 30, 60:
+	case 0, 30, 60, 120:
 		return true
 	default:
 		return false

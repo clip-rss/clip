@@ -160,9 +160,9 @@
       "updateInterval": "訂閱來源全局更新间隔",
       "updateIntervalDesc": "统一設定所有訂閱來源的自动重新整理周期；选「手动」则全部停止自动重新整理",
       "updateIntervalOptions": {
-        "15m": "15 分钟",
         "30m": "30 分钟",
         "1h": "1 小時",
+        "2h": "2 小時",
         "manual": "手动"
       },
       "maxItems": "每來源最大条目",

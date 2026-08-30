@@ -160,9 +160,9 @@
       "updateInterval": "订阅源全局更新间隔",
       "updateIntervalDesc": "统一设置所有订阅源的自动刷新周期；选「手动」则全部停止自动刷新",
       "updateIntervalOptions": {
-        "15m": "15 分钟",
         "30m": "30 分钟",
         "1h": "1 小时",
+        "2h": "2 小时",
         "manual": "手动"
       },
       "maxItems": "每源最大条目",
