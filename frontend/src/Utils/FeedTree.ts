@@ -123,3 +123,17 @@ export function flattenCategories(categories: Category[]): CategoryOption[] {
   walk(0, 0)
   return out
 }
+
+/**
+ * 判定订阅源是否处于异常状态（侧栏 ⚠ 标记同口径）。
+ * status==='error' 是历史遗留值，现行代码只会写 active/paused；
+ * 实际异常信号是 errorCount>0 且 lastError 非空（RecordFeedFailure 写入，成功后清零）。
+ */
+export function isFeedErrored(feed: FeedWithUnread): boolean {
+  return feed.status === 'error' || (feed.errorCount > 0 && !!feed.lastError)
+}
+
+/** 全部异常订阅源的 id 列表（「批量删除异常订阅源」的筛选口径）。 */
+export function erroredFeedIds(feeds: FeedWithUnread[]): number[] {
+  return feeds.filter(isFeedErrored).map((f) => f.id)
+}

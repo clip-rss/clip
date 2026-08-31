@@ -23,7 +23,12 @@ export {
 export { importOpmlFromFile, importOpmlFromURL, exportOpmlToFile } from './Opml'
 
 // 树构建与时间格式化
-export { buildFeedTree, flattenCategories } from './FeedTree'
+export {
+  buildFeedTree,
+  flattenCategories,
+  isFeedErrored,
+  erroredFeedIds,
+} from './FeedTree'
 export type { CategoryOption } from './FeedTree'
 export { formatRelativeTime, latestUpdated } from './Time'
 

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import * as ContextMenu from '@radix-ui/react-context-menu'
 import clsx from 'clsx'
 import { useSidebarStore } from '../../Stores'
+import { erroredFeedIds, isFeedErrored, showToast } from '../../Utils'
 import type { FeedWithUnread } from '../../Types'
 import { EditFeedModal } from '../EditFeedModal'
 import UnreadBadge from './UnreadBadge'
@@ -27,6 +28,7 @@ function FeedItem(props: FeedItemProps): JSX.Element {
   const select = useSidebarStore((s) => s.select)
   const renameFeed = useSidebarStore((s) => s.renameFeed)
   const deleteFeed = useSidebarStore((s) => s.deleteFeed)
+  const deleteFeeds = useSidebarStore((s) => s.deleteFeeds)
   const pauseFeed = useSidebarStore((s) => s.pauseFeed)
   const resumeFeed = useSidebarStore((s) => s.resumeFeed)
   const refreshFeed = useSidebarStore((s) => s.refreshFeed)
@@ -38,15 +40,34 @@ function FeedItem(props: FeedItemProps): JSX.Element {
   const [editing, setEditing] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [erroredConfirmOpen, setErroredConfirmOpen] = useState(false)
+  /** 右键时快照的异常源 id 列表；确认删除按此执行，避免与弹窗期间的状态漂移不一致。 */
+  const [erroredIds, setErroredIds] = useState<number[]>([])
+
+  const feeds = useSidebarStore((s) => s.feeds)
+  const errorIds = useMemo(() => erroredFeedIds(feeds), [feeds])
 
   const paused = feed.status === 'paused'
-  const hasError =
-    feed.status === 'error' || (feed.errorCount > 0 && feed.lastError)
+  const hasError = isFeedErrored(feed)
   const refreshing = useSidebarStore((s) => s.refreshingFeeds.has(feed.id))
 
   function handleDragStart(e: React.DragEvent): void {
     e.dataTransfer.setData(FEED_DRAG_TYPE, String(feed.id))
     e.dataTransfer.effectAllowed = 'move'
+  }
+
+  /** 批量删除异常订阅源，并按结果给出 toast 反馈。 */
+  async function deleteErroredFeeds(ids: number[]): Promise<void> {
+    const ok = await deleteFeeds(ids)
+    if (ok) {
+      showToast(
+        t('sidebar.deleteErrored.done', { count: ids.length }),
+        'success',
+      )
+    } else {
+      const err = useSidebarStore.getState().error
+      if (err) showToast(err, 'error')
+    }
   }
 
   return (
@@ -166,6 +187,18 @@ function FeedItem(props: FeedItemProps): JSX.Element {
             >
               {t('sidebar.contextMenu.deleteBatch')}
             </ContextMenu.Item>
+            <ContextMenu.Item
+              className={clsx(styles.menuItem, styles.menuItemDanger)}
+              disabled={errorIds.length === 0}
+              onSelect={() => {
+                setErroredIds(errorIds)
+                setErroredConfirmOpen(true)
+              }}
+            >
+              {t('sidebar.contextMenu.deleteErrored', {
+                count: errorIds.length,
+              })}
+            </ContextMenu.Item>
           </ContextMenu.Content>
         </ContextMenu.Portal>
       </ContextMenu.Root>
@@ -180,6 +213,18 @@ function FeedItem(props: FeedItemProps): JSX.Element {
         confirmText={t('sidebar.deleteFeed.confirm')}
         danger
         onConfirm={() => deleteFeed(feed.id)}
+      />
+
+      <ConfirmDialog
+        open={erroredConfirmOpen}
+        onOpenChange={setErroredConfirmOpen}
+        title={t('sidebar.deleteFeed.title')}
+        description={t('sidebar.deleteFeed.erroredDescription', {
+          count: erroredIds.length,
+        })}
+        confirmText={t('sidebar.deleteFeed.confirm')}
+        danger
+        onConfirm={() => void deleteErroredFeeds(erroredIds)}
       />
     </>
   )

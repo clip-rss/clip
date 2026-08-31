@@ -24,13 +24,18 @@
       "delete": "删除",
       "pause": "暂停更新",
       "resume": "恢复更新",
-      "deleteBatch": "批量删除"
+      "deleteBatch": "批量删除",
+      "deleteErrored": "批量删除异常订阅源 ({{count}})"
     },
     "deleteFeed": {
       "title": "删除订阅源",
       "description": "确定删除「{{title}}」吗？该源下的全部文章也会被删除，此操作不可撤销。",
       "batchDescription": "确定删除选中的 {{count}} 个订阅源吗？其全部文章也会被删除，此操作不可撤销。",
+      "erroredDescription": "确定删除 {{count}} 个异常订阅源吗？其全部文章也会被删除，此操作不可撤销。",
       "confirm": "删除"
+    },
+    "deleteErrored": {
+      "done": "已删除 {{count}} 个异常订阅源"
     },
     "batchDelete": {
       "button": "删除 ({{count}})",
