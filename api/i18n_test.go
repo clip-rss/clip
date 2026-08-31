@@ -27,7 +27,7 @@ func TestBackendPromptsFollowSettingsLanguage(t *testing.T) {
 	if _, err := NewCategoryService(st).AddCategory(" ", 0); err == nil || err.Error() != "Category name is required" {
 		t.Fatalf("english category prompt = %v", err)
 	}
-	if _, err := NewOPMLService(st, nil).ImportOPML(" "); err == nil || err.Error() != "OPML content is empty" {
+	if _, err := NewOPMLService(st, nil, nil).ImportOPML(" "); err == nil || err.Error() != "OPML content is empty" {
 		t.Fatalf("english OPML prompt = %v", err)
 	}
 	if _, err := NewWebDAVConfigService(st, nil).GetWebDAVConfig(); err == nil || !strings.HasPrefix(err.Error(), "Credential storage is unavailable") {

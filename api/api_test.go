@@ -430,12 +430,12 @@ func TestSettingsService(t *testing.T) {
 	}
 
 	got.Theme = "dark"
-	got.DefaultUpdateInterval = 15
+	got.DefaultUpdateInterval = 120
 	if err := svc.UpdateSettings(got); err != nil {
 		t.Fatalf("UpdateSettings: %v", err)
 	}
 	after, _ := svc.GetSettings()
-	if after.Theme != "dark" || after.DefaultUpdateInterval != 15 {
+	if after.Theme != "dark" || after.DefaultUpdateInterval != 120 {
 		t.Errorf("settings not persisted: %+v", after)
 	}
 	feeds, err := st.ListFeeds()
@@ -443,8 +443,8 @@ func TestSettingsService(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, feed := range feeds {
-		if feed.UpdateInterval != 15 {
-			t.Errorf("feed %d interval = %d, want global interval 15", feed.ID, feed.UpdateInterval)
+		if feed.UpdateInterval != 120 {
+			t.Errorf("feed %d interval = %d, want global interval 120", feed.ID, feed.UpdateInterval)
 		}
 	}
 
@@ -488,7 +488,7 @@ const importOPML = `<?xml version="1.0"?>
 
 func TestOPMLImportExportRoundTrip(t *testing.T) {
 	st := newTestStore(t)
-	svc := NewOPMLService(st, nil)
+	svc := NewOPMLService(st, nil, nil)
 
 	res, err := svc.ImportOPML(importOPML)
 	if err != nil {
@@ -509,7 +509,7 @@ func TestOPMLImportExportRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("buildOPML: %v", err)
 	}
-	reimport := NewOPMLService(newTestStore(t), nil)
+	reimport := NewOPMLService(newTestStore(t), nil, nil)
 	back, err := reimport.ImportOPML(out)
 	if err != nil {
 		t.Fatalf("re-parse exported OPML: %v", err)
@@ -541,7 +541,7 @@ func TestImportOPMLFromURL(t *testing.T) {
 	defer srv.Close()
 
 	t.Run("valid url imports", func(t *testing.T) {
-		svc := NewOPMLService(newTestStore(t), fetcher.NewClient())
+		svc := NewOPMLService(newTestStore(t), fetcher.NewClient(), nil)
 		res, err := svc.ImportOPMLFromURL(srv.URL + "/feeds.opml")
 		if err != nil {
 			t.Fatalf("ImportOPMLFromURL: %v", err)
@@ -561,7 +561,7 @@ func TestImportOPMLFromURL(t *testing.T) {
 	})
 
 	t.Run("rejects bad urls", func(t *testing.T) {
-		svc := NewOPMLService(newTestStore(t), fetcher.NewClient())
+		svc := NewOPMLService(newTestStore(t), fetcher.NewClient(), nil)
 		for _, raw := range []string{
 			"", "   ",
 			"file:///etc/passwd",
@@ -576,7 +576,7 @@ func TestImportOPMLFromURL(t *testing.T) {
 	})
 
 	t.Run("propagates fetch and parse failures", func(t *testing.T) {
-		svc := NewOPMLService(newTestStore(t), fetcher.NewClient())
+		svc := NewOPMLService(newTestStore(t), fetcher.NewClient(), nil)
 		if _, err := svc.ImportOPMLFromURL(srv.URL + "/missing.opml"); err == nil {
 			t.Error("expected error for 404 response")
 		}
@@ -586,7 +586,7 @@ func TestImportOPMLFromURL(t *testing.T) {
 	})
 
 	t.Run("nil client reports unavailable", func(t *testing.T) {
-		svc := NewOPMLService(newTestStore(t), nil)
+		svc := NewOPMLService(newTestStore(t), nil, nil)
 		if _, err := svc.ImportOPMLFromURL(srv.URL + "/feeds.opml"); err == nil {
 			t.Error("expected error when HTTP client is missing")
 		}
