@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -106,6 +107,54 @@ func TestClientUserAgent(t *testing.T) {
 	}
 	if v := <-got; v != ua {
 		t.Errorf("User-Agent = %q, want %q", v, ua)
+	}
+}
+
+func TestDefaultUserAgentIsBrowserLike(t *testing.T) {
+	if !strings.Contains(DefaultUserAgent, "Mozilla/5.0") {
+		t.Errorf("DefaultUserAgent should contain Mozilla/5.0, got %q", DefaultUserAgent)
+	}
+	if !strings.Contains(DefaultUserAgent, "Chrome/") {
+		t.Errorf("DefaultUserAgent should contain Chrome/, got %q", DefaultUserAgent)
+	}
+	if strings.Contains(DefaultUserAgent, "Clip/") {
+		t.Errorf("DefaultUserAgent should not contain Clip/, got %q", DefaultUserAgent)
+	}
+}
+
+func TestClientSendsBrowserHeaders(t *testing.T) {
+	var gotUA, gotAccept, gotAcceptLang, gotCacheControl string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotUA = r.Header.Get("User-Agent")
+		gotAccept = r.Header.Get("Accept")
+		gotAcceptLang = r.Header.Get("Accept-Language")
+		gotCacheControl = r.Header.Get("Cache-Control")
+		_, _ = w.Write([]byte("ok"))
+	}))
+	defer srv.Close()
+
+	c := NewClient()
+	if _, err := c.Fetch(context.Background(), srv.URL, ConditionalHeaders{}); err != nil {
+		t.Fatalf("fetch: %v", err)
+	}
+
+	if gotUA == "" {
+		t.Error("User-Agent should not be empty")
+	}
+	if strings.Contains(gotUA, "Clip/") {
+		t.Errorf("User-Agent should not be the old Clip UA, got %q", gotUA)
+	}
+
+	if !strings.Contains(gotAccept, "text/html") {
+		t.Errorf("Accept should contain text/html, got %q", gotAccept)
+	}
+
+	if gotAcceptLang == "" {
+		t.Error("Accept-Language should not be empty")
+	}
+
+	if gotCacheControl == "" {
+		t.Error("Cache-Control should not be empty")
 	}
 }
 
