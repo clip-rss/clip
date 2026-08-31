@@ -4,8 +4,8 @@ set -e
 # Build configuration
 APP_NAME="Clip"
 BUNDLE_ID="io.github.cliprss.clip"
-VERSION="0.3.0"
-BUILD_NUMBER="0.3.0"
+VERSION="0.4.0"
+BUILD_NUMBER="0.4.0"
 BUILD_DIR="build/ios"
 TARGET="simulator"
 

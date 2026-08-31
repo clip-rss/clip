@@ -1,3 +1,43 @@
+## 0.4.0
+
+#### 2026-09-01
+
+### 新增
+- 侧栏支持多选批量删除订阅源，右键菜单新增「删除全部出错订阅源」
+- 支持从远程 OPML 链接导入订阅；批量导入改为事务式并显示进度，过程中侧栏逐步合并结果
+- 新增应用内 toast 通知；后端错误改为以可读文案弹出，多条提示堆叠展示、悬停展开
+- 刷新时对应订阅源显示加载动画
+- 侧栏标题旁显示订阅源数量
+- 抓取请求伪装为浏览器流量，降低被站点反爬拦截的概率
+- 全局刷新间隔：移除 15 分钟选项，新增 2 小时
+
+### 修复
+- 修复摘要类订阅源多条条目共用同一链接时只保存部分文章的问题
+
+### New Features
+- Multi-select batch deletion of feeds in the sidebar, plus a context-menu action to delete all errored feeds at once
+- Import subscriptions from a remote OPML URL; bulk import is now transactional with progress events, and the sidebar merges results incrementally during import
+- Added in-app toast notifications; backend errors now surface as readable toasts that stack and expand on hover
+- A per-feed spinner shows while that feed is refreshing
+- Feed count shown next to the sidebar header title
+- HTTP requests now masquerade as browser traffic to reduce blocking by anti-bot protection
+- Refresh interval options: removed 15 minutes, added 2 hours
+
+### Bug Fixes
+- Fixed digest feeds storing only some entries when multiple entries share the same URL
+
+### 新增
+- 側欄支援多選批次刪除訂閱源，右鍵選單新增「刪除全部出錯訂閱源」
+- 支援從遠端 OPML 連結匯入訂閱；批次匯入改為交易式並顯示進度，過程中側欄逐步合併結果
+- 新增應用內 toast 通知；後端錯誤改為以可讀文字彈出，多條提示堆疊顯示、懸停展開
+- 重新整理時對應訂閱源顯示載入動畫
+- 側欄標題旁顯示訂閱源數量
+- 抓取請求偽裝為瀏覽器流量，降低被網站反爬攔截的機率
+- 全域重新整理間隔：移除 15 分鐘選項，新增 2 小時
+
+### 修復
+- 修復摘要類訂閱源多條條目共用同一連結時只儲存部分文章的問題
+
 ## 0.3.0
 
 #### 2026-08-23
