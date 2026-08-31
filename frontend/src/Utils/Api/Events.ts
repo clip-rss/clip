@@ -5,10 +5,12 @@ import {
   FeedErrorEvent,
   FeedRefreshingEvent,
   NotificationOpenEvent,
+  OPMLImportProgressEvent,
   type ItemsUpdatedPayload,
   type FeedErrorPayload,
   type FeedRefreshingPayload,
   type NotificationOpenPayload,
+  type OPMLImportProgressPayload,
 } from '../../Types/Events'
 
 /**
@@ -51,5 +53,17 @@ export function onNotificationOpen(
 ): () => void {
   return Events.On(NotificationOpenEvent, (ev) =>
     handler(ev.data as NotificationOpenPayload),
+  )
+}
+
+/**
+ * 订阅"OPML 导入进度"事件。
+ * @returns 取消订阅函数，组件卸载时调用。
+ */
+export function onOPMLImportProgress(
+  handler: (payload: OPMLImportProgressPayload) => void,
+): () => void {
+  return Events.On(OPMLImportProgressEvent, (ev) =>
+    handler(ev.data as OPMLImportProgressPayload),
   )
 }

@@ -14,6 +14,8 @@ export type {
 export type {
   RefreshOutcome,
   ImportResult,
+  NewFeed,
+  NewCategory,
   FeedPreview,
   ConnectionTestResult,
   WebDAVView,

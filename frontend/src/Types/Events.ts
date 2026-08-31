@@ -33,3 +33,15 @@ export const NotificationOpenEvent = 'notification:open'
 export interface NotificationOpenPayload {
   articleId: number
 }
+
+/** OPML 导入进度事件名（对应 api.OPMLImportProgressEvent）。 */
+export const OPMLImportProgressEvent = 'opml:import:progress'
+
+/** OPML 导入进度事件负载。 */
+export interface OPMLImportProgressPayload {
+  processed: number
+  total: number
+  feeds: number
+  skipped: number
+  categories: number
+}

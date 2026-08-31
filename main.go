@@ -594,7 +594,7 @@ func main() {
 	// 出现「抓 feed 走代理、下更新包不走」这种一半生效的状态。
 	settingsSvc := api.NewSettingsService(st, sch, ft.Client(), updProxy)
 	webdavConfigSvc := api.NewWebDAVConfigService(st, cipher)
-	opmlSvc := api.NewOPMLService(st, ft.Client())
+	opmlSvc := api.NewOPMLService(st, ft.Client(), wailsEmitter{}.Emit)
 	opmlBackupSvc := api.NewOPMLBackupService(st, webdavConfigSvc, opmlSvc)
 
 	sysSvc := &api.SystemService{

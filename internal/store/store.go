@@ -16,6 +16,11 @@ type Store struct {
 	dbPath string // 数据库文件绝对路径
 }
 
+// Begin 开启一个事务。调用方负责 Commit 或 Rollback。
+func (s *Store) Begin() (*sql.Tx, error) {
+	return s.db.Begin()
+}
+
 // pendingRestoreSuffix 暂存的待恢复数据库文件后缀。
 // 运行时数据库被占用无法直接覆盖，恢复操作先写入该暂存文件，
 // 下次启动时由 applyPendingRestore 换库。

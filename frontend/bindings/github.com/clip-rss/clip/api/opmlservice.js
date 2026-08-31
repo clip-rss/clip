@@ -35,6 +35,7 @@ export function ExportOPML() {
 /**
  * ImportOPML 解析 OPML 文本并导入分类与订阅源。
  * 导入仅根据 OPML 元信息建源，不发起网络抓取；文章将在下次调度或手动刷新时拉取。
+ * 整个导入过程在一个数据库事务中完成。
  * @param {string} content
  * @returns {$CancellablePromise<$models.ImportResult>}
  */

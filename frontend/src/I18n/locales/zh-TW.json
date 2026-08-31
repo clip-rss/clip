@@ -338,6 +338,8 @@
       "importUrlPlaceholder": "https://example.com/feeds.opml",
       "importSuccess": "匯入完成：新增 {{feeds}} 个訂閱來源，跳过 {{skipped}} 个重复，新增 {{categories}} 个資料夾。",
       "importError": "OPML 匯入失敗",
+      "importProgress": "正在匯入訂閱來源…",
+      "importProgressCount": "{{processed}}/{{total}} 個（新增 {{feeds}}，跳過 {{skipped}}）",
       "exportSuccess": "已匯出 OPML 訂閱檔案。",
       "exportCancelled": "已取消匯出。",
       "exportError": "OPML 匯出失敗",

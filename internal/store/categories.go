@@ -5,6 +5,30 @@ import (
 	"fmt"
 )
 
+// TxCreateCategory 在事务中创建新分类。
+func TxCreateCategory(tx *sql.Tx, category *Category) error {
+	query := `
+		INSERT INTO feed_categories (name, parent_id, sort_order)
+		VALUES (?, ?, ?)
+	`
+	result, err := tx.Exec(query,
+		category.Name,
+		category.ParentID,
+		category.SortOrder,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create category: %w", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get category id: %w", err)
+	}
+
+	category.ID = id
+	return nil
+}
+
 // CreateCategory 创建新分类
 func (s *Store) CreateCategory(category *Category) error {
 	query := `
