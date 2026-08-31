@@ -136,6 +136,22 @@ describe('SidebarStore', () => {
     expect(useSidebarStore.getState().selection).toEqual({ kind: 'all' })
   })
 
+  it('deleteFeeds 全部成功时返回 true 并退出批量模式', async () => {
+    useSidebarStore.setState({ batchMode: true })
+    const ok = await useSidebarStore.getState().deleteFeeds([1, 2])
+    expect(ok).toBe(true)
+    expect(DeleteFeed).toHaveBeenCalledTimes(2)
+    expect(useSidebarStore.getState().batchMode).toBe(false)
+    expect(useSidebarStore.getState().error).toBeNull()
+  })
+
+  it('deleteFeeds 任一失败时返回 false 并记录 error', async () => {
+    DeleteFeed.mockRejectedValueOnce(new Error('boom'))
+    const ok = await useSidebarStore.getState().deleteFeeds([1, 2])
+    expect(ok).toBe(false)
+    expect(useSidebarStore.getState().error).toContain('boom')
+  })
+
   it('refreshSelected 总是刷新全部源', async () => {
     useSidebarStore.setState({ selection: { kind: 'feed', id: 7 } })
     await useSidebarStore.getState().refreshSelected()

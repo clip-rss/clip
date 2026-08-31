@@ -36,8 +36,8 @@ interface SidebarState {
 
   renameFeed: (id: number, title: string) => Promise<void>
   deleteFeed: (id: number) => Promise<void>
-  /** 批量删除订阅源；不引入后端批量接口，循环调单条 DeleteFeed。 */
-  deleteFeeds: (ids: number[]) => Promise<void>
+  /** 批量删除订阅源；不引入后端批量接口，循环调单条 DeleteFeed。返回是否全部成功。 */
+  deleteFeeds: (ids: number[]) => Promise<boolean>
   pauseFeed: (id: number) => Promise<void>
   resumeFeed: (id: number) => Promise<void>
   refreshFeed: (id: number) => Promise<void>
@@ -184,8 +184,10 @@ export const useSidebarStore = create<SidebarState>()(
           resetSelectionIfMatchesAny(get, set, ids)
           await get().load()
           set({ batchMode: false, multiSelectIds: new Set<number>() })
+          return true
         } catch (err) {
           set({ error: toApiError(err) })
+          return false
         }
       },
 

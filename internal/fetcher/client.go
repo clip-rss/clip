@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -11,7 +12,7 @@ import (
 )
 
 // DefaultUserAgent 默认 User-Agent。
-const DefaultUserAgent = "Clip/1.0 (+https://github.com/clip-rss/clip)"
+const DefaultUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
 
 // DefaultTimeout 单次请求默认超时时间。
 const DefaultTimeout = 20 * time.Second
@@ -164,7 +165,8 @@ func (c *Client) do(ctx context.Context, rawURL string, cond ConditionalHeaders)
 		return nil, false, fmt.Errorf("fetcher: build request: %w", err)
 	}
 	req.Header.Set("User-Agent", c.userAgent)
-	req.Header.Set("Accept", "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.8")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,application/rss+xml;q=0.8,application/atom+xml;q=0.8,image/avif,image/webp,image/apng,*/*;q=0.7")
+	setCommonHeaders(req)
 	if cond.ETag != "" {
 		req.Header.Set("If-None-Match", cond.ETag)
 	}
@@ -240,6 +242,7 @@ func (c *Client) get(ctx context.Context, rawURL string) (body []byte, contentTy
 	}
 	req.Header.Set("User-Agent", c.userAgent)
 	req.Header.Set("Accept", "image/*, */*;q=0.8")
+	setCommonHeaders(req)
 
 	resp, err := c.http.Do(req)
 	if err != nil {
@@ -261,13 +264,24 @@ func (c *Client) get(ctx context.Context, rawURL string) (body []byte, contentTy
 	return body, resp.Header.Get("Content-Type"), false, nil
 }
 
+// setCommonHeaders 设置浏览器标配的请求头，用于掩盖爬虫特征。
+func setCommonHeaders(req *http.Request) {
+	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+	req.Header.Set("Cache-Control", "no-cache")
+}
+
 // retryBackoff 计算第 attempt 次重试的等待时间（指数，封顶 8s）。
+// 加入 [base/2, base) 范围内的随机 jitter，使重试时间不可预测。
 func retryBackoff(attempt int) time.Duration {
-	d := time.Duration(1<<uint(attempt-1)) * time.Second
-	if d > 8*time.Second {
-		d = 8 * time.Second
+	base := time.Duration(1<<uint(attempt-1)) * time.Second
+	if base > 8*time.Second {
+		base = 8 * time.Second
 	}
-	return d
+	half := base / 2
+	if half <= 0 {
+		return base
+	}
+	return half + time.Duration(rand.Int63n(int64(half)))
 }
 
 // sleepCtx 在 ctx 取消时提前返回的可中断睡眠。

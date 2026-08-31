@@ -24,13 +24,18 @@
       "delete": "Delete",
       "pause": "Pause Updates",
       "resume": "Resume Updates",
-      "deleteBatch": "Batch Delete"
+      "deleteBatch": "Batch Delete",
+      "deleteErrored": "Delete Errored Feeds ({{count}})"
     },
     "deleteFeed": {
       "title": "Delete Feed",
       "description": "Are you sure you want to delete \"{{title}}\"? All articles from this feed will also be deleted. This action cannot be undone.",
       "batchDescription": "Are you sure you want to delete the {{count}} selected feeds? All their articles will also be deleted. This action cannot be undone.",
+      "erroredDescription": "Are you sure you want to delete the {{count}} errored feeds? All their articles will also be deleted. This action cannot be undone.",
       "confirm": "Delete"
+    },
+    "deleteErrored": {
+      "done": "Deleted {{count}} errored feeds"
     },
     "batchDelete": {
       "button": "Delete ({{count}})",

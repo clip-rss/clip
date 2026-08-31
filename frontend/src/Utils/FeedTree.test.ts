@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { buildFeedTree, flattenCategories } from './FeedTree'
+import {
+  buildFeedTree,
+  flattenCategories,
+  isFeedErrored,
+  erroredFeedIds,
+} from './FeedTree'
 import type { Category, FeedWithUnread } from '../Types'
 
 function cat(
@@ -140,5 +145,57 @@ describe('flattenCategories', () => {
   it('指向不存在父级的分类视为根', () => {
     const flat = flattenCategories([cat(1, '孤儿', 999)])
     expect(flat).toEqual([{ id: 1, name: '孤儿', depth: 0 }])
+  })
+})
+
+describe('isFeedErrored / erroredFeedIds', () => {
+  it('errorCount>0 且 lastError 非空视为异常', () => {
+    const f = {
+      ...feed(1, 'A', null, 0),
+      errorCount: 3,
+      lastError: 'connection refused',
+    }
+    expect(isFeedErrored(f)).toBe(true)
+  })
+
+  it('status=error 为历史遗留口径，同样视为异常', () => {
+    const f = { ...feed(1, 'A', null, 0), status: 'error' }
+    expect(isFeedErrored(f)).toBe(true)
+  })
+
+  it('errorCount>0 但 lastError 为空不视为异常', () => {
+    const f = { ...feed(1, 'A', null, 0), errorCount: 2, lastError: null }
+    expect(isFeedErrored(f)).toBe(false)
+  })
+
+  it('成功刷新后错误清零的源不视为异常', () => {
+    const f = { ...feed(1, 'A', null, 0), errorCount: 0, lastError: '' }
+    expect(isFeedErrored(f)).toBe(false)
+  })
+
+  it('暂停中的异常源仍视为异常', () => {
+    const f = {
+      ...feed(1, 'A', null, 0),
+      status: 'paused',
+      errorCount: 1,
+      lastError: 'timeout',
+    }
+    expect(isFeedErrored(f)).toBe(true)
+  })
+
+  it('erroredFeedIds 只保留异常源的 id', () => {
+    const feeds = [
+      feed(1, '正常', null, 0),
+      { ...feed(2, '异常', null, 0), errorCount: 1, lastError: '404' },
+      { ...feed(3, '遗留', null, 0), status: 'error' as const },
+      {
+        ...feed(4, '暂停异常', null, 0),
+        status: 'paused' as const,
+        errorCount: 5,
+        lastError: 'x',
+      },
+    ]
+    expect(erroredFeedIds(feeds)).toEqual([2, 3, 4])
+    expect(erroredFeedIds([])).toEqual([])
   })
 })
