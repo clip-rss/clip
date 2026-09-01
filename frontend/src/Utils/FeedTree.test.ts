@@ -120,6 +120,34 @@ describe('buildFeedTree', () => {
     const titles = tree.roots[0].feeds.map((f) => f.title)
     expect(titles).toEqual(['苹果', '香蕉'].sort((a, b) => a.localeCompare(b)))
   })
+
+  it('capacity/cappedUnread 只聚合设了保留上限的源', () => {
+    const categories = [cat(1, '根'), cat(2, '子', 1)]
+    const feeds = [
+      { ...feed(10, '限量源', 1, 90), maxItems: 100 },
+      { ...feed(11, '不限量子源', 2, 300), maxItems: 0 },
+      { ...feed(12, '子分类限量源', 2, 40), maxItems: 50 },
+    ]
+    const tree = buildFeedTree(categories, feeds)
+
+    const child = tree.roots[0].children[0]
+    // 不限量源没有分母，分子分母都不计入
+    expect(child.capacity).toBe(50)
+    expect(child.cappedUnread).toBe(40)
+
+    const root = tree.roots[0]
+    // 根 = 直属(100/90) + 子分类(50/40)
+    expect(root.capacity).toBe(150)
+    expect(root.cappedUnread).toBe(130)
+  })
+
+  it('全部源都不限量时 capacity 与 cappedUnread 为 0', () => {
+    const categories = [cat(1, '根')]
+    const feeds = [feed(10, 'A', 1, 5), feed(11, 'B', 1, 6)]
+    const tree = buildFeedTree(categories, feeds)
+    expect(tree.roots[0].capacity).toBe(0)
+    expect(tree.roots[0].cappedUnread).toBe(0)
+  })
 })
 
 describe('flattenCategories', () => {

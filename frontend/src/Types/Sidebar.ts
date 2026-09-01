@@ -15,6 +15,13 @@ export interface FeedTreeNode {
   feeds: FeedWithUnread[]
   /** 自身直属源未读 + 所有子分类未读，递归累加。 */
   unreadCount: number
+  /**
+   * badge 负载配色的容量口径：直属源与子孙分类中**设了保留上限**（maxItems>0）
+   * 的源的 maxItems 之和，递归累加。不限制（maxItems=0）的源不计入。
+   */
+  capacity: number
+  /** 上述计入容量的那些源的未读之和，与 capacity 构成文件夹 badge 的负载分子分母。 */
+  cappedUnread: number
 }
 
 /** 构建后的左侧栏树结构。 */

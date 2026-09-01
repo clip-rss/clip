@@ -33,6 +33,9 @@ export {
 export type { CategoryOption } from './FeedTree'
 export { formatRelativeTime, latestUpdated } from './Time'
 
+// 未读 badge 相对保留上限的负载（黄→红渐变配色）
+export { BADGE_WARN_THRESHOLD, badgeLoad, badgeWarnProgress } from './BadgeLoad'
+
 // 文章筛选排序
 export {
   categoryFeedIds,

@@ -227,17 +227,30 @@
 }
 
 .badge {
+  // 常态取 accent；.warn 态由 --badge-color 覆盖为警告混色
+  --badge-color: var(--accent);
+
   flex-shrink: 0;
   min-width: 20px;
   height: 18px;
   padding: 0 6px;
   border-radius: 9px;
-  background-color: color-mix(in srgb, var(--accent) 10%, transparent);
-  color: var(--accent);
+  background-color: color-mix(in srgb, var(--badge-color) 10%, transparent);
+  color: var(--badge-color);
   font-size: 12px;
   font-weight: 500;
   line-height: 18px;
   text-align: center;
+
+  // 负载警告：--badge-warn 由内联注入（80%→0%，100%→100%），
+  // 把 --warning（黄）按该比例渐变到 --danger（红），颜色随主题 token 切换。
+  &.warn {
+    --badge-color: color-mix(
+      in srgb,
+      var(--danger) var(--badge-warn, 0%),
+      var(--warning)
+    );
+  }
 }
 
 .renameInput {

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import * as ContextMenu from '@radix-ui/react-context-menu'
 import clsx from 'clsx'
 import { useSidebarStore } from '../../Stores'
+import { badgeLoad } from '../../Utils'
 import type { FeedTreeNode } from '../../Types'
 import UnreadBadge from './UnreadBadge'
 import ConfirmDialog from './ConfirmDialog'
@@ -122,7 +123,12 @@ function FolderItem(props: FolderItemProps): JSX.Element {
             ) : (
               <span className={styles.rowName}>{category.name}</span>
             )}
-            {!editing ? <UnreadBadge count={unreadCount} /> : null}
+            {!editing ? (
+              <UnreadBadge
+                count={unreadCount}
+                load={badgeLoad(node.cappedUnread, node.capacity)}
+              />
+            ) : null}
           </div>
         </ContextMenu.Trigger>
         <ContextMenu.Portal>

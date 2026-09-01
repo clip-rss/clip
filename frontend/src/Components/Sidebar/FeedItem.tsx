@@ -3,7 +3,12 @@ import { useTranslation } from 'react-i18next'
 import * as ContextMenu from '@radix-ui/react-context-menu'
 import clsx from 'clsx'
 import { useSidebarStore } from '../../Stores'
-import { erroredFeedIds, isFeedErrored, showToast } from '../../Utils'
+import {
+  badgeLoad,
+  erroredFeedIds,
+  isFeedErrored,
+  showToast,
+} from '../../Utils'
 import type { FeedWithUnread } from '../../Types'
 import { EditFeedModal } from '../EditFeedModal'
 import UnreadBadge from './UnreadBadge'
@@ -139,7 +144,12 @@ function FeedItem(props: FeedItemProps): JSX.Element {
                 ⚠
               </span>
             ) : null}
-            {!editing ? <UnreadBadge count={feed.unreadCount} /> : null}
+            {!editing ? (
+              <UnreadBadge
+                count={feed.unreadCount}
+                load={badgeLoad(feed.unreadCount, feed.maxItems)}
+              />
+            ) : null}
           </div>
         </ContextMenu.Trigger>
         <ContextMenu.Portal>

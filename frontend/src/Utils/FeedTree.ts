@@ -65,7 +65,29 @@ export function buildFeedTree(
     for (const f of ownFeeds) unreadCount += f.unreadCount
     for (const child of children) unreadCount += child.unreadCount
 
-    return { category, children, feeds: ownFeeds, unreadCount }
+    // badge 负载口径：只统计设了保留上限的源（maxItems>0），不限制的源没有
+    // 分母，不计入；否则一个不限量的源就能把文件夹负载永远顶满。
+    let capacity = 0
+    let cappedUnread = 0
+    for (const f of ownFeeds) {
+      if (f.maxItems > 0) {
+        capacity += f.maxItems
+        cappedUnread += f.unreadCount
+      }
+    }
+    for (const child of children) {
+      capacity += child.capacity
+      cappedUnread += child.cappedUnread
+    }
+
+    return {
+      category,
+      children,
+      feeds: ownFeeds,
+      unreadCount,
+      capacity,
+      cappedUnread,
+    }
   }
 
   const roots = (childrenOf.get(0) ?? [])
