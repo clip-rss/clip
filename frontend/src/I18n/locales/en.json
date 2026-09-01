@@ -214,6 +214,7 @@
     },
     "proxy": {
       "title": "Proxy",
+      "hint": "Used for feed updates, app update checks, and WebDAV sync; leave empty to connect directly",
       "host": "Proxy host",
       "hostDesc": "HTTP proxy IP or hostname",
       "port": "Port",

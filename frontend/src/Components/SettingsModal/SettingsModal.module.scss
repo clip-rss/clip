@@ -218,6 +218,18 @@
   color: var(--text-primary);
 }
 
+/* 标题下的整段说明（与 .sectionTitleTight 成对使用，标题收紧底部间距） */
+.sectionTitleTight {
+  margin-bottom: 6px;
+}
+
+.sectionHint {
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
 /* ===== 设置行 ===== */
 .row {
   display: flex;

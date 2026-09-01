@@ -965,7 +965,10 @@ export function ProxySection(): JSX.Element {
 
   return (
     <div>
-      <h3 className={styles.sectionTitle}>{t('settings.proxy.title')}</h3>
+      <h3 className={`${styles.sectionTitle} ${styles.sectionTitleTight}`}>
+        {t('settings.proxy.title')}
+      </h3>
+      <p className={styles.sectionHint}>{t('settings.proxy.hint')}</p>
       <SettingRow
         label={t('settings.proxy.host')}
         description={t('settings.proxy.hostDesc')}
