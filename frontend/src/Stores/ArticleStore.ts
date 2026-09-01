@@ -135,7 +135,7 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     items: [],
     loading: false,
     error: null,
-    filter: 'unread',
+    filter: 'all',
     sort: 'time',
     selectedItemId: null,
     currentSelection: { kind: 'all' },
