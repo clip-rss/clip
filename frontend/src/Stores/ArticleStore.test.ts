@@ -85,6 +85,29 @@ describe('ArticleStore', () => {
     expect(ListItemsLight).toHaveBeenCalledWith(0, 2000, 0)
   })
 
+  it('reload 保留选中文章及其已加载正文（新文章事件不打断阅读）', async () => {
+    useArticleStore.setState({
+      items: [item(1), item(2, { content: '正文' })],
+      selectedItemId: 2,
+    })
+    ListItemsLight.mockResolvedValue([item(1), item(2), item(3)])
+    await useArticleStore.getState().reload()
+    const s = useArticleStore.getState()
+    expect(s.selectedItemId).toBe(2)
+    expect(s.items.find((it) => it.id === 2)?.content).toBe('正文')
+    expect(s.items).toHaveLength(3) // 新文章已并入列表
+  })
+
+  it('reload 选中文章已不在新列表时清除选中', async () => {
+    useArticleStore.setState({
+      items: [item(2, { content: '正文' })],
+      selectedItemId: 2,
+    })
+    ListItemsLight.mockResolvedValue([item(1)])
+    await useArticleStore.getState().reload()
+    expect(useArticleStore.getState().selectedItemId).toBeNull()
+  })
+
   it('setFilter / setSort 更新状态', () => {
     useArticleStore.getState().setFilter('starred')
     useArticleStore.getState().setSort('source')

@@ -43,7 +43,10 @@ interface ArticleState {
 
   /** 按选中范围加载文章（清空已选文章）。 */
   load: (selection: Selection) => Promise<void>
-  /** 重新拉取当前范围（保留已选文章），用于新文章事件。 */
+  /**
+   * 重新拉取当前范围（新文章事件等），不清空选中与已加载正文；
+   * 选中文章若已不在新列表中（被清理等）才恢复为未选中。
+   */
   reload: () => Promise<void>
   setFilter: (filter: ArticleFilter) => void
   setSort: (sort: ArticleSort) => void
@@ -106,7 +109,11 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
   }
 
   // 封装 load：完成后消费 pendingSelectId，若有匹配则自动选中。
-  async function fetchAndResolve(selection: Selection): Promise<void> {
+  // reload（事件驱动刷新）时保留选中文章与已加载正文，不打断正在进行的阅读。
+  async function fetchAndResolve(
+    selection: Selection,
+    preserveSelection = false,
+  ): Promise<void> {
     set({ loading: true, error: null })
     try {
       const lights = await ItemService.ListItemsLight(
@@ -114,12 +121,31 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
         LOAD_LIMIT,
         0,
       )
-      const items = (lights ?? []).map(lightToItem)
-      const pending = get().pendingSelectId
-      const selectedId =
-        pending !== null && items.some((it) => it.id === pending)
-          ? pending
-          : null
+      const prev = get()
+      // 轻量列表不含正文；回填已加载过的 content，避免阅读中的文章被清成空正文。
+      const loadedContent = new Map<number, string>()
+      if (preserveSelection) {
+        for (const it of prev.items) {
+          if (it.content) loadedContent.set(it.id, it.content)
+        }
+      }
+      const items = (lights ?? []).map((light) => {
+        const base = lightToItem(light)
+        const content = loadedContent.get(base.id)
+        return content ? { ...base, content } : base
+      })
+      const pending = prev.pendingSelectId
+      // 选中恢复优先级：通知定位 > 原选中（仍存在于新列表时）> 清空。
+      let selectedId: number | null = null
+      if (pending !== null && items.some((it) => it.id === pending)) {
+        selectedId = pending
+      } else if (
+        preserveSelection &&
+        prev.selectedItemId !== null &&
+        items.some((it) => it.id === prev.selectedItemId)
+      ) {
+        selectedId = prev.selectedItemId
+      }
       set({
         items,
         loading: false,
@@ -156,7 +182,7 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     },
 
     async reload() {
-      await fetchAndResolve(get().currentSelection)
+      await fetchAndResolve(get().currentSelection, true)
     },
 
     setFilter(filter) {
