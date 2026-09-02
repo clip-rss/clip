@@ -55,7 +55,7 @@ func DefaultSettings() Settings {
 		NotificationMode:      NotifyEach,
 		ShowUnreadBadge:       true,
 		AutoMarkReadDelay:     0,
-		ShowFocusIndicator:    true,
+		ShowFocusIndicator:    false,
 		WindowWidth:           1200,
 		WindowHeight:          800,
 		ReaderFontFamily:      "sans",

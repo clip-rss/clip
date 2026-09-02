@@ -91,20 +91,20 @@ function App() {
     return unsubscribe
   }, [])
 
-  // 应用焦点指示器设置
+  // 应用焦点指示器设置（默认关闭，仅显式开启时显示）
   useEffect(() => {
     const settings = useSettingsStore.getState().settings
-    if (settings?.showFocusIndicator === false) {
-      document.documentElement.classList.add('hide-focus-indicator')
-    } else {
+    if (settings?.showFocusIndicator === true) {
       document.documentElement.classList.remove('hide-focus-indicator')
+    } else {
+      document.documentElement.classList.add('hide-focus-indicator')
     }
 
     const unsubscribe = useSettingsStore.subscribe((state) => {
-      if (state.settings?.showFocusIndicator === false) {
-        document.documentElement.classList.add('hide-focus-indicator')
-      } else {
+      if (state.settings?.showFocusIndicator === true) {
         document.documentElement.classList.remove('hide-focus-indicator')
+      } else {
+        document.documentElement.classList.add('hide-focus-indicator')
       }
     })
 

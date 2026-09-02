@@ -121,7 +121,7 @@ export function GeneralSection(): JSX.Element {
         description={t('settings.general.showFocusIndicatorDesc')}
       >
         <Toggle
-          checked={settings?.showFocusIndicator ?? true}
+          checked={settings?.showFocusIndicator ?? false}
           onChange={(v) => update({ showFocusIndicator: v })}
           label={t('settings.general.showFocusIndicator')}
         />
