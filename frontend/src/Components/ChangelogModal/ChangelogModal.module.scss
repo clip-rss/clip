@@ -161,6 +161,10 @@
   ul {
     margin: 0 0 12px;
     padding-left: 20px;
+
+    li {
+      list-style-type: disc;
+    }
   }
 
   ol {
