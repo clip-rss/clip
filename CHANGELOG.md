@@ -1,3 +1,40 @@
+## 0.5.0
+
+#### 2026-09-02
+
+### 新增
+- 文章列表默认筛选改为「全部」
+- 侧栏未读角标接近单源上限时将变色提醒
+
+### 修复
+- 修复自动刷新时选中文章被重置、阅读被打断的问题
+- 修复搜索结果点击后未在阅读器中打开的问题
+
+### 优化
+- 部分 UI 优化
+
+### New Features
+- The article list filter now defaults to "All"
+- The sidebar unread badge changes color as a feed approaches its item cap
+
+### Bug Fixes
+- Fixed auto refresh resetting the selected article and interrupting reading
+- Fixed search results not opening in the reader when clicked
+
+### Improvements
+- Minor UI polish
+
+### 新增
+- 文章列表預設篩選改為「全部」
+- 側欄未讀角標接近單源上限時將變色提醒
+
+### 修復
+- 修復自動重新整理時選中文章被重置、閱讀被打斷的問題
+- 修復搜尋結果點擊後未在閱讀器中開啟的問題
+
+### 優化
+- 部分 UI 優化
+
 ## 0.4.0
 
 #### 2026-09-01
