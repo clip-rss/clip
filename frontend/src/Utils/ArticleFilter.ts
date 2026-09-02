@@ -131,3 +131,21 @@ export function neighborItemId(
   }
   return null
 }
+
+/**
+ * 选中文章查找：先查常规列表，再查搜索结果。
+ * 搜索模式下选中的文章只存在于 searchResults（见 ArticleStore.patchItem），
+ * 只查 items 会导致点击搜索结果后阅读栏一直显示空态。
+ */
+export function findSelectedItem(
+  items: Item[],
+  searchResults: Item[],
+  selectedId: number | null,
+): Item | null {
+  if (selectedId === null) return null
+  return (
+    items.find((it) => it.id === selectedId) ??
+    searchResults.find((it) => it.id === selectedId) ??
+    null
+  )
+}

@@ -1,13 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
-import {
-  useArticleStore,
-  useLayoutStore,
-  useReaderStore,
-  useSidebarStore,
-} from '../../Stores'
-import { useArticleNavigation, usePlatform } from '../../Hooks'
+import { useLayoutStore, useReaderStore, useSidebarStore } from '../../Stores'
+import { useArticleNavigation, usePlatform, useSelectedItem } from '../../Hooks'
 import { readerBackgroundClass, readerContentStyle } from '../../Utils'
 import { ReaderArticle, Lightbox, NotePanel } from '../ReadingView'
 import FocusControlBar from './FocusControlBar'
@@ -35,9 +30,7 @@ function FocusMode(): JSX.Element | null {
   const closeNotePanel = useLayoutStore((s) => s.closeNotePanel)
   const platform = usePlatform()
 
-  const item = useArticleStore(
-    (s) => s.items.find((it) => it.id === s.selectedItemId) ?? null,
-  )
+  const item = useSelectedItem()
   const feeds = useSidebarStore((s) => s.feeds)
   const prefs = useReaderStore()
   const nav = useArticleNavigation()

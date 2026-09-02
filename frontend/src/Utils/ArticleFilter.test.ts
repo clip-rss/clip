@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   categoryFeedIds,
   filterAndSortItems,
+  findSelectedItem,
   neighborItemId,
 } from './ArticleFilter'
 import type { Category, FeedWithUnread, Item } from '../Types'
@@ -205,5 +206,32 @@ describe('neighborItemId', () => {
 
   it('currentId 不在有序列表中返回 null', () => {
     expect(neighborItemId(ordered, allVisible, 99, 1)).toBeNull()
+  })
+})
+
+describe('findSelectedItem', () => {
+  it('选中文章在搜索结果中（不在常规列表）时能被找到', () => {
+    // 回归：搜索模式下选中的文章只存在于 searchResults，
+    // 只查 items 会导致点击搜索结果后阅读栏一直显示空态。
+    const found = findSelectedItem([item(1, 100)], [item(2, 100)], 2)
+    expect(found?.id).toBe(2)
+  })
+
+  it('选中文章在常规列表中时优先命中常规列表', () => {
+    const inItems = item(1, 100, { title: '常规' })
+    const found = findSelectedItem(
+      [inItems],
+      [item(1, 100, { title: '搜索' })],
+      1,
+    )
+    expect(found).toBe(inItems)
+  })
+
+  it('未选中时返回 null', () => {
+    expect(findSelectedItem([item(1, 100)], [item(2, 100)], null)).toBeNull()
+  })
+
+  it('两个列表都未命中时返回 null', () => {
+    expect(findSelectedItem([item(1, 100)], [item(2, 100)], 99)).toBeNull()
   })
 })

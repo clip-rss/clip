@@ -7,6 +7,7 @@ import {
   useReaderStore,
   useLayoutStore,
 } from '../../Stores'
+import { useSelectedItem } from '../../Hooks'
 import { readerBackgroundClass, readerContentStyle } from '../../Utils'
 import ReaderToolbar from './ReaderToolbar'
 import ReaderArticle from './ReaderArticle'
@@ -16,9 +17,7 @@ import styles from './ReadingView.module.scss'
 
 function ReadingView(): JSX.Element {
   const { t } = useTranslation()
-  const item = useArticleStore(
-    (s) => s.items.find((it) => it.id === s.selectedItemId) ?? null,
-  )
+  const item = useSelectedItem()
   const loadingContentId = useArticleStore((s) => s.loadingContentId)
   const feeds = useSidebarStore((s) => s.feeds)
   const prefs = useReaderStore()

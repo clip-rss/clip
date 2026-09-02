@@ -1,7 +1,19 @@
 import { useMemo } from 'react'
 import { useArticleStore, useSidebarStore } from '../Stores'
-import { categoryFeedIds, filterAndSortItems, neighborItemId } from '../Utils'
+import {
+  categoryFeedIds,
+  filterAndSortItems,
+  findSelectedItem,
+  neighborItemId,
+} from '../Utils'
 import type { Item } from '../Types'
+
+/** 当前选中的文章（常规列表与搜索结果均可），无选中或未命中时为 null。 */
+export function useSelectedItem(): Item | null {
+  return useArticleStore((s) =>
+    findSelectedItem(s.items, s.searchResults, s.selectedItemId),
+  )
+}
 
 /** 当前选中范围下的「来源标题映射」与「分类限定集合」（多个 Hook 内部复用）。 */
 function useScopeContext(): {
@@ -81,20 +93,24 @@ export function useArticleNavigation(): ArticleNavigation {
   const sort = useArticleStore((s) => s.sort)
   const currentId = useArticleStore((s) => s.selectedItemId)
   const selectItem = useArticleStore((s) => s.selectItem)
+  const searchActive = useArticleStore((s) => s.searchActive)
+  const searchResults = useArticleStore((s) => s.searchResults)
   const { feedTitleOf, allowedFeedIds } = useScopeContext()
 
-  const ordered = useMemo(
-    () =>
-      filterAndSortItems(items, {
-        filter: 'all',
-        sort,
-        allowedFeedIds,
-        feedTitleOf,
-      }),
-    [items, sort, allowedFeedIds, feedTitleOf],
-  )
+  // 搜索模式与 useVisibleArticles 同源：直接用后端已排序的搜索结果，
+  // 不套用筛选与分类限定，保证专注模式导航与列表展示顺序一致。
+  const ordered = useMemo(() => {
+    if (searchActive) return searchResults
+    return filterAndSortItems(items, {
+      filter: 'all',
+      sort,
+      allowedFeedIds,
+      feedTitleOf,
+    })
+  }, [searchActive, searchResults, items, sort, allowedFeedIds, feedTitleOf])
 
   const candidateIds = useMemo(() => {
+    if (searchActive) return new Set(searchResults.map((it) => it.id))
     const visible = filterAndSortItems(items, {
       filter,
       sort,
@@ -102,7 +118,15 @@ export function useArticleNavigation(): ArticleNavigation {
       feedTitleOf,
     })
     return new Set(visible.map((it) => it.id))
-  }, [items, filter, sort, allowedFeedIds, feedTitleOf])
+  }, [
+    searchActive,
+    searchResults,
+    items,
+    filter,
+    sort,
+    allowedFeedIds,
+    feedTitleOf,
+  ])
 
   const prevId = useMemo(
     () => neighborItemId(ordered, candidateIds, currentId, -1),

@@ -40,6 +40,7 @@ export { BADGE_WARN_THRESHOLD, badgeLoad, badgeWarnProgress } from './BadgeLoad'
 export {
   categoryFeedIds,
   filterAndSortItems,
+  findSelectedItem,
   neighborItemId,
 } from './ArticleFilter'
 export type { FilterSortOptions } from './ArticleFilter'
