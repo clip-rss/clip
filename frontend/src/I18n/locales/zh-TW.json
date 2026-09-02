@@ -364,10 +364,11 @@
     },
     "about": {
       "appName": "Clip",
-      "version": "版本 {{version}}",
+      "version": "版本 v{{version}}",
       "desc": "簡單好用的跨平台 RSS 閱讀器",
       "updateAvailable": "新版本可用",
       "changelogError": "更新日志載入失敗",
+      "copyright": "Copyright © 2026 Clip RSS",
       "links": {
         "sourceCode": "Source Code (Github)",
         "reportBug": "Report Bug",

@@ -913,6 +913,9 @@ export function AboutSection(): JSX.Element {
           </span>
         ))}
       </div>
+      <div className={styles.aboutCopyright}>
+        {t('settings.about.copyright')}
+      </div>
       <ChangelogModal open={changelogOpen} onOpenChange={setChangelogOpen} />
     </div>
   )

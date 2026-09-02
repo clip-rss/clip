@@ -364,10 +364,11 @@
     },
     "about": {
       "appName": "Clip",
-      "version": "Version {{version}}",
+      "version": "Version v{{version}}",
       "desc": "A simple cross-platform RSS reader",
       "updateAvailable": "New Version Available",
       "changelogError": "Failed to load changelog",
+      "copyright": "Copyright © 2026 Clip RSS",
       "links": {
         "sourceCode": "Source Code (Github)",
         "reportBug": "Report Bug",
