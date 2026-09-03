@@ -49,24 +49,16 @@ export interface FilterSortOptions {
   sort: ArticleSort
   /** 限定的 feedId 集合（按分类选中时传入）；null/undefined 表示不按源限定。 */
   allowedFeedIds?: Set<number> | null
-  /** feedId → 源名，排序 'source' 时使用。 */
-  feedTitleOf?: (feedId: number) => string
   /** 当前时间，默认 new Date()（便于测试注入）。 */
   now?: Date
 }
 
-/** 按筛选维度过滤、按排序维度排序，返回新数组。 */
+/** 按筛选维度过滤、按时间方向排序，返回新数组。 */
 export function filterAndSortItems(
   items: Item[],
   opts: FilterSortOptions,
 ): Item[] {
-  const {
-    filter,
-    sort,
-    allowedFeedIds = null,
-    feedTitleOf,
-    now = new Date(),
-  } = opts
+  const { filter, sort, allowedFeedIds = null, now = new Date() } = opts
   const startOfToday = new Date(
     now.getFullYear(),
     now.getMonth(),
@@ -90,14 +82,11 @@ export function filterAndSortItems(
     }
   })
 
-  const titleOf = feedTitleOf ?? (() => '')
-  return filtered.sort((a, b) => {
-    if (sort === 'source') {
-      const cmp = titleOf(a.feedId).localeCompare(titleOf(b.feedId))
-      if (cmp !== 0) return cmp
-    }
-    return publishedMs(b) - publishedMs(a) // 时间倒序（亦作 source 的次级排序）
-  })
+  return filtered.sort((a, b) =>
+    sort === 'timeAsc'
+      ? publishedMs(a) - publishedMs(b)
+      : publishedMs(b) - publishedMs(a),
+  )
 }
 
 /**

@@ -39,8 +39,8 @@ export function ExternalLinkIcon(props: IconProps): JSX.Element {
   )
 }
 
-export function SortIcon(props: IconProps): JSX.Element {
-  const size = props.size ?? 16
+export function ArrowDownIcon(props: IconProps): JSX.Element {
+  const size = props.size ?? 14
   return (
     <svg
       width={size}
@@ -49,14 +49,32 @@ export function SortIcon(props: IconProps): JSX.Element {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="2.5"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path
-        d="M3 6h12M3 12h9M3 18h6M17 8l4-4 4 4M21 4v16"
-        transform="translate(-2 0)"
-      />
+      <path d="M12 5v14" />
+      <path d="m19 12-7 7-7-7" />
+    </svg>
+  )
+}
+
+export function ArrowUpIcon(props: IconProps): JSX.Element {
+  const size = props.size ?? 14
+  return (
+    <svg
+      width={size}
+      height={size}
+      className={props.className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 19V5" />
+      <path d="m5 12 7-7 7 7" />
     </svg>
   )
 }

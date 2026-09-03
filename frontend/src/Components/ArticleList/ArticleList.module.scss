@@ -56,16 +56,14 @@
   background: transparent;
   color: var(--text-secondary);
   font-size: 12px;
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 
   &:hover {
     background-color: var(--bg-tertiary);
     color: var(--text-primary);
   }
-}
-
-.sortLabel {
-  font-size: 12px;
 }
 
 // 搜索结果数提示
@@ -153,7 +151,11 @@
     background-color: var(--bg-tertiary);
 
     .actions {
-      background: linear-gradient(to right, transparent, var(--bg-tertiary) 24px);
+      background: linear-gradient(
+        to right,
+        transparent,
+        var(--bg-tertiary) 24px
+      );
     }
 
     .actionBtn {
@@ -279,7 +281,10 @@
   color: var(--text-secondary);
   opacity: 0;
   pointer-events: auto;
-  transition: opacity 0.15s, background-color 0.15s, color 0.15s;
+  transition:
+    opacity 0.15s,
+    background-color 0.15s,
+    color 0.15s;
 
   &:hover {
     background-color: var(--bg-secondary);

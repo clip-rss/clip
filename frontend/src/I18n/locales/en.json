@@ -64,10 +64,9 @@
       "today": "Today"
     },
     "sort": {
-      "time": "Time",
-      "source": "Source",
       "byTime": "Sort by time",
-      "bySource": "Sort by source"
+      "newest": "Newest first",
+      "oldest": "Oldest first"
     },
     "actions": {
       "markAllRead": "Mark All Read",

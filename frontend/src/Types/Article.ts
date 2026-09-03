@@ -3,5 +3,5 @@
 /** 文章筛选维度。 */
 export type ArticleFilter = 'all' | 'unread' | 'read' | 'starred' | 'today'
 
-/** 文章排序维度。 */
-export type ArticleSort = 'time' | 'source'
+/** 文章时间排序方向。 */
+export type ArticleSort = 'timeDesc' | 'timeAsc'

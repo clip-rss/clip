@@ -101,7 +101,7 @@ describe('filterAndSortItems', () => {
   it('unread 只留未读', () => {
     const r = filterAndSortItems(items, {
       filter: 'unread',
-      sort: 'time',
+      sort: 'timeDesc',
       now: NOW,
     })
     expect(r.map((i) => i.id)).toEqual([1, 3])
@@ -110,7 +110,7 @@ describe('filterAndSortItems', () => {
   it('read 只留已读', () => {
     const r = filterAndSortItems(items, {
       filter: 'read',
-      sort: 'time',
+      sort: 'timeDesc',
       now: NOW,
     })
     expect(r.map((i) => i.id)).toEqual([2])
@@ -119,7 +119,7 @@ describe('filterAndSortItems', () => {
   it('starred 只留星标', () => {
     const r = filterAndSortItems(items, {
       filter: 'starred',
-      sort: 'time',
+      sort: 'timeDesc',
       now: NOW,
     })
     expect(r.map((i) => i.id)).toEqual([1])
@@ -128,41 +128,38 @@ describe('filterAndSortItems', () => {
   it('today 只留今天发布', () => {
     const r = filterAndSortItems(items, {
       filter: 'today',
-      sort: 'time',
+      sort: 'timeDesc',
       now: NOW,
     })
     expect(r.map((i) => i.id)).toEqual([1])
   })
 
-  it('time 排序按发布时间倒序', () => {
+  it('timeDesc 排序按发布时间倒序', () => {
     const r = filterAndSortItems(items, {
       filter: 'all',
-      sort: 'time',
+      sort: 'timeDesc',
       now: NOW,
     })
     expect(r.map((i) => i.id)).toEqual([1, 2, 3])
   })
 
+  it('timeAsc 排序按发布时间升序', () => {
+    const r = filterAndSortItems(items, {
+      filter: 'all',
+      sort: 'timeAsc',
+      now: NOW,
+    })
+    expect(r.map((i) => i.id)).toEqual([3, 2, 1])
+  })
+
   it('allowedFeedIds 限定来源范围', () => {
     const r = filterAndSortItems(items, {
       filter: 'all',
-      sort: 'time',
+      sort: 'timeDesc',
       allowedFeedIds: new Set([200]),
       now: NOW,
     })
     expect(r.map((i) => i.id)).toEqual([3])
-  })
-
-  it('source 排序按源名升序、其次时间倒序', () => {
-    const titleOf = (id: number) => (id === 100 ? 'B源' : 'A源')
-    const r = filterAndSortItems(items, {
-      filter: 'all',
-      sort: 'source',
-      feedTitleOf: titleOf,
-      now: NOW,
-    })
-    // A源(feed200)=id3 在前，B源(feed100)=id1,2（时间倒序）
-    expect(r.map((i) => i.id)).toEqual([3, 1, 2])
   })
 })
 

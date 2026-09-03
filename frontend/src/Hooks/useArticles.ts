@@ -15,32 +15,20 @@ export function useSelectedItem(): Item | null {
   )
 }
 
-/** 当前选中范围下的「来源标题映射」与「分类限定集合」（多个 Hook 内部复用）。 */
+/** 当前选中范围下的「分类限定集合」（多个 Hook 内部复用）。 */
 function useScopeContext(): {
-  feedTitleOf: (id: number) => string
   allowedFeedIds: Set<number> | null
 } {
   const feeds = useSidebarStore((s) => s.feeds)
   const categories = useSidebarStore((s) => s.categories)
   const selection = useSidebarStore((s) => s.selection)
 
-  const feedTitle = useMemo(() => {
-    const map = new Map<number, string>()
-    for (const f of feeds) map.set(f.id, f.title)
-    return map
-  }, [feeds])
-
   const allowedFeedIds = useMemo(() => {
     if (selection.kind !== 'category') return null
     return categoryFeedIds(categories, feeds, selection.id)
   }, [selection, categories, feeds])
 
-  const feedTitleOf = useMemo(
-    () => (id: number) => feedTitle.get(id) ?? '',
-    [feedTitle],
-  )
-
-  return { feedTitleOf, allowedFeedIds }
+  return { allowedFeedIds }
 }
 
 /** 中间栏可见文章（筛选 + 排序），与文章列表展示完全一致。 */
@@ -50,26 +38,13 @@ export function useVisibleArticles(): Item[] {
   const sort = useArticleStore((s) => s.sort)
   const searchActive = useArticleStore((s) => s.searchActive)
   const searchResults = useArticleStore((s) => s.searchResults)
-  const { feedTitleOf, allowedFeedIds } = useScopeContext()
+  const { allowedFeedIds } = useScopeContext()
 
   return useMemo(() => {
     // 搜索模式：全库结果，已按后端 rank/时间排序，不再套用筛选与分类限定。
     if (searchActive) return searchResults
-    return filterAndSortItems(items, {
-      filter,
-      sort,
-      allowedFeedIds,
-      feedTitleOf,
-    })
-  }, [
-    searchActive,
-    searchResults,
-    items,
-    filter,
-    sort,
-    allowedFeedIds,
-    feedTitleOf,
-  ])
+    return filterAndSortItems(items, { filter, sort, allowedFeedIds })
+  }, [searchActive, searchResults, items, filter, sort, allowedFeedIds])
 }
 
 export interface ArticleNavigation {
@@ -95,7 +70,7 @@ export function useArticleNavigation(): ArticleNavigation {
   const selectItem = useArticleStore((s) => s.selectItem)
   const searchActive = useArticleStore((s) => s.searchActive)
   const searchResults = useArticleStore((s) => s.searchResults)
-  const { feedTitleOf, allowedFeedIds } = useScopeContext()
+  const { allowedFeedIds } = useScopeContext()
 
   // 搜索模式与 useVisibleArticles 同源：直接用后端已排序的搜索结果，
   // 不套用筛选与分类限定，保证专注模式导航与列表展示顺序一致。
@@ -105,9 +80,8 @@ export function useArticleNavigation(): ArticleNavigation {
       filter: 'all',
       sort,
       allowedFeedIds,
-      feedTitleOf,
     })
-  }, [searchActive, searchResults, items, sort, allowedFeedIds, feedTitleOf])
+  }, [searchActive, searchResults, items, sort, allowedFeedIds])
 
   const candidateIds = useMemo(() => {
     if (searchActive) return new Set(searchResults.map((it) => it.id))
@@ -115,18 +89,9 @@ export function useArticleNavigation(): ArticleNavigation {
       filter,
       sort,
       allowedFeedIds,
-      feedTitleOf,
     })
     return new Set(visible.map((it) => it.id))
-  }, [
-    searchActive,
-    searchResults,
-    items,
-    filter,
-    sort,
-    allowedFeedIds,
-    feedTitleOf,
-  ])
+  }, [searchActive, searchResults, items, filter, sort, allowedFeedIds])
 
   const prevId = useMemo(
     () => neighborItemId(ordered, candidateIds, currentId, -1),

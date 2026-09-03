@@ -64,10 +64,9 @@
       "today": "今日"
     },
     "sort": {
-      "time": "时间",
-      "source": "来源",
       "byTime": "按时间排序",
-      "bySource": "按来源排序"
+      "newest": "新到旧",
+      "oldest": "旧到新"
     },
     "actions": {
       "markAllRead": "全部标记为已读",

@@ -47,7 +47,7 @@ function reset(): void {
     loading: false,
     error: null,
     filter: 'unread',
-    sort: 'time',
+    sort: 'timeDesc',
     selectedItemId: null,
     currentSelection: { kind: 'all' },
     searchQuery: '',
@@ -110,9 +110,9 @@ describe('ArticleStore', () => {
 
   it('setFilter / setSort 更新状态', () => {
     useArticleStore.getState().setFilter('starred')
-    useArticleStore.getState().setSort('source')
+    useArticleStore.getState().setSort('timeAsc')
     expect(useArticleStore.getState().filter).toBe('starred')
-    expect(useArticleStore.getState().sort).toBe('source')
+    expect(useArticleStore.getState().sort).toBe('timeAsc')
   })
 
   it('selectItem 设置选中并对未读项乐观标记已读', () => {

@@ -2,7 +2,13 @@ import { useTranslation } from 'react-i18next'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import clsx from 'clsx'
 import type { ArticleFilter, ArticleSort } from '../../Types'
-import { ChevronDownIcon, CheckIcon, SortIcon, MoreIcon } from './Icons'
+import {
+  ChevronDownIcon,
+  CheckIcon,
+  ArrowDownIcon,
+  ArrowUpIcon,
+  MoreIcon,
+} from './Icons'
 import styles from './ArticleList.module.scss'
 
 interface ListHeaderProps {
@@ -45,10 +51,12 @@ function ListHeader(props: ListHeaderProps): JSX.Element {
     today: t('article.filter.today'),
   }
 
-  const sortLabel =
-    sort === 'time' ? t('article.sort.time') : t('article.sort.source')
-  const sortTitle =
-    sort === 'time' ? t('article.sort.byTime') : t('article.sort.bySource')
+  // 按时间排序：按钮仅为方向箭头图标，完整含义放在 title / aria-label，点击在新→旧 / 旧→新间切换。
+  const isDesc = sort === 'timeDesc'
+  const sortDirLabel = isDesc
+    ? t('article.sort.newest')
+    : t('article.sort.oldest')
+  const sortTitle = `${t('article.sort.byTime')} · ${sortDirLabel}`
 
   if (searchActive) {
     return (
@@ -95,12 +103,11 @@ function ListHeader(props: ListHeaderProps): JSX.Element {
         <button
           type="button"
           className={styles.iconButton}
-          onClick={() => onSortChange(sort === 'time' ? 'source' : 'time')}
+          onClick={() => onSortChange(isDesc ? 'timeAsc' : 'timeDesc')}
           title={sortTitle}
-          aria-label="切换排序"
+          aria-label={sortTitle}
         >
-          <SortIcon size={16} />
-          <span className={styles.sortLabel}>{sortLabel}</span>
+          {isDesc ? <ArrowDownIcon size={16} /> : <ArrowUpIcon size={16} />}
         </button>
 
         <DropdownMenu.Root>

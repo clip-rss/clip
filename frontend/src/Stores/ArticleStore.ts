@@ -162,7 +162,7 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     loading: false,
     error: null,
     filter: 'all',
-    sort: 'time',
+    sort: 'timeDesc',
     selectedItemId: null,
     currentSelection: { kind: 'all' },
     searchQuery: '',
