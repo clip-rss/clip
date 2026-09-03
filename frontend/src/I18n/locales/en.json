@@ -153,6 +153,7 @@
       "reading": "Reading",
       "theme": "Theme",
       "notification": "Notifications",
+      "accessibility": "Accessibility",
       "proxy": "Proxy",
       "shortcuts": "Shortcuts",
       "backup": "Backup",
@@ -172,10 +173,6 @@
       "maxItems": "Max items per feed",
       "maxItemsDesc": "Maximum articles retained per feed",
       "itemsUnit": "items",
-      "reduceMotion": "Reduce motion",
-      "reduceMotionDesc": "Disable animations and transitions for better accessibility",
-      "showFocusIndicator": "Show focus indicator",
-      "showFocusIndicatorDesc": "Display focus outline when navigating with keyboard",
       "language": "Language",
       "languageDesc": "Interface display language"
     },
@@ -188,6 +185,13 @@
         "5s": "5 sec",
         "off": "Off"
       }
+    },
+    "accessibility": {
+      "title": "Accessibility",
+      "reduceMotion": "Reduce motion",
+      "reduceMotionDesc": "Disable animations and transitions for better accessibility",
+      "showFocusIndicator": "Show focus indicator",
+      "showFocusIndicatorDesc": "Display focus outline when navigating with keyboard"
     },
     "theme": {
       "title": "Theme",

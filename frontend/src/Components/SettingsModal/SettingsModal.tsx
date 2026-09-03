@@ -5,6 +5,7 @@ import clsx from 'clsx'
 import { useSettingsStore, useUpdateStore } from '../../Stores'
 import {
   AboutSection,
+  AccessibilitySection,
   DataSection,
   GeneralSection,
   NotificationSection,
@@ -30,6 +31,7 @@ type SectionId =
   | 'shortcuts'
   | 'backup'
   | 'data'
+  | 'accessibility'
   | 'about'
 
 const NAV_KEYS: { id: SectionId; labelKey: string }[] = [
@@ -41,6 +43,7 @@ const NAV_KEYS: { id: SectionId; labelKey: string }[] = [
   { id: 'shortcuts', labelKey: 'settings.tabs.shortcuts' },
   { id: 'backup', labelKey: 'settings.tabs.backup' },
   { id: 'data', labelKey: 'settings.tabs.data' },
+  { id: 'accessibility', labelKey: 'settings.tabs.accessibility' },
   { id: 'about', labelKey: 'settings.tabs.about' },
 ]
 
@@ -108,6 +111,7 @@ function SettingsModal(props: SettingsModalProps): JSX.Element {
                 {active === 'shortcuts' ? <ShortcutSection /> : null}
                 {active === 'backup' ? <BackupSection /> : null}
                 {active === 'data' ? <DataSection /> : null}
+                {active === 'accessibility' ? <AccessibilitySection /> : null}
                 {active === 'about' ? <AboutSection /> : null}
               </div>
             </div>

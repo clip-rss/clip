@@ -104,28 +104,6 @@ export function GeneralSection(): JSX.Element {
           ))}
         </select>
       </SettingRow>
-
-      <SettingRow
-        label={t('settings.general.reduceMotion')}
-        description={t('settings.general.reduceMotionDesc')}
-      >
-        <Toggle
-          checked={settings?.reduceMotion ?? false}
-          onChange={(v) => update({ reduceMotion: v })}
-          label={t('settings.general.reduceMotion')}
-        />
-      </SettingRow>
-
-      <SettingRow
-        label={t('settings.general.showFocusIndicator')}
-        description={t('settings.general.showFocusIndicatorDesc')}
-      >
-        <Toggle
-          checked={settings?.showFocusIndicator ?? false}
-          onChange={(v) => update({ showFocusIndicator: v })}
-          label={t('settings.general.showFocusIndicator')}
-        />
-      </SettingRow>
     </div>
   )
 }
@@ -354,6 +332,43 @@ function CloseIcon(): JSX.Element {
     >
       <path d="M18 6 6 18M6 6l12 12" />
     </svg>
+  )
+}
+
+/* ============================ 无障碍 ============================ */
+
+export function AccessibilitySection(): JSX.Element {
+  const { t } = useTranslation()
+  const settings = useSettingsStore((s) => s.settings)
+  const update = useSettingsStore((s) => s.update)
+
+  return (
+    <div>
+      <h3 className={styles.sectionTitle}>
+        {t('settings.accessibility.title')}
+      </h3>
+      <SettingRow
+        label={t('settings.accessibility.reduceMotion')}
+        description={t('settings.accessibility.reduceMotionDesc')}
+      >
+        <Toggle
+          checked={settings?.reduceMotion ?? false}
+          onChange={(v) => update({ reduceMotion: v })}
+          label={t('settings.accessibility.reduceMotion')}
+        />
+      </SettingRow>
+
+      <SettingRow
+        label={t('settings.accessibility.showFocusIndicator')}
+        description={t('settings.accessibility.showFocusIndicatorDesc')}
+      >
+        <Toggle
+          checked={settings?.showFocusIndicator ?? false}
+          onChange={(v) => update({ showFocusIndicator: v })}
+          label={t('settings.accessibility.showFocusIndicator')}
+        />
+      </SettingRow>
+    </div>
   )
 }
 

@@ -153,6 +153,7 @@
       "reading": "阅读",
       "theme": "主题",
       "notification": "通知",
+      "accessibility": "无障碍",
       "proxy": "代理",
       "shortcuts": "快捷键",
       "backup": "备份",
@@ -172,10 +173,6 @@
       "maxItems": "每源最大条目",
       "maxItemsDesc": "新订阅源默认保留的最大文章数",
       "itemsUnit": "篇",
-      "reduceMotion": "减弱动画效果",
-      "reduceMotionDesc": "关闭界面动画和过渡效果，提升无障碍体验",
-      "showFocusIndicator": "显示焦点指示器",
-      "showFocusIndicatorDesc": "键盘导航时显示焦点边框，帮助识别当前聚焦的元素",
       "language": "语言",
       "languageDesc": "界面显示语言"
     },
@@ -188,6 +185,13 @@
         "5s": "5 秒",
         "off": "关闭"
       }
+    },
+    "accessibility": {
+      "title": "无障碍",
+      "reduceMotion": "减弱动画效果",
+      "reduceMotionDesc": "关闭界面动画和过渡效果，提升无障碍体验",
+      "showFocusIndicator": "显示焦点指示器",
+      "showFocusIndicatorDesc": "键盘导航时显示焦点边框，帮助识别当前聚焦的元素"
     },
     "theme": {
       "title": "主题",
