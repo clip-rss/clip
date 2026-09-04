@@ -1,7 +1,13 @@
 // 把扁平的「分类列表 + 订阅源列表」组装成左侧栏需要的多级树结构。
 // 纯函数，无副作用，便于单元测试。
 
-import type { Category, FeedWithUnread, FeedTree, FeedTreeNode } from '../Types'
+import type {
+  Category,
+  FeedWithUnread,
+  FeedTree,
+  FeedTreeNode,
+  FeedSort,
+} from '../Types'
 
 /** 分类排序：先按 sortOrder 升序，相同则按名称本地化比较。 */
 function compareCategory(a: Category, b: Category): number {
@@ -9,9 +15,32 @@ function compareCategory(a: Category, b: Category): number {
   return a.name.localeCompare(b.name)
 }
 
-/** 订阅源排序：按标题本地化比较（无持久化 sortOrder 字段）。 */
+/** 订阅源排序：按标题本地化比较（默认排序）。 */
 function compareFeed(a: FeedWithUnread, b: FeedWithUnread): number {
   return a.title.localeCompare(b.title)
+}
+
+/**
+ * 根据指定排序方式返回对应的订阅源比较器。
+ * - 'default'：按标题字母序
+ * - 'created'：按订阅时间降序（最新在前）
+ * - 'unread'：按未读数降序（最多在前）
+ */
+export function compareFeedBy(
+  sortBy: FeedSort,
+): (a: FeedWithUnread, b: FeedWithUnread) => number {
+  switch (sortBy) {
+    case 'created':
+      return (a, b) => {
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        return tb - ta // 降序，最新在前
+      }
+    case 'unread':
+      return (a, b) => b.unreadCount - a.unreadCount // 降序，最多在前
+    default:
+      return compareFeed
+  }
 }
 
 /**
@@ -19,10 +48,12 @@ function compareFeed(a: FeedWithUnread, b: FeedWithUnread): number {
  * - 分类按 parentId 形成多级嵌套；parentId 为 null 或指向不存在的父级时视为根。
  * - 订阅源 categoryId 为 null/0 归入 uncategorized。
  * - 每个分类节点的 unreadCount 递归累加自身直属源与全部子孙分类的未读数。
+ * - sortBy 控制订阅源在分类内和未分类区的排序方式，默认按标题字母序。
  */
 export function buildFeedTree(
   categories: Category[],
   feeds: FeedWithUnread[],
+  sortBy: FeedSort = 'default',
 ): FeedTree {
   // 分类按父级分组
   const childrenOf = new Map<number, Category[]>()
@@ -54,7 +85,9 @@ export function buildFeedTree(
 
   function buildNode(category: Category): FeedTreeNode {
     visited.add(category.id)
-    const ownFeeds = (feedsOf.get(category.id) ?? []).slice().sort(compareFeed)
+    const ownFeeds = (feedsOf.get(category.id) ?? [])
+      .slice()
+      .sort(compareFeedBy(sortBy))
     const childCats = (childrenOf.get(category.id) ?? [])
       .slice()
       .sort(compareCategory)
@@ -100,7 +133,7 @@ export function buildFeedTree(
 
   return {
     roots,
-    uncategorized: uncategorized.sort(compareFeed),
+    uncategorized: uncategorized.sort(compareFeedBy(sortBy)),
     totalUnread,
   }
 }

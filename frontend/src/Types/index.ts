@@ -37,7 +37,7 @@ export type {
 } from './Events'
 
 // 左侧栏类型
-export type { Selection, FeedTreeNode, FeedTree } from './Sidebar'
+export type { Selection, FeedTreeNode, FeedTree, FeedSort } from './Sidebar'
 
 // 文章列表类型
 export type { ArticleFilter, ArticleSort } from './Article'

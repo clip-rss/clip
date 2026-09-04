@@ -14,12 +14,13 @@ import {
   showToast,
 } from '../../Utils'
 import type { FeedRefreshingPayload } from '../../Types/Events'
+import type { FeedSort } from '../../Types'
 import FolderItem from './FolderItem'
 import FeedItem from './FeedItem'
 import UnreadBadge from './UnreadBadge'
 import RenameInput from './RenameInput'
 import ConfirmDialog from './ConfirmDialog'
-import { InboxIcon, PlusIcon, RefreshIcon } from './Icons'
+import { InboxIcon, PlusIcon, RefreshIcon, SortIcon } from './Icons'
 import { rowPaddingLeft, FEED_DRAG_TYPE } from './layout'
 import styles from './Sidebar.module.scss'
 
@@ -34,8 +35,10 @@ function Sidebar(props: SidebarProps): JSX.Element {
   const categories = useSidebarStore((s) => s.categories)
   const feeds = useSidebarStore((s) => s.feeds)
   const selection = useSidebarStore((s) => s.selection)
+  const feedSort = useSidebarStore((s) => s.feedSort)
   const load = useSidebarStore((s) => s.load)
   const select = useSidebarStore((s) => s.select)
+  const setFeedSort = useSidebarStore((s) => s.setFeedSort)
   const addCategory = useSidebarStore((s) => s.addCategory)
   const moveFeed = useSidebarStore((s) => s.moveFeed)
   const refreshSelected = useSidebarStore((s) => s.refreshSelected)
@@ -84,8 +87,8 @@ function Sidebar(props: SidebarProps): JSX.Element {
   }, [])
 
   const tree = useMemo(
-    () => buildFeedTree(categories, feeds),
-    [categories, feeds],
+    () => buildFeedTree(categories, feeds, feedSort),
+    [categories, feeds, feedSort],
   )
   const lastUpdated = useMemo(() => latestUpdated(feeds), [feeds])
   const allSelected = selection.kind === 'all'
@@ -141,6 +144,7 @@ function Sidebar(props: SidebarProps): JSX.Element {
               </button>
             </>
           ) : null}
+          <SortMenu value={feedSort} onChange={setFeedSort} />
           <AddMenu
             onNewFolder={() => setCreatingFolder(true)}
             onAddFeed={onAddFeed}
@@ -254,6 +258,62 @@ function Sidebar(props: SidebarProps): JSX.Element {
       setRefreshing(false)
     }
   }
+}
+
+/** 头部排序下拉菜单。 */
+function SortMenu(props: {
+  value: FeedSort
+  onChange: (sort: FeedSort) => void
+}): JSX.Element {
+  const { t } = useTranslation()
+  const { value, onChange } = props
+  const options: { key: FeedSort; label: string }[] = [
+    { key: 'default', label: t('sidebar.sort.default') },
+    { key: 'created', label: t('sidebar.sort.created') },
+    { key: 'unread', label: t('sidebar.sort.unread') },
+  ]
+  const active = value !== 'default'
+
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          className={clsx(styles.headerSort, active && styles.headerSortActive)}
+          title={t('sidebar.sort.title')}
+          aria-label={t('sidebar.sort.title')}
+        >
+          <SortIcon size={16} />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          className={styles.menuContent}
+          align="end"
+          sideOffset={4}
+        >
+          {options.map((opt) => (
+            <DropdownMenu.Item
+              key={opt.key}
+              className={styles.menuItem}
+              onSelect={() => onChange(opt.key)}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 16,
+                  textAlign: 'center',
+                }}
+              >
+                {value === opt.key ? '✓' : ''}
+              </span>
+              {opt.label}
+            </DropdownMenu.Item>
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  )
 }
 
 /** 头部「＋」下拉菜单。 */

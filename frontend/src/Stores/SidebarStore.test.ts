@@ -92,6 +92,16 @@ describe('SidebarStore', () => {
     })
   })
 
+  it('setFeedSort 更新排序方式', () => {
+    expect(useSidebarStore.getState().feedSort).toBe('default')
+    useSidebarStore.getState().setFeedSort('created')
+    expect(useSidebarStore.getState().feedSort).toBe('created')
+    useSidebarStore.getState().setFeedSort('unread')
+    expect(useSidebarStore.getState().feedSort).toBe('unread')
+    useSidebarStore.getState().setFeedSort('default')
+    expect(useSidebarStore.getState().feedSort).toBe('default')
+  })
+
   it('toggleExpand 切换展开集合', () => {
     const { toggleExpand, isExpanded } = useSidebarStore.getState()
     expect(isExpanded(3)).toBe(false)

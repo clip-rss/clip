@@ -53,7 +53,13 @@
     "feedError": "Failed to fetch feed",
     "refresh": "Refresh (R)",
     "addMenu": "Add menu",
-    "toggleMultiSelect": "Toggle multi-select for batch actions"
+    "toggleMultiSelect": "Toggle multi-select for batch actions",
+    "sort": {
+      "title": "Sort by",
+      "default": "Default",
+      "created": "Subscription time",
+      "unread": "Unread count"
+    }
   },
   "article": {
     "filter": {

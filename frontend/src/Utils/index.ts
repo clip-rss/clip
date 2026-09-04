@@ -27,6 +27,7 @@ export { importOpmlFromFile, importOpmlFromURL, exportOpmlToFile } from './Opml'
 export {
   buildFeedTree,
   flattenCategories,
+  compareFeedBy,
   isFeedErrored,
   erroredFeedIds,
 } from './FeedTree'

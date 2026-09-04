@@ -24,6 +24,9 @@ export interface FeedTreeNode {
   cappedUnread: number
 }
 
+/** 左侧栏订阅源排序方式。 */
+export type FeedSort = 'default' | 'created' | 'unread'
+
 /** 构建后的左侧栏树结构。 */
 export interface FeedTree {
   /** 根级分类节点（parentId 为 null）。 */

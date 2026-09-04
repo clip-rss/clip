@@ -1,12 +1,14 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { CategoryService, FeedService, toApiError } from '../Utils'
-import type { Category, FeedWithUnread, Selection } from '../Types'
+import type { Category, FeedWithUnread, Selection, FeedSort } from '../Types'
 
 interface SidebarState {
   categories: Category[]
   feeds: FeedWithUnread[]
   selection: Selection
+  /** 左侧栏订阅源排序方式。 */
+  feedSort: FeedSort
   /** 已展开的分类 id 集合（持久化）。 */
   expanded: Set<number>
   /** 批量勾选（复选框多选）的订阅源 id 集合，与单选 selection 解耦。 */
@@ -21,6 +23,7 @@ interface SidebarState {
   /** 并发拉取分类与订阅源（含未读计数）。 */
   load: () => Promise<void>
   select: (selection: Selection) => void
+  setFeedSort: (sort: FeedSort) => void
   toggleExpand: (categoryId: number) => void
   isExpanded: (categoryId: number) => boolean
 
@@ -66,6 +69,7 @@ export const useSidebarStore = create<SidebarState>()(
       categories: [],
       feeds: [],
       selection: { kind: 'all' },
+      feedSort: 'default',
       expanded: new Set<number>(),
       multiSelectIds: new Set<number>(),
       batchMode: false,
@@ -92,6 +96,10 @@ export const useSidebarStore = create<SidebarState>()(
 
       select(selection) {
         set({ selection })
+      },
+
+      setFeedSort(sort) {
+        set({ feedSort: sort })
       },
 
       toggleExpand(categoryId) {
@@ -281,11 +289,20 @@ export const useSidebarStore = create<SidebarState>()(
     }),
     {
       name: 'clip-sidebar',
-      // 仅持久化展开集合（Set 转数组）。
-      partialize: (state) => ({ expanded: Array.from(state.expanded) }),
+      // 仅持久化展开集合与排序偏好（Set 转数组）。
+      partialize: (state) => ({
+        expanded: Array.from(state.expanded),
+        feedSort: state.feedSort,
+      }),
       merge: (persisted, current) => {
-        const p = persisted as { expanded?: number[] } | undefined
-        return { ...current, expanded: new Set(p?.expanded ?? []) }
+        const p = persisted as
+          | { expanded?: number[]; feedSort?: FeedSort }
+          | undefined
+        return {
+          ...current,
+          expanded: new Set(p?.expanded ?? []),
+          feedSort: p?.feedSort ?? 'default',
+        }
       },
     },
   ),

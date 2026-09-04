@@ -150,3 +150,23 @@ export function PauseIcon(props: IconProps): JSX.Element {
     </svg>
   )
 }
+
+/** 排序图标（上下箭头，表示可排序）。 */
+export function SortIcon(props: IconProps): JSX.Element {
+  return (
+    <svg
+      {...base(props)}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m3 16 4 4 4-4" />
+      <path d="M7 20V4" />
+      <path d="m21 8-4-4-4 4" />
+      <path d="M17 4v16" />
+    </svg>
+  )
+}

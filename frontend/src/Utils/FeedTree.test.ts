@@ -2,10 +2,11 @@ import { describe, it, expect } from 'vitest'
 import {
   buildFeedTree,
   flattenCategories,
+  compareFeedBy,
   isFeedErrored,
   erroredFeedIds,
 } from './FeedTree'
-import type { Category, FeedWithUnread } from '../Types'
+import type { Category, FeedWithUnread, FeedSort } from '../Types'
 
 function cat(
   id: number,
@@ -28,6 +29,7 @@ function feed(
   title: string,
   categoryId: number | null,
   unreadCount: number,
+  createdAt?: string | null,
 ): FeedWithUnread {
   return {
     id,
@@ -43,7 +45,7 @@ function feed(
     errorCount: 0,
     lastError: null,
     status: 'active',
-    createdAt: null,
+    createdAt: createdAt ?? null,
     updatedAt: null,
     unreadCount,
   } as FeedWithUnread
@@ -148,6 +150,75 @@ describe('buildFeedTree', () => {
     expect(tree.roots[0].capacity).toBe(0)
     expect(tree.roots[0].cappedUnread).toBe(0)
   })
+})
+
+it('sortBy=created 时分类内源按订阅时间降序', () => {
+  const categories = [cat(1, '分类')]
+  const feeds = [
+    feed(1, '旧源', 1, 0, '2024-01-01T00:00:00Z'),
+    feed(2, '新源', 1, 0, '2025-06-15T00:00:00Z'),
+  ]
+  const tree = buildFeedTree(categories, feeds, 'created')
+  const ids = tree.roots[0].feeds.map((f) => f.id)
+  expect(ids).toEqual([2, 1])
+})
+
+it('sortBy=created 时未分类源按订阅时间降序', () => {
+  const feeds = [
+    feed(1, '旧源', null, 0, '2024-01-01T00:00:00Z'),
+    feed(2, '新源', null, 0, '2025-06-15T00:00:00Z'),
+  ]
+  const tree = buildFeedTree([], feeds, 'created')
+  expect(tree.uncategorized.map((f) => f.id)).toEqual([2, 1])
+})
+
+it('sortBy=unread 时分类内源按未读数降序', () => {
+  const categories = [cat(1, '分类')]
+  const feeds = [
+    feed(1, '少', 1, 3),
+    feed(2, '多', 1, 42),
+    feed(3, '中', 1, 15),
+  ]
+  const tree = buildFeedTree(categories, feeds, 'unread')
+  const ids = tree.roots[0].feeds.map((f) => f.id)
+  expect(ids).toEqual([2, 3, 1])
+})
+
+it('sortBy=unread 时未分类源按未读数降序', () => {
+  const feeds = [
+    feed(1, '少', null, 3),
+    feed(2, '多', null, 42),
+    feed(3, '中', null, 15),
+  ]
+  const tree = buildFeedTree([], feeds, 'unread')
+  expect(tree.uncategorized.map((f) => f.id)).toEqual([2, 3, 1])
+})
+
+it('compareFeedBy("default") 按标题字母序', () => {
+  const feeds = [feed(1, '香蕉', null, 0), feed(2, '苹果', null, 0)]
+  const sorted = [...feeds].sort(compareFeedBy('default'))
+  expect(sorted[0].title).toBe('苹果')
+  expect(sorted[1].title).toBe('香蕉')
+})
+
+it('compareFeedBy("created") 按订阅时间降序，无 createdAt 时排末尾', () => {
+  const feeds = [
+    feed(1, '无时间', null, 0, null),
+    feed(2, '旧源', null, 0, '2024-01-01T00:00:00Z'),
+    feed(3, '新源', null, 0, '2025-06-15T00:00:00Z'),
+  ]
+  const sorted = [...feeds].sort(compareFeedBy('created'))
+  expect(sorted.map((f) => f.title)).toEqual(['新源', '旧源', '无时间'])
+})
+
+it('compareFeedBy("unread") 按未读数降序', () => {
+  const feeds = [
+    feed(1, '少', null, 3),
+    feed(2, '多', null, 42),
+    feed(3, '中', null, 15),
+  ]
+  const sorted = [...feeds].sort(compareFeedBy('unread'))
+  expect(sorted.map((f) => f.title)).toEqual(['多', '中', '少'])
 })
 
 describe('flattenCategories', () => {
