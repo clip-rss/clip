@@ -18,6 +18,7 @@
     "contextMenu": {
       "newFolder": "新建文件夹",
       "addFeed": "添加订阅",
+      "info": "信息",
       "rename": "重命名",
       "edit": "编辑…",
       "refresh": "刷新订阅",
@@ -423,6 +424,35 @@
       "cancel": "取消",
       "delete": "删除订阅",
       "deleteConfirm": "确定要删除此订阅源及其所有文章吗？此操作不可撤销。"
+    },
+    "info": {
+      "title": "订阅源信息",
+      "section": {
+        "basic": "基本信息",
+        "stats": "统计信息",
+        "time": "时间信息",
+        "error": "错误信息"
+      },
+      "titleLabel": "标题",
+      "description": "描述",
+      "feedUrl": "订阅地址",
+      "siteLink": "网站链接",
+      "category": "所属分类",
+      "statusLabel": "状态",
+      "status": {
+        "active": "正常",
+        "paused": "已暂停",
+        "error": "异常"
+      },
+      "updateInterval": "更新间隔",
+      "intervalUnit": "{{count}} 分钟",
+      "maxItems": "保留上限",
+      "itemUnit": "{{count}} 篇",
+      "unreadCount": "未读文章",
+      "createdAt": "订阅时间",
+      "lastUpdated": "上次更新",
+      "errorCount": "错误次数",
+      "lastError": "上次错误"
     }
   },
   "confirm": {

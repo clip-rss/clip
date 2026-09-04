@@ -11,6 +11,7 @@ import {
 } from '../../Utils'
 import type { FeedWithUnread } from '../../Types'
 import { EditFeedModal } from '../EditFeedModal'
+import FeedInfoModal from '../FeedInfoModal/FeedInfoModal'
 import UnreadBadge from './UnreadBadge'
 import ConfirmDialog from './ConfirmDialog'
 import RenameInput from './RenameInput'
@@ -44,6 +45,7 @@ function FeedItem(props: FeedItemProps): JSX.Element {
 
   const [editing, setEditing] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const [infoOpen, setInfoOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [erroredConfirmOpen, setErroredConfirmOpen] = useState(false)
   /** 右键时快照的异常源 id 列表；确认删除按此执行，避免与弹窗期间的状态漂移不一致。 */
@@ -186,6 +188,13 @@ function FeedItem(props: FeedItemProps): JSX.Element {
             </ContextMenu.Item>
             <ContextMenu.Separator className={styles.menuSeparator} />
             <ContextMenu.Item
+              className={styles.menuItem}
+              onSelect={() => setInfoOpen(true)}
+            >
+              {t('sidebar.contextMenu.info')}
+            </ContextMenu.Item>
+            <ContextMenu.Separator className={styles.menuSeparator} />
+            <ContextMenu.Item
               className={clsx(styles.menuItem, styles.menuItemDanger)}
               onSelect={() => setConfirmOpen(true)}
             >
@@ -214,6 +223,8 @@ function FeedItem(props: FeedItemProps): JSX.Element {
       </ContextMenu.Root>
 
       <EditFeedModal feed={feed} open={editOpen} onOpenChange={setEditOpen} />
+
+      <FeedInfoModal feed={feed} open={infoOpen} onOpenChange={setInfoOpen} />
 
       <ConfirmDialog
         open={confirmOpen}

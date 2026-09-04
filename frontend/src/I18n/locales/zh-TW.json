@@ -18,6 +18,7 @@
     "contextMenu": {
       "newFolder": "新增資料夾",
       "addFeed": "新增訂閱",
+      "info": "資訊",
       "rename": "重新命名",
       "edit": "編輯…",
       "refresh": "重新整理訂閱",
@@ -423,6 +424,35 @@
       "cancel": "取消",
       "delete": "刪除訂閱",
       "deleteConfirm": "確定要刪除此訂閱來源及其所有文章吗？此操作不可撤销。"
+    },
+    "info": {
+      "title": "訂閱來源資訊",
+      "section": {
+        "basic": "基本資訊",
+        "stats": "統計資訊",
+        "time": "時間資訊",
+        "error": "錯誤資訊"
+      },
+      "titleLabel": "標題",
+      "description": "描述",
+      "feedUrl": "訂閱位址",
+      "siteLink": "網站連結",
+      "category": "所属分類",
+      "statusLabel": "狀態",
+      "status": {
+        "active": "正常",
+        "paused": "已暫停",
+        "error": "異常"
+      },
+      "updateInterval": "更新間隔",
+      "intervalUnit": "{{count}} 分鐘",
+      "maxItems": "保留上限",
+      "itemUnit": "{{count}} 篇",
+      "unreadCount": "未讀文章",
+      "createdAt": "訂閱時間",
+      "lastUpdated": "上次更新",
+      "errorCount": "錯誤次數",
+      "lastError": "上次錯誤"
     }
   },
   "confirm": {
