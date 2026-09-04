@@ -43,7 +43,11 @@ function FeedInfoModal(props: FeedInfoModalProps): JSX.Element {
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className={styles.overlay} />
-        <Dialog.Content className={styles.content} aria-describedby={undefined}>
+        <Dialog.Content
+          className={styles.content}
+          aria-describedby={undefined}
+          onPointerDownOutside={(e) => e.preventDefault()}
+        >
           <header className={styles.header}>
             <Dialog.Title className={styles.title}>
               {t('feed.info.title')}
