@@ -1,3 +1,34 @@
+## 0.6.0
+
+#### 2026-09-05
+
+### 新增
+- 侧栏支持订阅源排序
+- 文章列表支持按时间排序
+- 新增查看订阅源信息功能
+- 设置新增「无障碍」分区
+
+### 优化
+- 部分 UI 优化
+
+### New Features
+- Sidebar feeds can be sorted
+- Article list can be sorted by time
+- Added the ability to view feed info
+- Added an "Accessibility" section in settings
+
+### Improvements
+- Minor UI polish
+
+### 新增
+- 側欄支援訂閱源排序
+- 文章列表支援依時間排序
+- 新增查看訂閱來源資訊功能
+- 設定新增「無障礙」分區
+
+### 優化
+- 部分 UI 優化
+
 ## 0.5.0
 
 #### 2026-09-02
