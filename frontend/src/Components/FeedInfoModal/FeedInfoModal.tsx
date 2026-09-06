@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useSidebarStore } from '../../Stores'
-import { formatRelativeTime } from '../../Utils'
+import { formatRelativeTime, openURL } from '../../Utils'
 import type { FeedWithUnread } from '../../Types'
 import styles from './FeedInfoModal.module.scss'
 
@@ -195,15 +195,23 @@ function InfoRow(props: {
     <div className={styles.row}>
       <span className={styles.label}>{label}</span>
       {isLink ? (
-        <a
+        <span
           className={`${styles.value} ${styles.link}`}
-          href={value}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
+          role="link"
+          tabIndex={0}
+          onClick={(e) => {
+            e.stopPropagation()
+            openURL(value)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              openURL(value)
+            }
+          }}
         >
           {value}
-        </a>
+        </span>
       ) : (
         <span className={styles.value}>{value}</span>
       )}

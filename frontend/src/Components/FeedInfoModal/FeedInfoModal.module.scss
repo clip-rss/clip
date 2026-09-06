@@ -154,7 +154,7 @@
 .sectionTitle {
   font-size: 12px;
   font-weight: 700;
-  color: var(--text-tertiary);
+  color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 12px;
@@ -175,7 +175,7 @@
   flex-shrink: 0;
   width: 80px;
   font-size: 13px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   line-height: 1.5;
 }
 
@@ -190,6 +190,7 @@
 .link {
   color: var(--accent);
   text-decoration: none;
+  cursor: pointer;
 
   &:hover {
     text-decoration: underline;
