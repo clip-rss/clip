@@ -201,3 +201,49 @@ func TestParseCharsetConversion(t *testing.T) {
 		t.Errorf("title = %q, want café", feed.Title)
 	}
 }
+
+func TestParseGBKAsUTF8(t *testing.T) {
+	// 模拟 36kr 等中文网站的场景：XML 声明为 UTF-8，但实际字节是 GBK。
+	// GBK 编码的 "文章内容测试" → utf8.RuneError 的输入验证。
+	//
+	// "新闻" 的 GBK 字节：D0 C2 CE C5
+	//
+	// 构造一个 RSS feed，XML 声明 encoding="UTF-8"，但标题以 GBK 编码。
+	head := []byte(`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>`)
+	// GBK 编码的 "新闻" = D0 C2 CE C5
+	gbkTitle := []byte{0xD0, 0xC2, 0xCE, 0xC5}
+	tail := []byte(`</title><link>https://x</link><description>d</description></channel></rss>`)
+	data := append(append(head, gbkTitle...), tail...)
+
+	// 直接 Parse：ensureUTF8 应检测到非 UTF-8 字节并自动转换为 GBK。
+	feed, err := Parse(data)
+	if err != nil {
+		t.Fatalf("Parse GBK-as-UTF-8: %v", err)
+	}
+	if feed.Title != "新闻" {
+		t.Errorf("title = %q, want 新闻 (got apparent length %d runes)", feed.Title, len([]rune(feed.Title)))
+	}
+}
+
+func TestEnsureUTF8PreservesValidUTF8(t *testing.T) {
+	// 有效 UTF-8 应原样通过。
+	data := []byte(`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Hello 世界</title></channel></rss>`)
+	got := ensureUTF8(data)
+	if string(got) != string(data) {
+		t.Errorf("ensureUTF8 should not modify valid UTF-8")
+	}
+}
+
+func TestEnsureUTF8PreservesExplicitNonUTF8(t *testing.T) {
+	// 声明为 gb2312 的文档应原样保留（由 XML 解码器的 CharsetReader 处理）。
+	data := []byte(`<?xml version="1.0" encoding="gb2312"?><rss version="2.0"><channel><title>`)
+	// GBK 字节（gb2312 的超集）
+	gbkBytes := []byte{0xD0, 0xC2, 0xCE, 0xC5}
+	data = append(data, gbkBytes...)
+	data = append(data, []byte(`</title></channel></rss>`)...)
+
+	got := ensureUTF8(data)
+	if string(got) != string(data) {
+		t.Errorf("ensureUTF8 should not modify data with explicit non-UTF8 encoding declaration")
+	}
+}

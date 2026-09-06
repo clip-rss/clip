@@ -51,9 +51,19 @@ var urlAttrs = map[string]bool{"href": true, "src": true, "poster": true}
 
 // Sanitize 清洗 HTML：移除脚本/样式等危险元素、事件处理属性与危险协议，
 // 仅保留白名单内的标签与属性，以防止 XSS。
+//
+// 同时移除 U+FFFD（替换字符），该字符渲染为「��」方块。
+// U+FFFD 可能在以下场景进入数据：
+//   - 编码转换失败时由解码器注入（如旧版无 GBK 检测的解析器）
+//   - 无效 UTF-8 字节经 xml.Decoder 读取后生成
+//   - 来源于 Feed 本身携带的垃圾字节
 func Sanitize(input string) string {
 	if strings.TrimSpace(input) == "" {
 		return ""
+	}
+	// 移除替换字符 U+FFFD，避免渲染为「��」乱码。
+	if strings.ContainsRune(input, '�') {
+		input = strings.ReplaceAll(input, "�", "")
 	}
 
 	context := &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Body}
