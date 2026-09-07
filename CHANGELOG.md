@@ -1,3 +1,19 @@
+## 0.6.1
+
+#### 2026-09-07
+
+### 修复
+- 修复文章正文可能出现乱码的问题
+- 修复订阅源信息弹窗中链接的开启方式
+
+### Bug Fixes
+- Fixed article body text occasionally displaying garbled characters
+- Fixed the way links open in the feed info dialog
+
+### 修復
+- 修復文章正文可能出現亂碼的問題
+- 修復訂閱來源資訊彈窗中連結的開啟方式
+
 ## 0.6.0
 
 #### 2026-09-05
