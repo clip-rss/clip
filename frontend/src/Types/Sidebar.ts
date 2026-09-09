@@ -24,8 +24,8 @@ export interface FeedTreeNode {
   cappedUnread: number
 }
 
-/** 左侧栏订阅源排序方式。 */
-export type FeedSort = 'default' | 'created' | 'unread'
+/** 左侧栏订阅源排序方式。unreadAsc/unreadDesc 为按未读数升/降序。 */
+export type FeedSort = 'default' | 'created' | 'unreadAsc' | 'unreadDesc'
 
 /** 构建后的左侧栏树结构。 */
 export interface FeedTree {

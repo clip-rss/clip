@@ -270,7 +270,8 @@ function SortMenu(props: {
   const options: { key: FeedSort; label: string }[] = [
     { key: 'default', label: t('sidebar.sort.default') },
     { key: 'created', label: t('sidebar.sort.created') },
-    { key: 'unread', label: t('sidebar.sort.unread') },
+    { key: 'unreadAsc', label: t('sidebar.sort.unreadAsc') },
+    { key: 'unreadDesc', label: t('sidebar.sort.unreadDesc') },
   ]
   const active = value !== 'default'
 

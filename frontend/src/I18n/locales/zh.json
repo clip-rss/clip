@@ -59,7 +59,8 @@
       "title": "排序方式",
       "default": "默认排序",
       "created": "订阅时间",
-      "unread": "未读数"
+      "unreadAsc": "未读数升序",
+      "unreadDesc": "未读数降序"
     }
   },
   "article": {

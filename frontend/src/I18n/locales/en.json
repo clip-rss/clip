@@ -59,7 +59,8 @@
       "title": "Sort by",
       "default": "Default",
       "created": "Subscription time",
-      "unread": "Unread count"
+      "unreadAsc": "Unread ascending",
+      "unreadDesc": "Unread descending"
     }
   },
   "article": {

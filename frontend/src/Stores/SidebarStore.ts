@@ -301,12 +301,26 @@ export const useSidebarStore = create<SidebarState>()(
         return {
           ...current,
           expanded: new Set(p?.expanded ?? []),
-          feedSort: p?.feedSort ?? 'default',
+          feedSort: normalizeFeedSort(p?.feedSort),
         }
       },
     },
   ),
 )
+
+/** 归一化持久化的 feedSort；兼容旧值 'unread'（当时=降序），未知值回退 'default'。 */
+function normalizeFeedSort(v: unknown): FeedSort {
+  switch (v) {
+    case 'created':
+    case 'unreadAsc':
+    case 'unreadDesc':
+      return v
+    case 'unread':
+      return 'unreadDesc'
+    default:
+      return 'default'
+  }
+}
 
 /** 删除后若当前选中项正是被删对象，则回退到「全部文章」。 */
 function resetSelectionIfMatches(

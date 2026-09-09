@@ -172,25 +172,37 @@ it('sortBy=created 时未分类源按订阅时间降序', () => {
   expect(tree.uncategorized.map((f) => f.id)).toEqual([2, 1])
 })
 
-it('sortBy=unread 时分类内源按未读数降序', () => {
+it('sortBy=unreadDesc 时分类内源按未读数降序', () => {
   const categories = [cat(1, '分类')]
   const feeds = [
     feed(1, '少', 1, 3),
     feed(2, '多', 1, 42),
     feed(3, '中', 1, 15),
   ]
-  const tree = buildFeedTree(categories, feeds, 'unread')
+  const tree = buildFeedTree(categories, feeds, 'unreadDesc')
   const ids = tree.roots[0].feeds.map((f) => f.id)
   expect(ids).toEqual([2, 3, 1])
 })
 
-it('sortBy=unread 时未分类源按未读数降序', () => {
+it('sortBy=unreadAsc 时分类内源按未读数升序', () => {
+  const categories = [cat(1, '分类')]
+  const feeds = [
+    feed(1, '少', 1, 3),
+    feed(2, '多', 1, 42),
+    feed(3, '中', 1, 15),
+  ]
+  const tree = buildFeedTree(categories, feeds, 'unreadAsc')
+  const ids = tree.roots[0].feeds.map((f) => f.id)
+  expect(ids).toEqual([1, 3, 2])
+})
+
+it('sortBy=unreadDesc 时未分类源按未读数降序', () => {
   const feeds = [
     feed(1, '少', null, 3),
     feed(2, '多', null, 42),
     feed(3, '中', null, 15),
   ]
-  const tree = buildFeedTree([], feeds, 'unread')
+  const tree = buildFeedTree([], feeds, 'unreadDesc')
   expect(tree.uncategorized.map((f) => f.id)).toEqual([2, 3, 1])
 })
 
@@ -211,14 +223,24 @@ it('compareFeedBy("created") 按订阅时间降序，无 createdAt 时排末尾'
   expect(sorted.map((f) => f.title)).toEqual(['新源', '旧源', '无时间'])
 })
 
-it('compareFeedBy("unread") 按未读数降序', () => {
+it('compareFeedBy("unreadDesc") 按未读数降序', () => {
   const feeds = [
     feed(1, '少', null, 3),
     feed(2, '多', null, 42),
     feed(3, '中', null, 15),
   ]
-  const sorted = [...feeds].sort(compareFeedBy('unread'))
+  const sorted = [...feeds].sort(compareFeedBy('unreadDesc'))
   expect(sorted.map((f) => f.title)).toEqual(['多', '中', '少'])
+})
+
+it('compareFeedBy("unreadAsc") 按未读数升序', () => {
+  const feeds = [
+    feed(1, '少', null, 3),
+    feed(2, '多', null, 42),
+    feed(3, '中', null, 15),
+  ]
+  const sorted = [...feeds].sort(compareFeedBy('unreadAsc'))
+  expect(sorted.map((f) => f.title)).toEqual(['少', '中', '多'])
 })
 
 describe('flattenCategories', () => {

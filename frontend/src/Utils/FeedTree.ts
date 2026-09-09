@@ -24,7 +24,8 @@ function compareFeed(a: FeedWithUnread, b: FeedWithUnread): number {
  * 根据指定排序方式返回对应的订阅源比较器。
  * - 'default'：按标题字母序
  * - 'created'：按订阅时间降序（最新在前）
- * - 'unread'：按未读数降序（最多在前）
+ * - 'unreadAsc'：按未读数升序（最少在前）
+ * - 'unreadDesc'：按未读数降序（最多在前）
  */
 export function compareFeedBy(
   sortBy: FeedSort,
@@ -36,7 +37,9 @@ export function compareFeedBy(
         const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
         return tb - ta // 降序，最新在前
       }
-    case 'unread':
+    case 'unreadAsc':
+      return (a, b) => a.unreadCount - b.unreadCount // 升序，最少在前
+    case 'unreadDesc':
       return (a, b) => b.unreadCount - a.unreadCount // 降序，最多在前
     default:
       return compareFeed
