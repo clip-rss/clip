@@ -19,10 +19,14 @@ import {
   importOpmlFromFile,
   importOpmlFromURL,
   onOPMLImportProgress,
+  onDatabaseRestoreProgress,
   showToast,
   toApiError,
 } from '../../Utils'
-import type { OPMLImportProgressPayload } from '../../Types/Events'
+import type {
+  OPMLImportProgressPayload,
+  DatabaseRestoreProgressPayload,
+} from '../../Types/Events'
 import type {
   Category,
   FeedWithUnread,
@@ -382,6 +386,9 @@ export function DataSection(): JSX.Element {
   // OPML 导入进度：null 表示不在导入中，非 null 时显示进度条。
   const [importProgress, setImportProgress] =
     useState<OPMLImportProgressPayload | null>(null)
+  // 恢复数据库进度：null 表示不在恢复中。校验阶段没有确定百分比，走不确定态。
+  const [restoreProgress, setRestoreProgress] =
+    useState<DatabaseRestoreProgressPayload | null>(null)
   const importRef = useRef<HTMLInputElement>(null)
   // 远程导入的地址只存组件 state：不持久化，关闭设置即丢弃。
   const [remoteOpen, setRemoteOpen] = useState(false)
@@ -424,6 +431,12 @@ export function DataSection(): JSX.Element {
   // 订阅 OPML 导入进度事件，组件卸载时取消订阅。
   useEffect(() => {
     const unsub = onOPMLImportProgress(setImportProgress)
+    return unsub
+  }, [])
+
+  // 订阅恢复数据库进度事件，组件卸载时取消订阅。
+  useEffect(() => {
+    const unsub = onDatabaseRestoreProgress(setRestoreProgress)
     return unsub
   }, [])
 
@@ -579,6 +592,7 @@ export function DataSection(): JSX.Element {
 
   async function handleRestore(): Promise<void> {
     setBusy(true)
+    setRestoreProgress(null)
     try {
       const ok = await SettingsService.RestoreDatabase()
       if (ok) showToast(t('settings.data.restoreSuccess'), 'success')
@@ -590,6 +604,7 @@ export function DataSection(): JSX.Element {
       )
     } finally {
       setBusy(false)
+      setRestoreProgress(null)
     }
   }
 
@@ -827,6 +842,37 @@ export function DataSection(): JSX.Element {
           </button>
         </div>
       </SettingRow>
+
+      {restoreProgress ? (
+        <SettingRow
+          label={t('settings.data.restoreBtn')}
+          description={t('settings.data.restoreProgress')}
+        >
+          <div className={styles.importProgress}>
+            <div className={styles.progressTrack}>
+              <div
+                className={
+                  restoreProgress.phase === 'validating'
+                    ? styles.progressBarIndeterminate
+                    : styles.progressBar
+                }
+                style={
+                  restoreProgress.phase === 'validating'
+                    ? undefined
+                    : { width: `${restoreProgress.percent}%` }
+                }
+              />
+            </div>
+            <span className={styles.progressText}>
+              {restoreProgress.phase === 'validating'
+                ? t('settings.data.restoreProgressValidating')
+                : t('settings.data.restoreProgressCount', {
+                    percent: restoreProgress.percent,
+                  })}
+            </span>
+          </div>
+        </SettingRow>
+      ) : null}
     </div>
   )
 }

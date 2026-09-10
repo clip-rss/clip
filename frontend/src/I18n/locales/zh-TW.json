@@ -371,7 +371,10 @@
       "restoreBtn": "還原",
       "restoreSuccess": "已匯入備份，請重新啟動應用程式以生效。",
       "restoreCancelled": "已取消還原。",
-      "restoreError": "還原失敗"
+      "restoreError": "還原失敗",
+      "restoreProgress": "正在還原資料庫…",
+      "restoreProgressValidating": "正在校驗備份檔案完整性…",
+      "restoreProgressCount": "正在複製備份檔案… {{percent}}%"
     },
     "about": {
       "appName": "Clip",

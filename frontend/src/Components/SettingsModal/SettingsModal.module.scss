@@ -867,6 +867,35 @@
   transition: width 0.3s ease;
 }
 
+// 不确定态：宽度固定的滑块在轨道内循环平移。用于没有确定百分比的阶段
+// （恢复数据库的校验段是一次不可切分的全库 quick_check）。
+.progressBarIndeterminate {
+  width: 30%;
+  height: 100%;
+  border-radius: 3px;
+  background-color: var(--accent);
+  animation: progressSlide 1.2s ease-in-out infinite;
+}
+
+@keyframes progressSlide {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(333%);
+  }
+}
+
+// 尊重系统的减少动效偏好：停掉平移，给一条静态的浅色条。
+@media (prefers-reduced-motion: reduce) {
+  .progressBarIndeterminate {
+    animation: none;
+    transform: none;
+    opacity: 0.5;
+  }
+}
+
 .progressText {
   font-size: 12px;
   color: var(--text-secondary);

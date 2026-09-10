@@ -169,9 +169,15 @@ func (s *SettingsService) BackupDatabase() (bool, error) {
 	return true, nil
 }
 
+// DatabaseRestoreProgressEvent 恢复数据库的进度事件名（前端用）。
+const DatabaseRestoreProgressEvent = "database:restore:progress"
+
 // RestoreDatabase 弹出打开对话框选择备份文件，校验后暂存为待恢复库，
 // 实际换库在下次启动生效（前端据此提示用户重启）。
 // 用户取消时返回 (false, nil)；暂存成功返回 (true, nil)。
+//
+// 暂存期间按 store.RestorePhase* 阶段推送进度事件：校验段是一次不可切分的
+// quick_check（大库上占绝大部分耗时且无法细分），复制段有确定的字节百分比。
 func (s *SettingsService) RestoreDatabase() (bool, error) {
 	app := application.Get()
 	if app == nil {
@@ -188,8 +194,31 @@ func (s *SettingsService) RestoreDatabase() (bool, error) {
 	if src == "" {
 		return false, nil // 用户取消
 	}
-	if err := s.store.StageRestore(src); err != nil {
+	if err := s.store.StageRestore(src, func(phase string, copied, total int64) {
+		emitRestoreProgress(app, phase, copied, total)
+	}); err != nil {
 		return false, err
 	}
 	return true, nil
+}
+
+// emitRestoreProgress 推一条恢复进度事件。percent 由后端算好，
+// 前端无需知道 total 为 0（拿不到源文件大小时）该如何兜底。
+func emitRestoreProgress(app *application.App, phase string, copied, total int64) {
+	if app == nil {
+		return
+	}
+	percent := 0
+	if total > 0 {
+		percent = int(copied * 100 / total)
+	}
+	if percent > 100 {
+		percent = 100
+	}
+	app.Event.Emit(DatabaseRestoreProgressEvent, map[string]any{
+		"phase":   phase,
+		"copied":  copied,
+		"total":   total,
+		"percent": percent,
+	})
 }

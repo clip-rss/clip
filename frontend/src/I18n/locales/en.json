@@ -371,7 +371,10 @@
       "restoreBtn": "Restore",
       "restoreSuccess": "Database restored. Please restart the app.",
       "restoreCancelled": "Restore cancelled.",
-      "restoreError": "Restore failed"
+      "restoreError": "Restore failed",
+      "restoreProgress": "Restoring database…",
+      "restoreProgressValidating": "Verifying backup file…",
+      "restoreProgressCount": "Copying backup file… {{percent}}%"
     },
     "about": {
       "appName": "Clip",

@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	_ "modernc.org/sqlite"
 )
@@ -25,6 +26,24 @@ func (s *Store) Begin() (*sql.Tx, error) {
 // 运行时数据库被占用无法直接覆盖，恢复操作先写入该暂存文件，
 // 下次启动时由 applyPendingRestore 换库。
 const pendingRestoreSuffix = ".pending"
+
+// 恢复暂存的两个阶段，随 ProgressFn 的 phase 参数上报。
+//
+// 拆成两段是因为耗时分布极不均匀：实测 46 MB 的库，PRAGMA quick_check 全库校验
+// 约 2.5 s、整库复制约 0.24 s。校验是一次不可切分的 SQL 调用（modernc.org/sqlite
+// 未导出 progress handler），拿不到中间进度，因此校验段只能是不确定态，
+// 确定态的字节百分比只属于复制段。
+const (
+	// RestorePhaseValidating 校验源文件确实是合法的 Clip 数据库。
+	RestorePhaseValidating = "validating"
+	// RestorePhaseCopying 把源文件复制为待恢复文件。
+	RestorePhaseCopying = "copying"
+)
+
+// ProgressFn 接收恢复暂存的进度。phase 为 RestorePhase* 之一；
+// copied/total 仅在复制阶段有意义，校验阶段二者分别是 0 和源文件字节数。
+// 校验阶段只回调一次。
+type ProgressFn func(phase string, copied, total int64)
 
 // dbPathFunc 可在测试中替换的数据库路径函数
 var dbPathFunc = getDBPath
@@ -95,14 +114,31 @@ func (s *Store) Path() string {
 
 // StageRestore 校验 src 为合法的 Clip 数据库后，将其暂存为待恢复文件，
 // 实际换库发生在下次启动（见 applyPendingRestore）。
-func (s *Store) StageRestore(src string) error {
+//
+// progress 可为 nil（不报进度）。调用顺序：先 RestorePhaseValidating 一次，
+// 再若干次 RestorePhaseCopying（首次立即、末次必为 100%）。
+func (s *Store) StageRestore(src string, progress ProgressFn) error {
+	total := int64(0)
+	if info, err := os.Stat(src); err == nil {
+		total = info.Size()
+	}
+	report(progress, RestorePhaseValidating, 0, total)
 	if err := validateClipDB(src); err != nil {
 		return fmt.Errorf("invalid backup file: %w", err)
 	}
-	if err := copyFile(src, s.dbPath+pendingRestoreSuffix); err != nil {
+	if err := copyFileProgress(src, s.dbPath+pendingRestoreSuffix, func(copied int64) {
+		report(progress, RestorePhaseCopying, copied, total)
+	}, total); err != nil {
 		return fmt.Errorf("failed to stage restore: %w", err)
 	}
 	return nil
+}
+
+// report 调用可选的进度回调。
+func report(progress ProgressFn, phase string, copied, total int64) {
+	if progress != nil {
+		progress(phase, copied, total)
+	}
 }
 
 // validateClipDB 以只读方式打开 path，确认其为含 feeds 表的 SQLite 数据库。
@@ -134,6 +170,16 @@ func applyPendingRestore(dbPath string) error {
 
 // copyFile 将 src 内容复制到 dst（覆盖写入）。
 func copyFile(src, dst string) error {
+	return copyFileProgress(src, dst, nil, 0)
+}
+
+// copyFileProgress 是 copyFile 的带进度版本。onBytes 每次收到已复制的字节数；
+// 可为 nil。total 为 0 时表示调用方没拿到源文件大小，此时只按时间节流。
+//
+// 节流：至少 1% 且距上次回调 250 ms 才上报一次，避免 32 KiB 的 io.Copy 缓冲
+// 把大库复制放大成上万次事件；首次和 100% 两次无条件上报，
+// 保证进度条能起来、也一定会走到头。
+func copyFileProgress(src, dst string, onBytes func(copied int64), total int64) error {
 	in, err := os.Open(src)
 	if err != nil {
 		return err
@@ -144,11 +190,71 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	if _, err := io.Copy(out, in); err != nil {
+
+	w := &progressWriter{out: out, onBytes: onBytes, total: total}
+	if _, err := io.Copy(w, in); err != nil {
 		out.Close()
 		return err
 	}
+	w.flush() // 保证末次回调落在 100%
 	return out.Close()
+}
+
+// copyProgressInterval 进度回调的最小间隔。
+const copyProgressInterval = 250 * time.Millisecond
+
+// progressWriter 包装写入目标，按节流规则回调已复制的字节数。
+type progressWriter struct {
+	out     io.Writer
+	onBytes func(copied int64)
+	total   int64
+
+	copied    int64
+	lastSent  int64 // 上次上报时的字节数，用于 1% 阈值
+	lastSentT time.Time
+}
+
+func (w *progressWriter) Write(p []byte) (int, error) {
+	n, err := w.out.Write(p)
+	w.copied += int64(n)
+	w.maybeReport()
+	return n, err
+}
+
+// maybeReport 按 1% + 250 ms 双阈值决定是否上报；首次无条件上报。
+func (w *progressWriter) maybeReport() {
+	if w.onBytes == nil {
+		return
+	}
+	if w.lastSentT.IsZero() {
+		w.send()
+		return
+	}
+	now := time.Now()
+	if now.Sub(w.lastSentT) < copyProgressInterval {
+		return
+	}
+	if w.total > 0 && w.copied-w.lastSent < w.total/100 {
+		return
+	}
+	w.send()
+}
+
+// flush 无条件上报一次（收尾用）。
+func (w *progressWriter) flush() {
+	if w.lastSent == w.copied && !w.lastSentT.IsZero() {
+		return
+	}
+	w.send()
+}
+
+func (w *progressWriter) send() {
+	if w.onBytes == nil {
+		return
+	}
+	w.lastSent = w.copied
+	w.lastSentT = time.Now()
+	w.onBytes(w.copied)
 }
 
 // getDBPath 获取数据库文件路径

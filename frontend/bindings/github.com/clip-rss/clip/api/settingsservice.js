@@ -64,6 +64,9 @@ export function GetSettings() {
  * RestoreDatabase 弹出打开对话框选择备份文件，校验后暂存为待恢复库，
  * 实际换库在下次启动生效（前端据此提示用户重启）。
  * 用户取消时返回 (false, nil)；暂存成功返回 (true, nil)。
+ * 
+ * 暂存期间按 store.RestorePhase* 阶段推送进度事件：校验段是一次不可切分的
+ * quick_check（大库上占绝大部分耗时且无法细分），复制段有确定的字节百分比。
  * @returns {$CancellablePromise<boolean>}
  */
 export function RestoreDatabase() {

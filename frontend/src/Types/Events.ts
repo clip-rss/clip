@@ -45,3 +45,22 @@ export interface OPMLImportProgressPayload {
   skipped: number
   categories: number
 }
+
+/** 恢复数据库进度事件名（对应 api.DatabaseRestoreProgressEvent）。 */
+export const DatabaseRestoreProgressEvent = 'database:restore:progress'
+
+/** 恢复数据库的阶段（对应 store.RestorePhase*）。 */
+export type RestorePhase = 'validating' | 'copying'
+
+/**
+ * 恢复数据库进度事件负载。
+ *
+ * 校验阶段是一次不可切分的全库 quick_check，copied 恒为 0、percent 恒为 0，
+ * 此时只应展示不确定态进度条。
+ */
+export interface DatabaseRestoreProgressPayload {
+  phase: RestorePhase
+  copied: number
+  total: number
+  percent: number
+}

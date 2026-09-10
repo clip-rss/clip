@@ -6,11 +6,13 @@ import {
   FeedRefreshingEvent,
   NotificationOpenEvent,
   OPMLImportProgressEvent,
+  DatabaseRestoreProgressEvent,
   type ItemsUpdatedPayload,
   type FeedErrorPayload,
   type FeedRefreshingPayload,
   type NotificationOpenPayload,
   type OPMLImportProgressPayload,
+  type DatabaseRestoreProgressPayload,
 } from '../../Types/Events'
 
 /**
@@ -65,5 +67,17 @@ export function onOPMLImportProgress(
 ): () => void {
   return Events.On(OPMLImportProgressEvent, (ev) =>
     handler(ev.data as OPMLImportProgressPayload),
+  )
+}
+
+/**
+ * 订阅"恢复数据库进度"事件。
+ * @returns 取消订阅函数，组件卸载时调用。
+ */
+export function onDatabaseRestoreProgress(
+  handler: (payload: DatabaseRestoreProgressPayload) => void,
+): () => void {
+  return Events.On(DatabaseRestoreProgressEvent, (ev) =>
+    handler(ev.data as DatabaseRestoreProgressPayload),
   )
 }

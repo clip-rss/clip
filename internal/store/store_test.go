@@ -649,7 +649,7 @@ func TestStageAndApplyRestore(t *testing.T) {
 	bk.Close()
 
 	// 暂存恢复并关闭当前库。
-	if err := st.StageRestore(backupPath); err != nil {
+	if err := st.StageRestore(backupPath, nil); err != nil {
 		t.Fatalf("StageRestore: %v", err)
 	}
 	st.Close()
@@ -681,11 +681,60 @@ func TestStageRestoreRejectsInvalid(t *testing.T) {
 	if err := os.WriteFile(bogus, []byte("not a sqlite db"), 0644); err != nil {
 		t.Fatalf("write bogus: %v", err)
 	}
-	if err := st.StageRestore(bogus); err == nil {
+	if err := st.StageRestore(bogus, nil); err == nil {
 		t.Error("StageRestore should reject a non-clip database")
 	}
 	if _, err := os.Stat(st.Path() + pendingRestoreSuffix); !os.IsNotExist(err) {
 		t.Error("no pending file should be staged on invalid input")
+	}
+}
+
+// TestStageRestoreReportsProgress 恢复暂存应按「校验一次 → 复制若干次」上报进度，
+// 且末次复制回调必为 100%。46 MB 级的库实测校验约 2.5 s、复制约 0.24 s，
+// 校验段没有可细分的进度，因此只断言它恰好出现一次且 copied 为 0。
+func TestStageRestoreReportsProgress(t *testing.T) {
+	st := setupTestDB(t)
+
+	backupPath := filepath.Join(t.TempDir(), "backup.db")
+	bk, err := NewWithPath(backupPath)
+	if err != nil {
+		t.Fatalf("create backup store: %v", err)
+	}
+	if err := bk.CreateFeed(&Feed{URL: "https://new.example/feed", Title: "NEW", UpdateInterval: 30, MaxItems: 100, Status: "active"}); err != nil {
+		t.Fatalf("seed NEW: %v", err)
+	}
+	bk.Close()
+
+	type call struct {
+		phase         string
+		copied, total int64
+	}
+	var calls []call
+	if err := st.StageRestore(backupPath, func(phase string, copied, total int64) {
+		calls = append(calls, call{phase, copied, total})
+	}); err != nil {
+		t.Fatalf("StageRestore: %v", err)
+	}
+
+	if len(calls) == 0 {
+		t.Fatal("progress callback was never called")
+	}
+	first := calls[0]
+	if first.phase != RestorePhaseValidating || first.copied != 0 {
+		t.Errorf("first call = %+v, want validating with copied 0", first)
+	}
+	// 校验阶段只出现一次，之后全部是复制段。
+	for i, c := range calls[1:] {
+		if c.phase != RestorePhaseCopying {
+			t.Errorf("call[%d] phase = %q, want %q", i+1, c.phase, RestorePhaseCopying)
+		}
+		if c.total != first.total {
+			t.Errorf("call[%d] total = %d, want %d", i+1, c.total, first.total)
+		}
+	}
+	last := calls[len(calls)-1]
+	if last.phase != RestorePhaseCopying || last.total <= 0 || last.copied != last.total {
+		t.Errorf("last call = %+v, want copying at 100%%", last)
 	}
 }
 

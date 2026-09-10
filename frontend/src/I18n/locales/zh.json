@@ -371,7 +371,10 @@
       "restoreBtn": "恢复",
       "restoreSuccess": "已导入备份，请重启应用以生效。",
       "restoreCancelled": "已取消恢复。",
-      "restoreError": "恢复失败"
+      "restoreError": "恢复失败",
+      "restoreProgress": "正在恢复数据库…",
+      "restoreProgressValidating": "正在校验备份文件完整性…",
+      "restoreProgressCount": "正在复制备份文件… {{percent}}%"
     },
     "about": {
       "appName": "Clip",

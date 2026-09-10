@@ -25,6 +25,7 @@ export {
   onFeedRefreshing,
   onNotificationOpen,
   onOPMLImportProgress,
+  onDatabaseRestoreProgress,
 } from './Events'
 
 import { Browser } from '@wailsio/runtime'
