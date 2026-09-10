@@ -206,18 +206,19 @@ function FeedItem(props: FeedItemProps): JSX.Element {
             >
               {t('sidebar.contextMenu.deleteBatch')}
             </ContextMenu.Item>
-            <ContextMenu.Item
-              className={clsx(styles.menuItem, styles.menuItemDanger)}
-              disabled={errorIds.length === 0}
-              onSelect={() => {
-                setErroredIds(errorIds)
-                setErroredConfirmOpen(true)
-              }}
-            >
-              {t('sidebar.contextMenu.deleteErrored', {
-                count: errorIds.length,
-              })}
-            </ContextMenu.Item>
+            {errorIds.length > 0 ? (
+              <ContextMenu.Item
+                className={clsx(styles.menuItem, styles.menuItemDanger)}
+                onSelect={() => {
+                  setErroredIds(errorIds)
+                  setErroredConfirmOpen(true)
+                }}
+              >
+                {t('sidebar.contextMenu.deleteErrored', {
+                  count: errorIds.length,
+                })}
+              </ContextMenu.Item>
+            ) : null}
           </ContextMenu.Content>
         </ContextMenu.Portal>
       </ContextMenu.Root>
