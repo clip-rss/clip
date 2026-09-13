@@ -1,3 +1,22 @@
+## 0.6.2
+
+#### 2026-09-13
+
+### 优化
+- 数据库恢复时显示实时进度
+- 订阅源按未读数量排序拆分为升序和降序
+- 调整右键菜单项
+
+### Improvements
+- Display real-time progress when restoring the database
+- Split feed sorting by unread count into ascending and descending options
+- Adjust context menu items
+
+### 優化
+- 資料庫還原時顯示即時進度
+- 訂閱來源依未讀數量排序拆分為升冪和降冪
+- 調整右鍵選單項目
+
 ## 0.6.1
 
 #### 2026-09-07
