@@ -247,8 +247,8 @@ function FeedFavicon(props: { icon: string }): JSX.Element {
     <img
       src={icon}
       alt=""
-      width={32}
-      height={32}
+      width={64}
+      height={64}
       draggable={false}
       className={styles.faviconImg}
       onError={() => setFailed(true)}

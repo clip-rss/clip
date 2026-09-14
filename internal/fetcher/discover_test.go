@@ -70,3 +70,60 @@ func TestDiscoverFaviconFallback(t *testing.T) {
 		t.Errorf("fallback favicon = %q, want https://example.com/favicon.ico", got)
 	}
 }
+
+// 403 页面照样返回：站点用 403 拦住爬虫/未登录请求是常态，
+// 而那个页面本身就带着站点的图标声明，当失败丢掉就白瞎了。
+func TestFetchPageKeepsBodyOnClientError(t *testing.T) {
+	page := []byte(`<html><head><link rel="icon" href="/a.png"></head><body>403</body></html>`)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write(page)
+	}))
+	defer srv.Close()
+
+	f := New(WithClient(NewClient(WithMaxRetry(0))))
+	body, err := f.FetchPage(context.Background(), srv.URL)
+	if err != nil {
+		t.Fatalf("FetchPage = %v, want 403 页面原样返回", err)
+	}
+	if string(body) != string(page) {
+		t.Errorf("body = %.60q, want 403 页面", body)
+	}
+}
+
+// ResolveFavicon 必须用上 403 页面里的图标声明。
+// 网页请求 403（而 /favicon.ico 返回 204 空响应），图标只存在于那个页面里。
+func TestResolveFaviconFromForbiddenPage(t *testing.T) {
+	const icon = "data:image/svg+xml;base64,PHN2Zy8+"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/favicon.ico" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte(`<html><head><link rel="icon" href="` + icon + `"></head></html>`))
+	}))
+	defer srv.Close()
+
+	f := New(WithClient(NewClient(WithMaxRetry(0))))
+	if got := f.ResolveFavicon(context.Background(), "", srv.URL); got != icon {
+		t.Errorf("ResolveFavicon = %q, want %q（应取自 403 页面，而非 /favicon.ico 兜底）", got, icon)
+	}
+}
+
+// 抓 Feed 那条路不受上面改动影响：4xx 仍算失败，不得把错误页当 Feed 解析。
+func TestFetchStillFailsOnClientError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte("<html><body>nope</body></html>"))
+	}))
+	defer srv.Close()
+
+	f := New(WithClient(NewClient(WithMaxRetry(0))))
+	res, err := f.Client().Fetch(context.Background(), srv.URL, ConditionalHeaders{})
+	if err == nil || res != nil {
+		t.Fatalf("Fetch = (%+v, %v), want (nil, error)", res, err)
+	}
+}

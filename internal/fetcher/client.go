@@ -189,24 +189,39 @@ func (c *Client) do(ctx context.Context, rawURL string, cond ConditionalHeaders)
 		}, false, nil
 	}
 
-	if resp.StatusCode >= 500 {
-		return nil, true, fmt.Errorf("fetcher: server error: %s", resp.Status)
-	}
-	if resp.StatusCode >= 400 {
-		return nil, false, fmt.Errorf("fetcher: client error: %s", resp.Status)
-	}
-
+	// 响应体先读、后判状态码：4xx/5xx 的页面本身可能就是调用方要的东西
+	// （见 fetchAny）。Fetch 依旧把非 2xx 当失败，行为不变。
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes))
 	if err != nil {
 		return nil, true, fmt.Errorf("fetcher: read body: %w", err)
 	}
 
-	return &FetchResult{
+	res = &FetchResult{
 		Body:         body,
 		StatusCode:   resp.StatusCode,
 		ETag:         resp.Header.Get("ETag"),
 		LastModified: resp.Header.Get("Last-Modified"),
-	}, false, nil
+	}
+	if resp.StatusCode >= 500 {
+		return res, true, fmt.Errorf("fetcher: server error: %s", resp.Status)
+	}
+	if resp.StatusCode >= 400 {
+		return res, false, fmt.Errorf("fetcher: client error: %s", resp.Status)
+	}
+	return res, false, nil
+}
+
+// fetchAny 取回响应体，4xx/5xx 也照样返回；err 仅在完全没拿到响应时为非 nil。
+//
+// Fetch 把 4xx/5xx 当失败并丢弃响应体，favicon 发现不能这么干：站点常用 403 拦住
+// 爬虫或未登录请求，而那个 403 页面本身往往就带着站点的图标声明。
+// 不带条件头、不重试。
+func (c *Client) fetchAny(ctx context.Context, rawURL string) ([]byte, int, error) {
+	res, _, err := c.do(ctx, rawURL, ConditionalHeaders{})
+	if res == nil {
+		return nil, 0, err
+	}
+	return res.Body, res.StatusCode, nil
 }
 
 // Get 下载一个二进制资源（如图片），返回响应体字节与 Content-Type。

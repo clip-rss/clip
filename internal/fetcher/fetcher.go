@@ -164,22 +164,25 @@ func (f *Fetcher) Client() *Client { return f.client }
 //
 // 判别为挑战页但求解失败时返回原始响应体（即挑战页 HTML），由调用方按普通
 // 网页处理 —— 拿不到图标好过报错。
+//
+// 走 fetchAny 而非 Fetch：403/404 这类页面照样返回。站点用 403 拦爬虫是常态，
+// 而那个页面本身就带着站点图标声明，当成失败丢掉就白瞎了。
 func (f *Fetcher) FetchPage(ctx context.Context, pageURL string) ([]byte, error) {
-	result, err := f.client.Fetch(ctx, pageURL, ConditionalHeaders{})
+	body, _, err := f.client.fetchAny(ctx, pageURL)
 	if err != nil {
 		return nil, err
 	}
-	if result.NotModified || !looksLikeWAFChallenge(result.Body) {
-		return result.Body, nil
+	if !looksLikeWAFChallenge(body) {
+		return body, nil
 	}
-	if !f.client.solveChallenge(pageURL, result.Body) {
-		return result.Body, nil
+	if !f.client.solveChallenge(pageURL, body) {
+		return body, nil
 	}
 	// 已算出凭据：带 cookie 重取一次，不递归（仍是挑战页则沿用首份响应体）。
-	if retry, rerr := f.client.Fetch(ctx, pageURL, ConditionalHeaders{}); rerr == nil && !retry.NotModified {
-		return retry.Body, nil
+	if retry, _, rerr := f.client.fetchAny(ctx, pageURL); rerr == nil {
+		return retry, nil
 	}
-	return result.Body, nil
+	return body, nil
 }
 
 // SeedConditional 预置某 Feed 的条件 GET 头（例如从持久化层恢复）。
