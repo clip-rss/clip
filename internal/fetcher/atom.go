@@ -11,6 +11,8 @@ type atomFeed struct {
 	Subtitle atomText    `xml:"subtitle"`
 	Links    []atomLink  `xml:"link"`
 	Updated  string      `xml:"updated"`
+	Icon     string      `xml:"icon"`
+	Logo     string      `xml:"logo"`
 	Entries  []atomEntry `xml:"entry"`
 }
 
@@ -80,6 +82,7 @@ func parseAtom(data []byte) (*ParsedFeed, error) {
 		Description: af.Subtitle.value(),
 		Link:        atomAlternateHref(af.Links),
 		FeedLink:    atomSelfHref(af.Links),
+		Icon:        atomIcon(af.Icon, af.Logo),
 		Updated:     parseDate(af.Updated),
 		Items:       make([]ParsedItem, 0, len(af.Entries)),
 	}
@@ -169,4 +172,13 @@ func atomCategoryTerms(cats []atomCategory) []string {
 		}
 	}
 	return out
+}
+
+// atomIcon 返回 Atom 频道图标地址：优先 <icon>，fallback 到 <logo>。
+// 两者均无效时返回空串。
+func atomIcon(icon, logo string) string {
+	if s := strings.TrimSpace(icon); s != "" {
+		return s
+	}
+	return strings.TrimSpace(logo)
 }

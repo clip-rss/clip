@@ -84,7 +84,7 @@ func (s *FeedService) buildPreview(feedURL string, parsed *fetcher.ParsedFeed) *
 		Title:        firstNonEmpty(parsed.Title, feedURL),
 		Description:  parsed.Description,
 		Link:         parsed.Link,
-		Icon:         fetcher.DiscoverFavicon(nil, parsed.Link),
+		Icon:         s.discoverFavicon(parsed, feedURL),
 		ItemCount:    len(parsed.Items),
 		AlreadyAdded: existing != nil,
 	}
@@ -117,7 +117,7 @@ func (s *FeedService) AddFeed(feedURL string, categoryID int64) (*store.Feed, er
 		Title:          firstNonEmpty(parsed.Title, feedURL),
 		Description:    parsed.Description,
 		Link:           parsed.Link,
-		Icon:           fetcher.DiscoverFavicon(nil, parsed.Link),
+		Icon:           s.discoverFavicon(parsed, feedURL),
 		CategoryID:     nullableID(categoryID),
 		UpdateInterval: settings.DefaultUpdateInterval,
 		MaxItems:       settings.DefaultMaxItems,
@@ -202,4 +202,20 @@ func (s *FeedService) ForceRefreshAll() ([]RefreshOutcome, error) {
 		return nil, err
 	}
 	return toOutcomes(res), nil
+}
+
+// discoverFavicon 解析订阅源图标。
+//
+// 站点地址取 Feed 声明的 <link>；缺失时退回订阅地址本身（订阅常挂在站点自身路径下，
+// 如同一主机的 /feed.xml）。解析分三层（Feed 声明 → 抓页面解析 → 默认 /favicon.ico），
+// 细节见 fetcher.ResolveFavicon。
+func (s *FeedService) discoverFavicon(parsed *fetcher.ParsedFeed, feedURL string) string {
+	if parsed == nil {
+		return ""
+	}
+	site := parsed.Link
+	if site == "" {
+		site = feedURL
+	}
+	return s.fetcher.ResolveFavicon(context.Background(), parsed.Icon, site)
 }

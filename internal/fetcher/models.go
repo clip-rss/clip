@@ -22,6 +22,7 @@ type ParsedFeed struct {
 	Description string       // 频道描述（RSS description / Atom subtitle）
 	Link        string       // 站点主页链接
 	FeedLink    string       // Feed 自身链接（Atom rel="self"）
+	Icon        string       // 频道图标（RSS image / Atom icon/logo）
 	Updated     time.Time    // 频道最后更新时间
 	Items       []ParsedItem // 文章条目
 }

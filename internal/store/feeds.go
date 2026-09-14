@@ -410,6 +410,28 @@ func (s *Store) UpdateFeedLastUpdated(id int64, t time.Time) error {
 	return nil
 }
 
+// UpdateFeedMeta 更新订阅源的元信息字段（标题、描述、链接、图标）。
+// 用于调度刷新时同步源站变化，不触碰 error/status 等运维字段。
+func (s *Store) UpdateFeedMeta(id int64, title, description, link, icon string) error {
+	query := `
+		UPDATE feeds
+		SET title = ?, description = ?, link = ?, icon = ?, updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?
+	`
+	result, err := s.db.Exec(query, title, description, link, icon, id)
+	if err != nil {
+		return fmt.Errorf("failed to update feed meta: %w", err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get affected rows: %w", err)
+	}
+	if rows == 0 {
+		return fmt.Errorf("feed not found")
+	}
+	return nil
+}
+
 // ListActiveFeeds 获取全部活跃订阅源；具体间隔与退避判定由调度器统一完成。
 func (s *Store) ListActiveFeeds() ([]Feed, error) {
 	query := `

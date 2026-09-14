@@ -42,12 +42,15 @@ type FeedStore interface {
 	MarkFeedNotModified(id int64, checkedAt time.Time) error
 	ApplyFeedRefresh(id int64, checkedAt time.Time, items []store.RefreshItem, maxItems int) ([]store.Item, error)
 	UpdateFeedStatus(id int64, status string) error
+	UpdateFeedMeta(id int64, title, description, link, icon string) error
 }
 
 // FeedFetcher 调度器所需的抓取能力（便于测试替换）。
 type FeedFetcher interface {
 	FetchFeed(ctx context.Context, url string) (*fetcher.ParsedFeed, *fetcher.FetchResult, error)
 	FetchFeedForce(ctx context.Context, url string) (*fetcher.ParsedFeed, *fetcher.FetchResult, error)
+	// ResolveFavicon 供元信息同步补全缺失的图标（见 syncFeedMeta）。
+	ResolveFavicon(ctx context.Context, declared, siteURL string) string
 }
 
 // Emitter 向前端推送事件的能力（生产环境由 Wails 应用实现）。
@@ -483,6 +486,10 @@ func (s *Scheduler) refreshFeed(ctx context.Context, feed store.Feed, force bool
 	if err != nil {
 		return s.recordFailure(feed.ID, checkedAt, err)
 	}
+
+	// 同步 feed 元信息（标题、描述、链接、图标），跟随源站变化。
+	s.syncFeedMeta(ctx, feed, parsed, checkedAt)
+
 	createdItems := make([]NewItem, len(created))
 	for i, item := range created {
 		createdItems[i] = NewItem{ID: item.ID, Title: item.Title}
@@ -497,6 +504,56 @@ func (s *Scheduler) refreshFeed(ctx context.Context, feed store.Feed, force bool
 		s.notifier.Notify(ctx, feed, createdItems)
 	}
 	return res
+}
+
+// syncFeedMeta 把解析结果中的元信息同步回库，仅在确有变化时写。解析结果缺字段
+// 时（空串）一律沿用库里的旧值，避免用空值覆盖有效数据。
+//
+// 图标还额外承担一次「自愈」。图标是站点链接的派生值，所以两种情况都要重解析：
+//
+//   - 链接变化 —— 旧图标是按旧链接算出来的，已经失效。老数据受 RSS <link> 解析
+//     缺陷影响（channel 同时含 <link> 与 <atom:link> 时前者被覆盖成空串）而链接
+//     为空，刷新时链接被修正，图标必须跟着重算；
+//   - 库里图标为空 —— 同上缺陷导致的历史遗留。
+//
+// ResolveFavicon 对非空站点地址总会返回一个地址，且链接稳定后不再变化，
+// 因此这两条路径都最多触发一次，不会每轮刷新都发网络请求。
+func (s *Scheduler) syncFeedMeta(ctx context.Context, feed store.Feed, parsed *fetcher.ParsedFeed, checkedAt time.Time) {
+	if parsed == nil {
+		return
+	}
+
+	title, desc, link, icon := feed.Title, feed.Description, feed.Link, feed.Icon
+	if parsed.Title != "" {
+		title = parsed.Title
+	}
+	if parsed.Description != "" {
+		desc = parsed.Description
+	}
+	if parsed.Link != "" {
+		link = parsed.Link
+	}
+
+	switch {
+	case parsed.Icon != "":
+		icon = parsed.Icon
+	case icon == "" || link != feed.Link:
+		site := link
+		if site == "" {
+			site = feed.URL
+		}
+		if resolved := s.fetcher.ResolveFavicon(ctx, "", site); resolved != "" {
+			icon = resolved
+		}
+	}
+
+	if title == feed.Title && desc == feed.Description && link == feed.Link && icon == feed.Icon {
+		return
+	}
+	// 元信息更新失败不阻断主流程（文章已入库），仅按抓取失败记录。
+	if err := s.store.UpdateFeedMeta(feed.ID, title, desc, link, icon); err != nil {
+		s.recordFailure(feed.ID, checkedAt, err)
+	}
 }
 
 func (s *Scheduler) recordFailure(feedID int64, attemptedAt time.Time, cause error) RefreshResult {

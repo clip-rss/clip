@@ -12,12 +12,26 @@ type rssRoot struct {
 }
 
 type rssChannel struct {
-	Title         string    `xml:"title"`
+	Title string `xml:"title"`
+	// SelfLink 显式接住 Atom 的 rel="self" 自引用链接（RSSHub 等会在 channel 里加
+	// <atom:link href=… rel="self"/>）。**必须声明在 Link 之前**：
+	// Go 的 encoding/xml 按本地名匹配、对空命名空间字段不校验命名空间，所以
+	// `xml:"link"` 会把 <atom:link> 一并吃下 —— 而后者没有 chardata，会把真正的
+	// <link> 覆盖成空串（实测 RSSHub 的财联社源即如此）。
+	SelfLink      string    `xml:"http://www.w3.org/2005/Atom link"`
 	Link          string    `xml:"link"`
 	Description   string    `xml:"description"`
 	LastBuildDate string    `xml:"lastBuildDate"`
 	PubDate       string    `xml:"pubDate"`
+	Image         *rssImage `xml:"image"`
 	Items         []rssItem `xml:"item"`
+}
+
+// rssImage RSS <channel><image> 子元素，用于声明频道图标/徽标。
+type rssImage struct {
+	URL   string `xml:"url"`
+	Title string `xml:"title"`
+	Link  string `xml:"link"`
 }
 
 type rssItem struct {
@@ -56,6 +70,7 @@ func parseRSS(data []byte) (*ParsedFeed, error) {
 		Title:       strings.TrimSpace(ch.Title),
 		Description: strings.TrimSpace(ch.Description),
 		Link:        strings.TrimSpace(ch.Link),
+		Icon:        channelImageURL(ch.Image),
 		Updated:     firstDate(ch.LastBuildDate, ch.PubDate),
 		Items:       make([]ParsedItem, 0, len(ch.Items)),
 	}
@@ -113,4 +128,13 @@ func trimAll(in []string) []string {
 		}
 	}
 	return out
+}
+
+// channelImageURL 从 RSS <channel><image> 中提取图标地址。
+// 元素存在但 <url> 为空时返回空串。
+func channelImageURL(img *rssImage) string {
+	if img == nil {
+		return ""
+	}
+	return strings.TrimSpace(img.URL)
 }

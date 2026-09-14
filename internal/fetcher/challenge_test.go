@@ -187,3 +187,63 @@ func TestFetchKeepsHTMLErrorWhenUnsolvable(t *testing.T) {
 		t.Errorf("hits = %d, want 1（不应重试）", hits)
 	}
 }
+
+// 端到端：FetchPage 抓普通网页时同样求解挑战并重取，返回真实 HTML。
+// 这是 favicon 发现的路径 —— 受 WAF 保护的站点靠它拿到真实页面。
+func TestFetchPageSolvesChallengeAndRetries(t *testing.T) {
+	page := buildChallengePage(t, "seed-for-fetchpage-e2e-32bytes!", 5)
+	realHTML := []byte(`<html><head><link rel="icon" href="/static/icon.png"></head><body>ok</body></html>`)
+
+	var challengeServed, pageServed int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if ck, err := r.Cookie(wafCookieName); err == nil && ck.Value != "" {
+			pageServed++
+			w.Header().Set("Content-Type", "text/html")
+			w.Write(realHTML)
+			return
+		}
+		challengeServed++
+		w.Header().Set("Content-Type", "text/html")
+		w.Write(page)
+	}))
+	defer srv.Close()
+
+	f := New(WithClient(NewClient(WithMaxRetry(0))))
+
+	body, err := f.FetchPage(context.Background(), srv.URL)
+	if err != nil {
+		t.Fatalf("FetchPage = %v", err)
+	}
+	if string(body) != string(realHTML) {
+		t.Errorf("body = %.60q, want 求解后的真实页面", body)
+	}
+	if challengeServed != 1 || pageServed != 1 {
+		t.Errorf("challengeServed=%d pageServed=%d, want 1/1", challengeServed, pageServed)
+	}
+}
+
+// 普通网页不得触发求解，也不得多发请求。
+func TestFetchPagePassesThroughPlainPage(t *testing.T) {
+	plain := []byte(`<html><head><link rel="icon" href="/a.png"></head></html>`)
+
+	var hits int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits++
+		w.Header().Set("Content-Type", "text/html")
+		w.Write(plain)
+	}))
+	defer srv.Close()
+
+	f := New(WithClient(NewClient(WithMaxRetry(0))))
+
+	body, err := f.FetchPage(context.Background(), srv.URL)
+	if err != nil {
+		t.Fatalf("FetchPage = %v", err)
+	}
+	if string(body) != string(plain) {
+		t.Errorf("body = %.60q, want 原样返回", body)
+	}
+	if hits != 1 {
+		t.Errorf("hits = %d, want 1（普通网页不应重取）", hits)
+	}
+}

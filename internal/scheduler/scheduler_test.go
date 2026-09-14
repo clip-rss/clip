@@ -30,6 +30,7 @@ type fakeStore struct {
 	lastUpdated    map[int64]time.Time
 	cleanups       map[int64]int
 	statusUpdates  map[int64]string
+	metaUpdates    map[int64]*store.Feed // track UpdateFeedMeta calls
 	listCalls      int32
 	listFeedsCalls int32
 	applyErr       error
@@ -46,6 +47,7 @@ func newFakeStore() *fakeStore {
 		lastUpdated:   map[int64]time.Time{},
 		cleanups:      map[int64]int{},
 		statusUpdates: map[int64]string{},
+		metaUpdates:   map[int64]*store.Feed{},
 	}
 }
 
@@ -169,6 +171,24 @@ func (f *fakeStore) UpdateFeedStatus(id int64, status string) error {
 	return nil
 }
 
+func (f *fakeStore) UpdateFeedMeta(id int64, title, description, link, icon string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.metaUpdates[id] = &store.Feed{
+		Title:       title,
+		Description: description,
+		Link:        link,
+		Icon:        icon,
+	}
+	if fd := f.feeds[id]; fd != nil {
+		fd.Title = title
+		fd.Description = description
+		fd.Link = link
+		fd.Icon = icon
+	}
+	return nil
+}
+
 func (f *fakeStore) itemCount() int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -211,6 +231,18 @@ func (f *fakeFetcher) FetchFeed(ctx context.Context, url string) (*fetcher.Parse
 func (f *fakeFetcher) FetchFeedForce(ctx context.Context, url string) (*fetcher.ParsedFeed, *fetcher.FetchResult, error) {
 	atomic.AddInt32(&f.forceCalls, 1)
 	return f.common(url)
+}
+
+// ResolveFavicon 是测试替身：不发网络请求，直接返回 declared，
+// 否则合成一个带前缀的可断言地址。
+func (f *fakeFetcher) ResolveFavicon(ctx context.Context, declared, siteURL string) string {
+	if declared != "" {
+		return declared
+	}
+	if siteURL == "" {
+		return ""
+	}
+	return "favicon:" + siteURL
 }
 
 func (f *fakeFetcher) common(url string) (*fetcher.ParsedFeed, *fetcher.FetchResult, error) {
@@ -331,6 +363,89 @@ func TestRefreshFeedPersistsAndEmits(t *testing.T) {
 	}
 	if em.count() != 4 {
 		t.Errorf("expected 4 events total (2 from first + 2 from second), got %d", em.count())
+	}
+}
+
+// 刷新应把解析到的元信息同步回库。老数据 Link/Icon 为空（RSS <link> 解析缺陷的
+// 历史遗留）时借此自愈 —— 否则前端只显示内置 globe 图标。
+func TestRefreshSyncsFeedMetaAndHealsMissingIcon(t *testing.T) {
+	st := newFakeStore()
+	st.addFeed(store.Feed{
+		ID: 1, URL: "https://rsshub.test/cls/depth/1000", Title: "旧标题",
+		Status: "active", UpdateInterval: 30, MaxItems: 100,
+		// Link 与 Icon 均为空 —— 与历史坏数据一致
+	})
+
+	ft := newFakeFetcher()
+	ft.feeds["https://rsshub.test/cls/depth/1000"] = &fetcher.ParsedFeed{
+		Title: "财联社 - 头条",
+		Link:  "https://www.cls.cn/depth?id=1000",
+	}
+
+	s := New(st, ft)
+	if _, err := s.RefreshFeed(context.Background(), 1); err != nil {
+		t.Fatalf("RefreshFeed: %v", err)
+	}
+
+	got := st.metaUpdates[1]
+	if got == nil {
+		t.Fatal("UpdateFeedMeta 未被调用，元信息没有同步")
+	}
+	if got.Title != "财联社 - 头条" {
+		t.Errorf("title = %q, want 财联社 - 头条", got.Title)
+	}
+	if got.Link != "https://www.cls.cn/depth?id=1000" {
+		t.Errorf("link = %q, want 解析出的站点链接", got.Link)
+	}
+	if got.Icon == "" {
+		t.Error("icon 仍为空 —— 未触发补解析，前端会回退到 globe 图标")
+	}
+}
+
+// 站点链接变化时，旧图标（按旧链接算出来的）必须重解析 —— 它已不再对应该站点。
+func TestRefreshReresolvesIconWhenLinkChanges(t *testing.T) {
+	st := newFakeStore()
+	st.addFeed(store.Feed{
+		ID: 1, URL: "https://rsshub.test/cls", Title: "T",
+		Link: "", Icon: "https://rsshub.test/favicon.ico", // 按「空链接」算出的旧图标
+		Status: "active", UpdateInterval: 30, MaxItems: 100,
+	})
+
+	ft := newFakeFetcher()
+	ft.feeds["https://rsshub.test/cls"] = &fetcher.ParsedFeed{Link: "https://www.cls.cn/depth?id=1000"}
+
+	s := New(st, ft)
+	if _, err := s.RefreshFeed(context.Background(), 1); err != nil {
+		t.Fatalf("RefreshFeed: %v", err)
+	}
+
+	got := st.metaUpdates[1]
+	if got == nil {
+		t.Fatal("链接变化却未同步元信息")
+	}
+	if got.Icon != "favicon:https://www.cls.cn/depth?id=1000" {
+		t.Errorf("icon = %q, want 按新链接重解析的图标", got.Icon)
+	}
+}
+
+// 元信息没变化时不应写库，避免每轮刷新都产生一次 UPDATE。
+func TestRefreshSkipsMetaWriteWhenUnchanged(t *testing.T) {
+	st := newFakeStore()
+	st.addFeed(store.Feed{
+		ID: 1, URL: "u1", Title: "T", Link: "https://x", Icon: "https://x/i.png",
+		Status: "active", UpdateInterval: 30, MaxItems: 100,
+	})
+
+	ft := newFakeFetcher()
+	ft.feeds["u1"] = &fetcher.ParsedFeed{Title: "T", Link: "https://x", Icon: "https://x/i.png"}
+
+	s := New(st, ft)
+	if _, err := s.RefreshFeed(context.Background(), 1); err != nil {
+		t.Fatalf("RefreshFeed: %v", err)
+	}
+
+	if _, ok := st.metaUpdates[1]; ok {
+		t.Errorf("元信息未变化却写了库: %+v", st.metaUpdates[1])
 	}
 }
 

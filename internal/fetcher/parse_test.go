@@ -11,6 +11,11 @@ const sampleRSS = `<?xml version="1.0" encoding="UTF-8"?>
     <title>Example Blog</title>
     <link>https://example.com/</link>
     <description>An example feed</description>
+    <image>
+      <url>https://example.com/logo.png</url>
+      <title>Example Blog</title>
+      <link>https://example.com/</link>
+    </image>
     <lastBuildDate>Mon, 02 Jan 2006 15:04:05 -0700</lastBuildDate>
     <item>
       <title>First Post</title>
@@ -39,6 +44,7 @@ const sampleAtom = `<?xml version="1.0" encoding="UTF-8"?>
   <subtitle>Atom subtitle</subtitle>
   <link href="https://atom.example.com/" rel="alternate"/>
   <link href="https://atom.example.com/feed.xml" rel="self"/>
+  <icon>https://atom.example.com/icon.png</icon>
   <updated>2020-01-02T15:04:05Z</updated>
   <entry>
     <title>Atom Entry</title>
@@ -63,6 +69,9 @@ func TestParseRSS(t *testing.T) {
 	}
 	if feed.Link != "https://example.com/" {
 		t.Errorf("link = %q", feed.Link)
+	}
+	if feed.Icon != "https://example.com/logo.png" {
+		t.Errorf("rss icon = %q, want https://example.com/logo.png", feed.Icon)
 	}
 	if len(feed.Items) != 2 {
 		t.Fatalf("items = %d, want 2", len(feed.Items))
@@ -109,6 +118,9 @@ func TestParseAtom(t *testing.T) {
 	if feed.FeedLink != "https://atom.example.com/feed.xml" {
 		t.Errorf("self link = %q", feed.FeedLink)
 	}
+	if feed.Icon != "https://atom.example.com/icon.png" {
+		t.Errorf("atom icon = %q, want https://atom.example.com/icon.png", feed.Icon)
+	}
 	if len(feed.Items) != 1 {
 		t.Fatalf("items = %d, want 1", len(feed.Items))
 	}
@@ -130,6 +142,34 @@ func TestParseAtom(t *testing.T) {
 	}
 	if it.Published.IsZero() || it.Updated.IsZero() {
 		t.Error("published/updated should be parsed")
+	}
+}
+
+// RSSHub 等生成的 RSS 会在 channel 里同时给出 <link> 与 <atom:link rel="self"/>。
+// Go 的 encoding/xml 按本地名匹配，对空命名空间字段不校验命名空间，`xml:"link"`
+// 因而把 <atom:link> 一并吃下 —— 它没有 chardata，会把真正的 <link> 覆盖成空串。
+// 实测财联社源因此拿到空 Link，favicon 无从解析（回退到 globe 图标）。
+func TestParseRSSChannelLinkSurvivesAtomSelfLink(t *testing.T) {
+	const doc = `<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+  <channel>
+    <title>财联社 - 头条</title>
+    <link>https://www.cls.cn/depth?id=1000</link>
+    <atom:link href="http://rsshub.example/cls/depth/1000" rel="self" type="application/rss+xml"></atom:link>
+    <description>d</description>
+    <item><title>t</title><link>https://example.com/1</link></item>
+  </channel>
+</rss>`
+
+	feed, err := Parse([]byte(doc))
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if feed.Link != "https://www.cls.cn/depth?id=1000" {
+		t.Errorf("channel link = %q, want https://www.cls.cn/depth?id=1000（是否被 <atom:link> 覆盖？）", feed.Link)
+	}
+	if feed.Items[0].Link != "https://example.com/1" {
+		t.Errorf("item link = %q", feed.Items[0].Link)
 	}
 }
 

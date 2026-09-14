@@ -155,6 +155,33 @@ func (f *Fetcher) Discover(ctx context.Context, pageURL string) ([]DiscoveredFee
 // Client 返回底层 HTTP 客户端，供外部配置代理等。
 func (f *Fetcher) Client() *Client { return f.client }
 
+// FetchPage 抓取一个普通网页并返回响应体，供 favicon 发现等非 Feed 场景使用。
+//
+// 与 fetch 共用同一套 HTTP 客户端与 cookie jar，因此同样会在命中反爬挑战时
+// 求解并重取一次 —— 受 WAF 保护的站点（36kr、财联社等）也能拿到真实 HTML。
+// 差别只在判别方式：网页没有「格式」可言，无法靠 Parse 返回 ErrHTMLResponse，
+// 改用 looksLikeWAFChallenge 直接判别。只重试一次，不递归。
+//
+// 判别为挑战页但求解失败时返回原始响应体（即挑战页 HTML），由调用方按普通
+// 网页处理 —— 拿不到图标好过报错。
+func (f *Fetcher) FetchPage(ctx context.Context, pageURL string) ([]byte, error) {
+	result, err := f.client.Fetch(ctx, pageURL, ConditionalHeaders{})
+	if err != nil {
+		return nil, err
+	}
+	if result.NotModified || !looksLikeWAFChallenge(result.Body) {
+		return result.Body, nil
+	}
+	if !f.client.solveChallenge(pageURL, result.Body) {
+		return result.Body, nil
+	}
+	// 已算出凭据：带 cookie 重取一次，不递归（仍是挑战页则沿用首份响应体）。
+	if retry, rerr := f.client.Fetch(ctx, pageURL, ConditionalHeaders{}); rerr == nil && !retry.NotModified {
+		return retry.Body, nil
+	}
+	return result.Body, nil
+}
+
 // SeedConditional 预置某 Feed 的条件 GET 头（例如从持久化层恢复）。
 func (f *Fetcher) SeedConditional(feedURL string, cond ConditionalHeaders) {
 	f.setCond(feedURL, cond)
