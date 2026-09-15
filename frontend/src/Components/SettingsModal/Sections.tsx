@@ -883,6 +883,7 @@ import { ChangelogModal } from '../ChangelogModal/ChangelogModal'
 
 export function AboutSection(): JSX.Element {
   const { t } = useTranslation()
+  const platform = usePlatform()
   const [version, setVersion] = useState('')
   const [changelogOpen, setChangelogOpen] = useState(false)
   const updateAvailable = useUpdateStore((s) => s.updateAvailable)
@@ -927,9 +928,21 @@ export function AboutSection(): JSX.Element {
         />
         <div className={styles.aboutAppName}>{t('settings.about.appName')}</div>
         {version ? (
-          <div className={styles.aboutVersion}>
-            {t('settings.about.version', { version })}
-          </div>
+          platform === 'windows' ? (
+            <button
+              className={styles.aboutVersionButton}
+              onClick={() => SystemService.CheckForUpdates()}
+              type="button"
+              title={t('settings.about.checkUpdate')}
+              aria-label={t('settings.about.checkUpdate')}
+            >
+              {t('settings.about.version', { version })}
+            </button>
+          ) : (
+            <div className={styles.aboutVersion}>
+              {t('settings.about.version', { version })}
+            </div>
+          )
         ) : null}
         {updateAvailable && (
           <button

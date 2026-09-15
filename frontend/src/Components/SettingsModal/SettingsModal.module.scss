@@ -555,6 +555,23 @@
   font-size: 12px;
 }
 
+/* Windows 下版本号可点击触发检查更新。 */
+.aboutVersionButton {
+  margin-top: -10px;
+  padding: 0;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.15s;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+}
+
 .aboutDesc {
   margin-top: -8px;
   color: var(--text-secondary);

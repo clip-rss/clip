@@ -386,7 +386,8 @@
     },
     "about": {
       "appName": "Clip",
-      "version": "Version v{{version}}",
+      "version": "v{{version}}",
+      "checkUpdate": "Check for updates",
       "desc": "A simple cross-platform RSS reader",
       "updateAvailable": "New Version Available",
       "changelogError": "Failed to load changelog",
