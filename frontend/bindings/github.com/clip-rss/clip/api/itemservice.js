@@ -35,6 +35,15 @@ export function BatchMarkRead(ids) {
 }
 
 /**
+ * CleanReadByFeed 删除指定订阅源中已读且未星标的文章，返回删除条数。
+ * @param {number} feedID
+ * @returns {$CancellablePromise<number>}
+ */
+export function CleanReadByFeed(feedID) {
+    return $Call.ByID(740785613, feedID);
+}
+
+/**
  * GetItem 按 ID 获取文章。
  * @param {number} id
  * @returns {$CancellablePromise<store$0.Item | null>}

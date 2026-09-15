@@ -452,6 +452,21 @@ func (s *Store) CleanupOldItems(feedID int64, maxItems int) error {
 	return nil
 }
 
+// PruneReadItemsByFeed 删除指定订阅源中已读且未星标的文章。
+// 不执行 VACUUM（per-feed 操作轻量，空间回收留给全局 ClearCache）。
+func (s *Store) PruneReadItemsByFeed(feedID int64) (int64, error) {
+	query := `DELETE FROM items WHERE feed_id = ? AND is_read = 1 AND is_starred = 0`
+	res, err := s.db.Exec(query, feedID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to prune read items by feed: %w", err)
+	}
+	removed, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to read prune count: %w", err)
+	}
+	return removed, nil
+}
+
 // GetUnreadCount 获取未读文章总数
 func (s *Store) GetUnreadCount() (int, error) {
 	query := `SELECT COUNT(*) FROM items WHERE is_read = 0`

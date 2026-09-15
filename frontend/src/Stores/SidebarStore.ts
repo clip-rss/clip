@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { CategoryService, FeedService, toApiError } from '../Utils'
+import { CategoryService, FeedService, ItemService, toApiError } from '../Utils'
+import { useArticleStore } from './ArticleStore'
 import type { Category, FeedWithUnread, Selection, FeedSort } from '../Types'
 
 interface SidebarState {
@@ -44,6 +45,8 @@ interface SidebarState {
   pauseFeed: (id: number) => Promise<void>
   resumeFeed: (id: number) => Promise<void>
   refreshFeed: (id: number) => Promise<void>
+  /** 清理订阅源中已读且未星标的文章。 */
+  cleanFeed: (id: number) => Promise<number>
   /** 标记某订阅源开始刷新（由 feed:refreshing 事件触发）。 */
   startRefreshing: (id: number) => void
   /** 标记某订阅源刷新结束。 */
@@ -223,6 +226,18 @@ export const useSidebarStore = create<SidebarState>()(
           await get().load()
         } catch (err) {
           set({ error: toApiError(err) })
+        }
+      },
+
+      async cleanFeed(id) {
+        try {
+          const count = await ItemService.CleanReadByFeed(id)
+          await useArticleStore.getState().reload()
+          await get().load()
+          return count
+        } catch (err) {
+          set({ error: toApiError(err) })
+          return 0
         }
       },
 

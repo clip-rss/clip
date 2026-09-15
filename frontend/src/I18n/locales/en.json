@@ -26,7 +26,15 @@
       "pause": "Pause Updates",
       "resume": "Resume Updates",
       "deleteBatch": "Batch Delete",
-      "deleteErrored": "Delete Errored Feeds ({{count}})"
+      "deleteErrored": "Delete Errored Feeds ({{count}})",
+      "cleanRead": "Clean Read Articles"
+    },
+    "cleanFeed": {
+      "title": "Clean Read Articles",
+      "description": "Remove all read, unstarred articles from \"{{title}}\"? Starred articles will be kept.",
+      "confirm": "Clean",
+      "result": "Cleaned {{count}} articles from \"{{title}}\"",
+      "empty": "No read articles to clean"
     },
     "deleteFeed": {
       "title": "Delete Feed",

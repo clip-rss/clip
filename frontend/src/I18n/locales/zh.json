@@ -26,7 +26,15 @@
       "pause": "暂停更新",
       "resume": "恢复更新",
       "deleteBatch": "批量删除",
-      "deleteErrored": "批量删除异常订阅源 ({{count}})"
+      "deleteErrored": "批量删除异常订阅源 ({{count}})",
+      "cleanRead": "清理已读文章"
+    },
+    "cleanFeed": {
+      "title": "清理已读文章",
+      "description": "确定移除「{{title}}」中已读且未星标的文章吗？星标文章会保留。",
+      "confirm": "清理",
+      "result": "已从「{{title}}」清理 {{count}} 篇文章",
+      "empty": "没有已读文章需要清理"
     },
     "deleteFeed": {
       "title": "删除订阅源",

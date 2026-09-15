@@ -178,6 +178,11 @@ func (s *ItemService) MarkAllReadByFeed(feedID int64) error {
 	return s.store.MarkAllAsReadByFeed(feedID)
 }
 
+// CleanReadByFeed 删除指定订阅源中已读且未星标的文章，返回删除条数。
+func (s *ItemService) CleanReadByFeed(feedID int64) (int64, error) {
+	return s.store.PruneReadItemsByFeed(feedID)
+}
+
 // ToggleStar 切换文章星标状态。
 func (s *ItemService) ToggleStar(id int64) error {
 	return s.store.ToggleItemStar(id)

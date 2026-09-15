@@ -26,7 +26,15 @@
       "pause": "暫停更新",
       "resume": "還原更新",
       "deleteBatch": "批次刪除",
-      "deleteErrored": "批次刪除異常訂閱來源 ({{count}})"
+      "deleteErrored": "批次刪除異常訂閱來源 ({{count}})",
+      "cleanRead": "清理已讀文章"
+    },
+    "cleanFeed": {
+      "title": "清理已讀文章",
+      "description": "確定移除「{{title}}」中已讀且未星標的文章嗎？星標文章會保留。",
+      "confirm": "清理",
+      "result": "已從「{{title}}」清理 {{count}} 篇文章",
+      "empty": "沒有已讀文章需要清理"
     },
     "deleteFeed": {
       "title": "刪除訂閱來源",

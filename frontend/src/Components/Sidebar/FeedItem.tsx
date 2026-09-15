@@ -38,6 +38,7 @@ function FeedItem(props: FeedItemProps): JSX.Element {
   const pauseFeed = useSidebarStore((s) => s.pauseFeed)
   const resumeFeed = useSidebarStore((s) => s.resumeFeed)
   const refreshFeed = useSidebarStore((s) => s.refreshFeed)
+  const cleanFeed = useSidebarStore((s) => s.cleanFeed)
   const batchMode = useSidebarStore((s) => s.batchMode)
   const enterBatchMode = useSidebarStore((s) => s.enterBatchMode)
   const multiSelected = useSidebarStore((s) => s.multiSelectIds.has(feed.id))
@@ -47,6 +48,7 @@ function FeedItem(props: FeedItemProps): JSX.Element {
   const [editOpen, setEditOpen] = useState(false)
   const [infoOpen, setInfoOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [cleanConfirmOpen, setCleanConfirmOpen] = useState(false)
   const [erroredConfirmOpen, setErroredConfirmOpen] = useState(false)
   /** 右键时快照的异常源 id 列表；确认删除按此执行，避免与弹窗期间的状态漂移不一致。 */
   const [erroredIds, setErroredIds] = useState<number[]>([])
@@ -74,6 +76,19 @@ function FeedItem(props: FeedItemProps): JSX.Element {
     } else {
       const err = useSidebarStore.getState().error
       if (err) showToast(err, 'error')
+    }
+  }
+
+  /** 清理已读文章。 */
+  async function handleCleanFeed(): Promise<void> {
+    const count = await cleanFeed(feed.id)
+    if (count > 0) {
+      showToast(
+        t('sidebar.cleanFeed.result', { title: feed.title, count }),
+        'success',
+      )
+    } else {
+      showToast(t('sidebar.cleanFeed.empty'), 'info')
     }
   }
 
@@ -178,6 +193,12 @@ function FeedItem(props: FeedItemProps): JSX.Element {
             </ContextMenu.Item>
             <ContextMenu.Item
               className={styles.menuItem}
+              onSelect={() => setCleanConfirmOpen(true)}
+            >
+              {t('sidebar.contextMenu.cleanRead')}
+            </ContextMenu.Item>
+            <ContextMenu.Item
+              className={styles.menuItem}
               onSelect={() =>
                 paused ? resumeFeed(feed.id) : pauseFeed(feed.id)
               }
@@ -226,6 +247,15 @@ function FeedItem(props: FeedItemProps): JSX.Element {
       <EditFeedModal feed={feed} open={editOpen} onOpenChange={setEditOpen} />
 
       <FeedInfoModal feed={feed} open={infoOpen} onOpenChange={setInfoOpen} />
+
+      <ConfirmDialog
+        open={cleanConfirmOpen}
+        onOpenChange={setCleanConfirmOpen}
+        title={t('sidebar.cleanFeed.title')}
+        description={t('sidebar.cleanFeed.description', { title: feed.title })}
+        confirmText={t('sidebar.cleanFeed.confirm')}
+        onConfirm={() => void handleCleanFeed()}
+      />
 
       <ConfirmDialog
         open={confirmOpen}
