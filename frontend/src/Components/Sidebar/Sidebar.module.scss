@@ -1,3 +1,5 @@
+@use '../../Styles/dialogTransition' as dialog;
+
 // 左侧栏样式。配色全部走 CSS 变量 token，随主题切换。
 
 .sidebar {
@@ -426,6 +428,7 @@
   inset: 0;
   background-color: rgba(0, 0, 0, 0.4);
   z-index: 100;
+  @include dialog.overlay;
 }
 
 .dialogContent {
@@ -440,6 +443,7 @@
   background-color: var(--bg-primary);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
   z-index: 101;
+  @include dialog.content;
 }
 
 .dialogTitle {

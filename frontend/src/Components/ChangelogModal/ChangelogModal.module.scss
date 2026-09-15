@@ -1,53 +1,11 @@
-@keyframes overlayIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes overlayOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes contentIn {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-@keyframes contentOut {
-  from {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.96);
-  }
-}
+@use '../../Styles/dialogTransition' as dialog;
 
 .overlay {
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.4);
   z-index: 110;
-  animation: overlayIn 0.15s ease;
-
-  &[data-state='closed'] {
-    animation: overlayOut 0.15s ease;
-  }
+  @include dialog.overlay;
 }
 
 .content {
@@ -65,11 +23,7 @@
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
   z-index: 111;
   overflow: hidden;
-  animation: contentIn 0.15s ease;
-
-  &[data-state='closed'] {
-    animation: contentOut 0.15s ease;
-  }
+  @include dialog.content;
 }
 
 /* ===== 头部 ===== */
