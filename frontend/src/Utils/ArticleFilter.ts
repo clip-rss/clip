@@ -14,6 +14,12 @@ function publishedMs(item: Item): number {
   return Number.isNaN(t) ? 0 : t
 }
 
+function readAtMs(item: Item): number {
+  if (!item.readAt) return 0
+  const t = new Date(item.readAt as unknown as string).getTime()
+  return Number.isNaN(t) ? 0 : t
+}
+
 /** 收集某分类及其全部子孙分类下的 feedId 集合（用于按分类过滤文章）。 */
 export function categoryFeedIds(
   categories: Category[],
@@ -82,10 +88,12 @@ export function filterAndSortItems(
     }
   })
 
+  // 已读列表按已读时间排序，其他按发布时间排序
+  const timeOf = filter === 'read' ? readAtMs : publishedMs
   return filtered.sort((a, b) =>
     sort === 'timeAsc'
-      ? publishedMs(a) - publishedMs(b)
-      : publishedMs(b) - publishedMs(a),
+      ? timeOf(a) - timeOf(b)
+      : timeOf(b) - timeOf(a),
   )
 }
 

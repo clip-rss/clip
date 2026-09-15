@@ -186,7 +186,12 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     },
 
     setFilter(filter) {
+      const prev = get().filter
       set({ filter })
+
+      if (filter === 'read' && prev !== 'read' && !get().searchActive) {
+        void get().reload()
+      }
     },
 
     setSort(sort) {
