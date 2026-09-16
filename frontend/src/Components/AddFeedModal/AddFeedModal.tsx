@@ -222,7 +222,7 @@ function AddFeedModal(props: AddFeedModalProps): JSX.Element {
             {detected && preview!.alreadyAdded ? (
               <div className={clsx(styles.resultBar, styles.resultError)}>
                 <CrossIcon />
-                <span>{t('feed.add.added')}</span>
+                <span>{t('feed.add.alreadyAdded')}</span>
               </div>
             ) : null}
 

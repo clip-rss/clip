@@ -423,7 +423,8 @@
       "searchOk": "已找到訂閱來源",
       "searchFailed": "未找到訂閱來源",
       "adding": "正在新增…",
-      "added": "新增成功"
+      "added": "新增成功",
+      "alreadyAdded": "已訂閱該來源"
     },
     "edit": {
       "title": "編輯訂閱來源",

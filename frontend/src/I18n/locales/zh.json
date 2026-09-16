@@ -423,7 +423,8 @@
       "searchOk": "已找到订阅源",
       "searchFailed": "未找到订阅源",
       "adding": "正在添加…",
-      "added": "添加成功"
+      "added": "添加成功",
+      "alreadyAdded": "已订阅该源"
     },
     "edit": {
       "title": "编辑订阅源",

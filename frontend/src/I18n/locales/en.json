@@ -423,7 +423,8 @@
       "searchOk": "Feed found",
       "searchFailed": "No feed found",
       "adding": "Adding…",
-      "added": "Added successfully"
+      "added": "Added successfully",
+      "alreadyAdded": "Already subscribed"
     },
     "edit": {
       "title": "Edit Feed",
