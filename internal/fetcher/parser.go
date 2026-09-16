@@ -19,8 +19,10 @@ import (
 // 自动嗅探根元素以区分格式，并支持非 UTF-8 编码（依据 XML 声明转换）。
 // 当 XML 声明为 UTF-8 但实际字节并非有效 UTF-8 时（常见于中文站点用 GBK 编码
 // 却声明为 UTF-8），自动尝试编码检测与转换。
+// 同时移除 XML 1.0 规范不允许的字符（如 U+001E），避免解码器报错。
 func Parse(data []byte) (*ParsedFeed, error) {
 	data = ensureUTF8(data)
+	data = stripInvalidXMLChars(data)
 
 	root, err := sniffRoot(data)
 	if err != nil {
@@ -89,6 +91,41 @@ func ensureUTF8(data []byte) []byte {
 	}
 
 	return data
+}
+
+// stripInvalidXMLChars 移除 XML 1.0 规范不允许的字符。
+//
+// XML 1.0 允许的字符范围：
+//
+//	#x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+//
+// 控制字符 U+0001–U+001F（除 Tab/LF/CR）常出现在一些中文站点的 Feed 中，
+// 会导致 Go encoding/xml 解码器报错 "illegal character code U+001E"。
+func stripInvalidXMLChars(data []byte) []byte {
+	// 快速路径：扫描是否包含需要移除的 ASCII 控制字符
+	needsStrip := false
+	for _, b := range data {
+		if b < 0x20 && b != 0x09 && b != 0x0A && b != 0x0D {
+			needsStrip = true
+			break
+		}
+	}
+	if !needsStrip {
+		return data
+	}
+
+	// 遍历全部字符，仅保留 XML 1.0 允许的字符
+	var buf bytes.Buffer
+	buf.Grow(len(data))
+	for _, r := range string(data) {
+		if r == 0x09 || r == 0x0A || r == 0x0D ||
+			(0x20 <= r && r <= 0xD7FF) ||
+			(0xE000 <= r && r <= 0xFFFD) ||
+			(0x10000 <= r && r <= 0x10FFFF) {
+			buf.WriteRune(r)
+		}
+	}
+	return buf.Bytes()
 }
 
 // sniffRoot 读取到第一个起始元素，返回其本地名（rss / feed 等）。

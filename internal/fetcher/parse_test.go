@@ -1,6 +1,7 @@
 package fetcher
 
 import (
+	"bytes"
 	"errors"
 	"testing"
 )
@@ -151,15 +152,15 @@ func TestParseAtom(t *testing.T) {
 // 实测财联社源因此拿到空 Link，favicon 无从解析（回退到 globe 图标）。
 func TestParseRSSChannelLinkSurvivesAtomSelfLink(t *testing.T) {
 	const doc = `<?xml version="1.0" encoding="UTF-8"?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
-  <channel>
-    <title>财联社 - 头条</title>
-    <link>https://www.cls.cn/depth?id=1000</link>
-    <atom:link href="http://rsshub.example/cls/depth/1000" rel="self" type="application/rss+xml"></atom:link>
-    <description>d</description>
-    <item><title>t</title><link>https://example.com/1</link></item>
-  </channel>
-</rss>`
+	<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+	  <channel>
+	    <title>财联社 - 头条</title>
+	    <link>https://www.cls.cn/depth?id=1000</link>
+	    <atom:link href="http://rsshub.example/cls/depth/1000" rel="self" type="application/rss+xml"></atom:link>
+	    <description>d</description>
+	    <item><title>t</title><link>https://example.com/1</link></item>
+	  </channel>
+	</rss>`
 
 	feed, err := Parse([]byte(doc))
 	if err != nil {
@@ -285,5 +286,71 @@ func TestEnsureUTF8PreservesExplicitNonUTF8(t *testing.T) {
 	got := ensureUTF8(data)
 	if string(got) != string(data) {
 		t.Errorf("ensureUTF8 should not modify data with explicit non-UTF8 encoding declaration")
+	}
+}
+
+func TestStripInvalidXMLChars(t *testing.T) {
+	t.Run("clean data unchanged", func(t *testing.T) {
+		data := []byte(`<rss><channel><title>Hello 世界</title></channel></rss>`)
+		got := stripInvalidXMLChars(data)
+		if string(got) != string(data) {
+			t.Errorf("clean data was modified: got %q", got)
+		}
+	})
+
+	t.Run("removes U+001E", func(t *testing.T) {
+		// 模拟 36kr 问题：feed 中包含 U+001E (Record Separator)
+		data := []byte("<rss><channel><title>标题\x1E副标题</title></channel></rss>")
+		got := stripInvalidXMLChars(data)
+		if bytes.Contains(got, []byte{0x1E}) {
+			t.Error("U+001E should have been removed")
+		}
+		if !bytes.Contains(got, []byte("标题副标题")) {
+			t.Errorf("expected concatenated title, got %q", got)
+		}
+	})
+
+	t.Run("preserves allowed control chars", func(t *testing.T) {
+		data := []byte("<rss><channel><title>line1\nline2\r\ttab</title></channel></rss>")
+		got := stripInvalidXMLChars(data)
+		if !bytes.Contains(got, []byte{0x0A}) {
+			t.Error("LF should be preserved")
+		}
+		if !bytes.Contains(got, []byte{0x0D}) {
+			t.Error("CR should be preserved")
+		}
+		if !bytes.Contains(got, []byte{0x09}) {
+			t.Error("Tab should be preserved")
+		}
+	})
+
+	t.Run("removes various control chars U+0000-U+001F", func(t *testing.T) {
+		data := []byte("a\x00b\x01c\x0Bd\x0Ce\x1Bf")
+		got := stripInvalidXMLChars(data)
+		if !bytes.Equal(got, []byte("abcdef")) {
+			t.Errorf("expected abcdef, got %q", got)
+		}
+	})
+}
+
+func TestParseStripsInvalidXMLChars(t *testing.T) {
+	// 完整 Parse 路径验证：含 U+001E 的 RSS 应成功解析而非报错
+	data := []byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+		"<rss version=\"2.0\"><channel>\n" +
+		"<title>test\x1Efeed</title>\n" +
+		"<link>https://example.com</link>\n" +
+		"<description>d</description>\n" +
+		"<item><title>item\x1Eone</title><link>https://example.com/1</link></item>\n" +
+		"</channel></rss>")
+
+	feed, err := Parse(data)
+	if err != nil {
+		t.Fatalf("Parse with U+001E: %v", err)
+	}
+	if feed.Title != "testfeed" {
+		t.Errorf("title = %q, want testfeed", feed.Title)
+	}
+	if feed.Items[0].Title != "itemone" {
+		t.Errorf("item title = %q, want itemone", feed.Items[0].Title)
 	}
 }
