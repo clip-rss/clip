@@ -14,12 +14,13 @@ interface ReaderArticleProps {
   sourceName: string
   contentStyle: ReaderContentStyle
   onImageClick: (src: string) => void
+  onLinkHover?: (url: string | null) => void
 }
 
 /** 文章正文主体（标题 + 元信息 + 正文 + 结尾提示），供阅读视图与专注模式复用。 */
 function ReaderArticle(props: ReaderArticleProps): JSX.Element {
   const { t } = useTranslation()
-  const { item, sourceName, contentStyle, onImageClick } = props
+  const { item, sourceName, contentStyle, onImageClick, onLinkHover } = props
   const tags = useMemo(
     () => parseCategories(item.categories),
     [item.categories],
@@ -54,6 +55,7 @@ function ReaderArticle(props: ReaderArticleProps): JSX.Element {
         html={item.content}
         style={contentStyle}
         onImageClick={onImageClick}
+        onLinkHover={onLinkHover}
       />
       <div className={styles.endHint}>{t('reader.endOfContent')}</div>
     </div>

@@ -6,11 +6,12 @@ interface ReaderContentProps {
   html: string
   style: ReaderContentStyle
   onImageClick: (src: string) => void
+  onLinkHover?: (url: string | null) => void
 }
 
 /** 渲染清洗后的正文 HTML，委托处理链接（系统浏览器）与图片（灯箱）点击。 */
 function ReaderContent(props: ReaderContentProps): JSX.Element {
-  const { html, style, onImageClick } = props
+  const { html, style, onImageClick, onLinkHover } = props
   const clean = useMemo(() => sanitizeHtml(html), [html])
 
   function handleClick(e: React.MouseEvent<HTMLElement>): void {
@@ -30,6 +31,21 @@ function ReaderContent(props: ReaderContentProps): JSX.Element {
     }
   }
 
+  function handleMouseOver(e: React.MouseEvent<HTMLElement>): void {
+    const anchor = (e.target as HTMLElement).closest('a')
+    if (anchor) {
+      const href = anchor.getAttribute('href')
+      if (href) onLinkHover?.(href)
+    }
+  }
+
+  function handleMouseOut(e: React.MouseEvent<HTMLElement>): void {
+    const relatedTarget = e.relatedTarget as HTMLElement | null
+    if (!relatedTarget || !relatedTarget.closest('a')) {
+      onLinkHover?.(null)
+    }
+  }
+
   return (
     <article
       className={styles.content}
@@ -39,6 +55,8 @@ function ReaderContent(props: ReaderContentProps): JSX.Element {
         lineHeight: style.lineHeight,
       }}
       onClick={handleClick}
+      onMouseOver={handleMouseOver}
+      onMouseOut={handleMouseOut}
       dangerouslySetInnerHTML={{ __html: clean }}
     />
   )
