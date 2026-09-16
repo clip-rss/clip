@@ -91,9 +91,7 @@ export function filterAndSortItems(
   // 已读列表按已读时间排序，其他按发布时间排序
   const timeOf = filter === 'read' ? readAtMs : publishedMs
   return filtered.sort((a, b) =>
-    sort === 'timeAsc'
-      ? timeOf(a) - timeOf(b)
-      : timeOf(b) - timeOf(a),
+    sort === 'timeAsc' ? timeOf(a) - timeOf(b) : timeOf(b) - timeOf(a),
   )
 }
 

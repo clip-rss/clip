@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
-import { ThemeToggle } from '../ThemeToggle'
 import { usePlatform, type Platform } from '../../Hooks'
 import { modKey } from '../../Utils'
 import {
@@ -156,7 +155,6 @@ function Toolbar(props: ToolbarProps): JSX.Element {
         >
           {t('toolbar.addFeed')}
         </button>
-        <ThemeToggle />
         <button
           className={styles.iconButton}
           onClick={onOpenSettings}
