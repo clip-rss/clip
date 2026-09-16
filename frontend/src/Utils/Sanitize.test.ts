@@ -26,9 +26,11 @@ describe('sanitizeHtml', () => {
     expect(out).toContain('href="https://x.com"')
   })
 
-  it('图片加 loading=lazy，外链加 rel/target', () => {
+  it('图片加 loading=lazy/decoding=async/referrerpolicy=no-referrer，外链加 rel/target', () => {
     const img = sanitizeHtml('<img src="https://x.com/a.png">')
     expect(img).toContain('loading="lazy"')
+    expect(img).toContain('decoding="async"')
+    expect(img).toContain('referrerpolicy="no-referrer"')
     const a = sanitizeHtml('<a href="https://x.com">l</a>')
     expect(a).toContain('rel="noopener noreferrer"')
     expect(a).toContain('target="_blank"')

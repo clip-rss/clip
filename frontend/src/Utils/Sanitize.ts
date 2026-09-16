@@ -12,6 +12,7 @@ function ensureHooks(): void {
     if (el.tagName === 'IMG') {
       el.setAttribute('loading', 'lazy')
       el.setAttribute('decoding', 'async')
+      el.setAttribute('referrerpolicy', 'no-referrer')
     }
     if (el.tagName === 'A') {
       el.setAttribute('rel', 'noopener noreferrer')
