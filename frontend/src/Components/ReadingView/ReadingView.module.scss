@@ -133,9 +133,9 @@
 .linkPreview {
   position: absolute;
   left: 0;
-  right: 0;
   bottom: 0;
   height: 26px;
+  width: fit-content;
   padding: 0 12px;
   display: flex;
   align-items: center;
@@ -143,6 +143,7 @@
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
   font-size: 12px;
   line-height: 13px;
   color: var(--text-secondary);

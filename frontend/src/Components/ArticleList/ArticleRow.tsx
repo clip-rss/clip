@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import { memo } from 'react'
 import clsx from 'clsx'
-import { formatRelativeTime, highlightText, openURL } from '../../Utils'
+import { formatRelativeTime, highlightText } from '../../Utils'
 import type { Item } from '../../Types'
-import { StarIcon, ExternalLinkIcon } from './Icons'
+import { StarIcon } from './Icons'
 import styles from './ArticleList.module.scss'
 
 interface ArticleRowProps {
@@ -32,11 +32,6 @@ function ArticleRow(props: ArticleRowProps): JSX.Element {
   function handleStar(e: React.MouseEvent): void {
     e.stopPropagation()
     onToggleStar(item.id)
-  }
-
-  function handleOpen(e: React.MouseEvent): void {
-    e.stopPropagation()
-    openURL(item.url)
   }
 
   return (
@@ -75,15 +70,6 @@ function ArticleRow(props: ArticleRowProps): JSX.Element {
       </div>
 
       <div className={styles.actions}>
-        <button
-          type="button"
-          className={styles.actionBtn}
-          onClick={handleOpen}
-          title={t('reader.toolbar.openInBrowser')}
-          aria-label={t('reader.toolbar.openInBrowser')}
-        >
-          <ExternalLinkIcon size={16} />
-        </button>
         <button
           type="button"
           className={clsx(styles.actionBtn, item.isStarred && styles.starred)}

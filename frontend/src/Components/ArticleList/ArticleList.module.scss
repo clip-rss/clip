@@ -265,7 +265,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 0 12px 0 24px; // 左 24px 留出渐变淡出区
+  padding: 0 4px 0 24px; // 左 24px 留出渐变淡出区
   pointer-events: none; // 空白区不拦截点击，仍可点行选中文章
 }
 

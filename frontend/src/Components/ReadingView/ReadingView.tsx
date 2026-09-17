@@ -25,7 +25,8 @@ function ReadingView(): JSX.Element {
   const closeNotePanel = useLayoutStore((s) => s.closeNotePanel)
 
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
-  const [linkPreview, setLinkPreview] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState('')
+  const [previewVisible, setPreviewVisible] = useState(false)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const positionsRef = useRef<Map<number, number>>(new Map())
@@ -44,6 +45,15 @@ function ReadingView(): JSX.Element {
     const id = currentIdRef.current
     if (id !== null && scrollRef.current) {
       positionsRef.current.set(id, scrollRef.current.scrollTop)
+    }
+  }
+
+  function handleLinkHover(url: string | null): void {
+    if (url) {
+      setPreviewUrl(url)
+      setPreviewVisible(true)
+    } else {
+      setPreviewVisible(false)
     }
   }
 
@@ -100,17 +110,17 @@ function ReadingView(): JSX.Element {
             sourceName={sourceName}
             contentStyle={contentStyle}
             onImageClick={setLightboxSrc}
-            onLinkHover={setLinkPreview}
+            onLinkHover={handleLinkHover}
           />
         )}
       </div>
       <div
         className={clsx(
           styles.linkPreview,
-          linkPreview && styles.linkPreviewVisible,
+          previewVisible && styles.linkPreviewVisible,
         )}
       >
-        {linkPreview ?? ''}
+        {previewUrl}
       </div>
       {notePanelOpen ? (
         <NotePanel item={item} onClose={closeNotePanel} />
