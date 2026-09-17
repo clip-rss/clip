@@ -29,6 +29,32 @@ func TxCreateCategory(tx *sql.Tx, category *Category) error {
 	return nil
 }
 
+// TxGetCategoryByNameAndParent 在事务中按「名称 + 父分类」查找分类，不存在返回 (nil, nil)。
+// 供 OPML 导入复用同名分类，避免重复导入不断叠加。
+// parent_id 用 IS 而非 = 匹配：根分类的 parent_id 为 NULL，而 NULL = NULL 不成立。
+func TxGetCategoryByNameAndParent(tx *sql.Tx, name string, parentID *int64) (*Category, error) {
+	query := `
+		SELECT id, name, parent_id, sort_order, created_at, updated_at
+		FROM feed_categories WHERE name = ? AND parent_id IS ?
+	`
+	category := &Category{}
+	err := tx.QueryRow(query, name, parentID).Scan(
+		&category.ID,
+		&category.Name,
+		&category.ParentID,
+		&category.SortOrder,
+		&category.CreatedAt,
+		&category.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get category by name and parent: %w", err)
+	}
+	return category, nil
+}
+
 // CreateCategory 创建新分类
 func (s *Store) CreateCategory(category *Category) error {
 	query := `

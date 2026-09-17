@@ -498,10 +498,10 @@ func TestOPMLImportExportRoundTrip(t *testing.T) {
 		t.Errorf("import result = %+v, want 1 cat / 2 feeds / 0 skipped", res)
 	}
 
-	// 再次导入应全部跳过（URL 已存在）。
+	// 再次导入应全部跳过（URL 已存在），分类同样复用而不叠加。
 	res2, _ := svc.ImportOPML(importOPML)
-	if res2.Feeds != 0 || res2.Skipped != 2 {
-		t.Errorf("re-import = %+v, want 0 feeds / 2 skipped", res2)
+	if res2.Feeds != 0 || res2.Skipped != 2 || res2.Categories != 0 {
+		t.Errorf("re-import = %+v, want 0 feeds / 2 skipped / 0 categories", res2)
 	}
 
 	// 导出后应能被重新解析，且包含两个源。
@@ -555,8 +555,8 @@ func TestImportOPMLFromURL(t *testing.T) {
 		if err != nil {
 			t.Fatalf("re-import: %v", err)
 		}
-		if again.Feeds != 0 || again.Skipped != 2 {
-			t.Errorf("re-import = %+v, want 0 feeds / 2 skipped", again)
+		if again.Feeds != 0 || again.Skipped != 2 || again.Categories != 0 {
+			t.Errorf("re-import = %+v, want 0 feeds / 2 skipped / 0 categories", again)
 		}
 	})
 

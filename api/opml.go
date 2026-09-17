@@ -217,17 +217,24 @@ func (s *OPMLService) importOutlines(tx *sql.Tx, outlines []opml.Outline, parent
 			continue
 		}
 
-		// 分组节点 → 分类。
-		cat := &store.Category{Name: firstNonEmpty(o.Label(), i18n.T(lang, "opml.unnamedCategory")), ParentID: parentID}
-		if err := store.TxCreateCategory(tx, cat); err != nil {
+		// 分组节点 → 分类。同名同父级已存在则复用，避免反复导入同一份 OPML 时分类逐次叠加。
+		name := firstNonEmpty(o.Label(), i18n.T(lang, "opml.unnamedCategory"))
+		cat, err := store.TxGetCategoryByNameAndParent(tx, name, parentID)
+		if err != nil {
 			return err
 		}
-		*newCategories = append(*newCategories, NewCategory{
-			ID:       cat.ID,
-			Name:     cat.Name,
-			ParentID: cat.ParentID,
-		})
-		res.Categories++
+		if cat == nil {
+			cat = &store.Category{Name: name, ParentID: parentID}
+			if err := store.TxCreateCategory(tx, cat); err != nil {
+				return err
+			}
+			*newCategories = append(*newCategories, NewCategory{
+				ID:       cat.ID,
+				Name:     cat.Name,
+				ParentID: cat.ParentID,
+			})
+			res.Categories++
+		}
 		if err := s.importOutlines(tx, o.Outlines, &cat.ID, lang, settings, res, processed, total, feedBatch, newFeeds, newCategories); err != nil {
 			return err
 		}
