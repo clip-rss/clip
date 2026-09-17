@@ -77,6 +77,7 @@
       "unread": "未读",
       "read": "已读",
       "starred": "星标",
+      "hasNote": "有笔记",
       "today": "今日"
     },
     "sort": {
@@ -94,6 +95,7 @@
       "noUnread": "暂无未读文章",
       "noRead": "暂无已读文章",
       "noStarred": "暂无星标文章",
+      "noHasNote": "暂无有笔记的文章",
       "noToday": "今日暂无文章",
       "noMatch": "未找到匹配「{{query}}」的文章"
     }

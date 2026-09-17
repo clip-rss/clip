@@ -596,6 +596,24 @@ func (s *Store) ListStarredItemsLight(limit, offset int) ([]ItemLight, error) {
 	return s.scanItemsLight(rows)
 }
 
+// ListNotedItemsLight 获取有笔记的文章列表（轻量版本）
+func (s *Store) ListNotedItemsLight(limit, offset int) ([]ItemLight, error) {
+	query := `
+		SELECT ` + itemColumnsLight + `
+		FROM items i
+		WHERE i.note IS NOT NULL AND TRIM(i.note) != ''
+		ORDER BY i.published_at DESC
+		LIMIT ? OFFSET ?
+	`
+	rows, err := s.db.Query(query, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list noted items (light): %w", err)
+	}
+	defer rows.Close()
+
+	return s.scanItemsLight(rows)
+}
+
 // scanItemsLight 辅助函数：扫描轻量文章行（不含 content）
 func (s *Store) scanItemsLight(rows *sql.Rows) ([]ItemLight, error) {
 	items := []ItemLight{}

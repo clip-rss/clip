@@ -821,3 +821,49 @@ func TestApplyFeedRefreshRollsBackOnWriteFailure(t *testing.T) {
 		t.Fatalf("failed transaction retained %d seen keys", seen)
 	}
 }
+
+// TestListNotedItemsLight 有笔记筛选端点：只返回 note 非空的文章，且按发布时间倒序。
+// 空白笔记（空串 / 纯空格）视为无笔记——与前端 it.note.trim() !== '' 的判定对齐。
+func TestListNotedItemsLight(t *testing.T) {
+	st := setupTestDB(t)
+
+	feed := &Feed{URL: "https://noted.example/feed", Title: "NOTED", UpdateInterval: 30, MaxItems: 100, Status: "active"}
+	if err := st.CreateFeed(feed); err != nil {
+		t.Fatalf("seed feed: %v", err)
+	}
+
+	base := time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)
+	seed := func(title, note string, day int) *Item {
+		it := &Item{
+			FeedID:      feed.ID,
+			Title:       title,
+			URL:         "https://noted.example/" + title,
+			PublishedAt: base.AddDate(0, 0, day),
+			Note:        note,
+		}
+		if err := st.CreateItem(it); err != nil {
+			t.Fatalf("seed item %s: %v", title, err)
+		}
+		return it
+	}
+
+	seed("plain", "", 0)
+	seed("spaces", "   ", 1)
+	older := seed("older-note", "早的笔记", 2)
+	newer := seed("newer-note", "晚的笔记", 3)
+
+	items, err := st.ListNotedItemsLight(10, 0)
+	if err != nil {
+		t.Fatalf("ListNotedItemsLight: %v", err)
+	}
+	if len(items) != 2 {
+		t.Fatalf("expected 2 noted items, got %d", len(items))
+	}
+	// published_at DESC：新的在前
+	if items[0].ID != newer.ID || items[1].ID != older.ID {
+		t.Errorf("expected [%d %d], got [%d %d]", newer.ID, older.ID, items[0].ID, items[1].ID)
+	}
+	if items[0].Note != "晚的笔记" {
+		t.Errorf("expected note carried into ItemLight, got %q", items[0].Note)
+	}
+}

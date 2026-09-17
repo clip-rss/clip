@@ -16,6 +16,7 @@ function EmptyState(props: EmptyStateProps): JSX.Element {
     unread: t('article.empty.noUnread'),
     read: t('article.empty.noRead'),
     starred: t('article.empty.noStarred'),
+    hasNote: t('article.empty.noHasNote'),
     today: t('article.empty.noToday'),
   }
 

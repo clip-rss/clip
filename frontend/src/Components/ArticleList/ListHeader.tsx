@@ -40,6 +40,7 @@ function ListHeader(props: ListHeaderProps): JSX.Element {
     { value: 'unread', label: t('article.filter.unread') },
     { value: 'read', label: t('article.filter.read') },
     { value: 'starred', label: t('article.filter.starred') },
+    { value: 'hasNote', label: t('article.filter.hasNote') },
     { value: 'today', label: t('article.filter.today') },
   ]
 
@@ -48,6 +49,7 @@ function ListHeader(props: ListHeaderProps): JSX.Element {
     unread: t('article.filter.unread'),
     read: t('article.filter.read'),
     starred: t('article.filter.starred'),
+    hasNote: t('article.filter.hasNote'),
     today: t('article.filter.today'),
   }
 

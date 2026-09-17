@@ -89,6 +89,18 @@ export function ListItemsLight(feedID, limit, offset) {
 }
 
 /**
+ * ListNotedItemsLight 列出有笔记的文章（轻量版本）。
+ * @param {number} limit
+ * @param {number} offset
+ * @returns {$CancellablePromise<store$0.ItemLight[]>}
+ */
+export function ListNotedItemsLight(limit, offset) {
+    return $Call.ByID(560631877, limit, offset).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType4($result);
+    }));
+}
+
+/**
  * ListStarredItems 列出星标文章。
  * @param {number} limit
  * @param {number} offset

@@ -80,6 +80,8 @@ export function filterAndSortItems(
         return it.isRead
       case 'starred':
         return it.isStarred
+      case 'hasNote':
+        return it.note != null && it.note.trim() !== ''
       case 'today':
         return publishedMs(it) >= startOfToday
       case 'all':

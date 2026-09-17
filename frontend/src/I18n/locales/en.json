@@ -77,6 +77,7 @@
       "unread": "Unread",
       "read": "Read",
       "starred": "Starred",
+      "hasNote": "Has Note",
       "today": "Today"
     },
     "sort": {
@@ -94,6 +95,7 @@
       "noUnread": "No unread articles",
       "noRead": "No read articles",
       "noStarred": "No starred articles",
+      "noHasNote": "No articles with notes",
       "noToday": "No articles today",
       "noMatch": "No articles matching \"{{query}}\""
     }

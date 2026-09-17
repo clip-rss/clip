@@ -134,6 +134,16 @@ func (s *ItemService) ListStarredItemsLight(limit, offset int) ([]store.ItemLigh
 	return items, nil
 }
 
+// ListNotedItemsLight 列出有笔记的文章（轻量版本）。
+func (s *ItemService) ListNotedItemsLight(limit, offset int) ([]store.ItemLight, error) {
+	items, err := s.store.ListNotedItemsLight(limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	cleanLightItems(items)
+	return items, nil
+}
+
 // GetItem 按 ID 获取文章。
 func (s *ItemService) GetItem(id int64) (*store.Item, error) {
 	item, err := s.store.GetItem(id)

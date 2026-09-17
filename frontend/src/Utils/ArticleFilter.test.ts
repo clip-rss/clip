@@ -32,6 +32,7 @@ interface ItemOpts {
   publishedAt?: string | null
   isRead?: boolean
   isStarred?: boolean
+  note?: string
 }
 
 function item(id: number, feedId: number, opts: ItemOpts = {}): Item {
@@ -50,7 +51,7 @@ function item(id: number, feedId: number, opts: ItemOpts = {}): Item {
     isRead: opts.isRead ?? false,
     isStarred: opts.isStarred ?? false,
     readAt: null,
-    note: '',
+    note: opts.note ?? '',
     createdAt: null,
   } as unknown as Item
 }
@@ -160,6 +161,31 @@ describe('filterAndSortItems', () => {
       now: NOW,
     })
     expect(r.map((i) => i.id)).toEqual([3])
+  })
+})
+
+describe('filterAndSortItems with hasNote', () => {
+  const noteItems = [
+    item(1, 100, { note: '', publishedAt: '2026-06-17T08:00:00Z' }),
+    item(2, 100, { note: '   ', publishedAt: '2026-06-16T08:00:00Z' }),
+    item(3, 100, { note: 'hello', publishedAt: '2026-06-15T08:00:00Z' }),
+    item(4, 100, { note: 'world', publishedAt: '2026-06-14T08:00:00Z' }),
+  ]
+
+  it('筛掉空字符串和纯空格的笔记', () => {
+    const r = filterAndSortItems(noteItems, {
+      filter: 'hasNote',
+      sort: 'timeDesc',
+    })
+    expect(r.map((i) => i.id)).toEqual([3, 4])
+  })
+
+  it('按时间倒序排列', () => {
+    const r = filterAndSortItems(noteItems, {
+      filter: 'hasNote',
+      sort: 'timeAsc',
+    })
+    expect(r.map((i) => i.id)).toEqual([4, 3])
   })
 })
 

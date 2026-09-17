@@ -7,6 +7,7 @@ vi.mock('../Utils', () => ({
     ListItemsLight: vi.fn(),
     ListUnreadItemsLight: vi.fn(),
     ListStarredItemsLight: vi.fn(),
+    ListNotedItemsLight: vi.fn(),
     GetItem: vi.fn(),
     MarkRead: vi.fn(),
     MarkUnread: vi.fn(),
@@ -34,6 +35,7 @@ const ListItems = ItemService.ListItems as Mock
 const ListItemsLight = ItemService.ListItemsLight as Mock
 const ListUnreadItemsLight = ItemService.ListUnreadItemsLight as Mock
 const ListStarredItemsLight = ItemService.ListStarredItemsLight as Mock
+const ListNotedItemsLight = ItemService.ListNotedItemsLight as Mock
 const GetItem = ItemService.GetItem as Mock
 const MarkRead = ItemService.MarkRead as Mock
 const ToggleStar = ItemService.ToggleStar as Mock
@@ -67,6 +69,7 @@ beforeEach(() => {
   ListItemsLight.mockResolvedValue([])
   ListUnreadItemsLight.mockResolvedValue([])
   ListStarredItemsLight.mockResolvedValue([])
+  ListNotedItemsLight.mockResolvedValue([])
   GetItem.mockResolvedValue(null)
   MarkRead.mockResolvedValue(undefined)
   ToggleStar.mockResolvedValue(undefined)
@@ -119,6 +122,34 @@ describe('ArticleStore', () => {
     useArticleStore.getState().setSort('timeAsc')
     expect(useArticleStore.getState().filter).toBe('starred')
     expect(useArticleStore.getState().sort).toBe('timeAsc')
+  })
+
+  it('hasNote 全局视图走后端专用端点（绕过 LOAD_LIMIT）', async () => {
+    // 回归：文章总数超过 LOAD_LIMIT 时，有笔记的旧文章不在通用端点返回的
+    // 最新 2000 篇窗口内，筛选会静默为空。
+    ListNotedItemsLight.mockResolvedValue([item(7)])
+    useArticleStore.getState().setFilter('hasNote')
+    await vi.waitFor(() =>
+      expect(ListNotedItemsLight).toHaveBeenCalledWith(2000, 0),
+    )
+    expect(ListItemsLight).not.toHaveBeenCalled()
+  })
+
+  it('hasNote 选中具体源时仍走通用端点（单源不会超上限）', async () => {
+    useArticleStore.setState({ currentSelection: { kind: 'feed', id: 5 } })
+    useArticleStore.getState().setFilter('hasNote')
+    await vi.waitFor(() =>
+      expect(ListItemsLight).toHaveBeenCalledWith(5, 2000, 0),
+    )
+    expect(ListNotedItemsLight).not.toHaveBeenCalled()
+  })
+
+  it('离开 hasNote 时回落到通用端点，恢复全量数据', async () => {
+    useArticleStore.setState({ filter: 'hasNote' })
+    useArticleStore.getState().setFilter('all')
+    await vi.waitFor(() =>
+      expect(ListItemsLight).toHaveBeenCalledWith(0, 2000, 0),
+    )
   })
 
   it('selectItem 设置选中并对未读项乐观标记已读', () => {

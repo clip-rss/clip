@@ -119,12 +119,15 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
       const feedId = scopeFeedId(selection)
       const currentFilter = get().filter
 
-      // 全局视图下「星标/未读」筛选走后端专用端点，绕过 LOAD_LIMIT 限制。
+      // 全局视图下「星标/未读/有笔记」筛选走后端专用端点，绕过 LOAD_LIMIT 限制。
+      // 否则超出最新 LOAD_LIMIT 篇的旧文章不进内存，这些筛选会静默漏掉目标文章。
       let lights: ItemLight[]
       if (currentFilter === 'starred' && feedId <= 0) {
         lights = (await ItemService.ListStarredItemsLight(LOAD_LIMIT, 0)) ?? []
       } else if (currentFilter === 'unread' && feedId <= 0) {
         lights = (await ItemService.ListUnreadItemsLight(LOAD_LIMIT, 0)) ?? []
+      } else if (currentFilter === 'hasNote' && feedId <= 0) {
+        lights = (await ItemService.ListNotedItemsLight(LOAD_LIMIT, 0)) ?? []
       } else {
         lights = (await ItemService.ListItemsLight(feedId, LOAD_LIMIT, 0)) ?? []
       }
@@ -198,12 +201,14 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
 
       if (get().searchActive) return
 
-      // 'read' 需要 reload 以获取最新 readAt 排序；
-      // 进入或离开 'starred' 需要 reload（星标走后端专用端点，回退需恢复全量数据）。
+      // 'read' 需要 reload 以获取最新 readAt 排序。
+      // 'starred' / 'hasNote' 在全局视图走后端专用端点（绕过 LOAD_LIMIT），
+      // 因此进入要取回超限的旧文章，离开要重新拉全量——进出都得 reload。
+      const usesDedicatedEndpoint = (f: ArticleFilter): boolean =>
+        f === 'starred' || f === 'hasNote'
       if (
         (filter === 'read' && prev !== 'read') ||
-        (filter === 'starred' && prev !== 'starred') ||
-        (prev === 'starred' && filter !== 'starred')
+        usesDedicatedEndpoint(filter) !== usesDedicatedEndpoint(prev)
       ) {
         void get().reload()
       }
