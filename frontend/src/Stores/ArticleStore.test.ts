@@ -5,6 +5,8 @@ vi.mock('../Utils', () => ({
   ItemService: {
     ListItems: vi.fn(),
     ListItemsLight: vi.fn(),
+    ListUnreadItemsLight: vi.fn(),
+    ListStarredItemsLight: vi.fn(),
     GetItem: vi.fn(),
     MarkRead: vi.fn(),
     MarkUnread: vi.fn(),
@@ -30,6 +32,8 @@ import { useSearchHistoryStore } from './SearchHistoryStore'
 
 const ListItems = ItemService.ListItems as Mock
 const ListItemsLight = ItemService.ListItemsLight as Mock
+const ListUnreadItemsLight = ItemService.ListUnreadItemsLight as Mock
+const ListStarredItemsLight = ItemService.ListStarredItemsLight as Mock
 const GetItem = ItemService.GetItem as Mock
 const MarkRead = ItemService.MarkRead as Mock
 const ToggleStar = ItemService.ToggleStar as Mock
@@ -46,7 +50,7 @@ function reset(): void {
     items: [],
     loading: false,
     error: null,
-    filter: 'unread',
+    filter: 'all',
     sort: 'timeDesc',
     selectedItemId: null,
     currentSelection: { kind: 'all' },
@@ -61,6 +65,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   ListItems.mockResolvedValue([])
   ListItemsLight.mockResolvedValue([])
+  ListUnreadItemsLight.mockResolvedValue([])
+  ListStarredItemsLight.mockResolvedValue([])
   GetItem.mockResolvedValue(null)
   MarkRead.mockResolvedValue(undefined)
   ToggleStar.mockResolvedValue(undefined)

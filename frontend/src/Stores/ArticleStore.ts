@@ -116,11 +116,18 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
   ): Promise<void> {
     set({ loading: true, error: null })
     try {
-      const lights = await ItemService.ListItemsLight(
-        scopeFeedId(selection),
-        LOAD_LIMIT,
-        0,
-      )
+      const feedId = scopeFeedId(selection)
+      const currentFilter = get().filter
+
+      // 全局视图下「星标/未读」筛选走后端专用端点，绕过 LOAD_LIMIT 限制。
+      let lights: ItemLight[]
+      if (currentFilter === 'starred' && feedId <= 0) {
+        lights = (await ItemService.ListStarredItemsLight(LOAD_LIMIT, 0)) ?? []
+      } else if (currentFilter === 'unread' && feedId <= 0) {
+        lights = (await ItemService.ListUnreadItemsLight(LOAD_LIMIT, 0)) ?? []
+      } else {
+        lights = (await ItemService.ListItemsLight(feedId, LOAD_LIMIT, 0)) ?? []
+      }
       const prev = get()
       // 轻量列表不含正文；回填已加载过的 content，避免阅读中的文章被清成空正文。
       const loadedContent = new Map<number, string>()
@@ -189,7 +196,15 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
       const prev = get().filter
       set({ filter })
 
-      if (filter === 'read' && prev !== 'read' && !get().searchActive) {
+      if (get().searchActive) return
+
+      // 'read' 需要 reload 以获取最新 readAt 排序；
+      // 进入或离开 'starred' 需要 reload（星标走后端专用端点，回退需恢复全量数据）。
+      if (
+        (filter === 'read' && prev !== 'read') ||
+        (filter === 'starred' && prev !== 'starred') ||
+        (prev === 'starred' && filter !== 'starred')
+      ) {
         void get().reload()
       }
     },
@@ -234,7 +249,9 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     },
 
     async toggleStar(id) {
-      const cur = get().items.find((it) => it.id === id)
+      const cur =
+        get().items.find((it) => it.id === id) ??
+        get().searchResults.find((it) => it.id === id)
       if (!cur) return
       const next = !cur.isStarred
       patchItem(id, { isStarred: next })
@@ -271,10 +288,13 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     async markAllRead(ids) {
       if (ids.length === 0) return
       const idSet = new Set(ids)
-      set({
-        items: get().items.map((it) =>
+      const apply = (list: Item[]): Item[] =>
+        list.map((it) =>
           idSet.has(it.id) ? ({ ...it, isRead: true } as Item) : it,
-        ),
+        )
+      set({
+        items: apply(get().items),
+        searchResults: apply(get().searchResults),
       })
       try {
         await ItemService.BatchMarkRead(ids)
@@ -328,10 +348,13 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     async batchStar(ids) {
       if (ids.length === 0) return
       const idSet = new Set(ids)
-      set({
-        items: get().items.map((it) =>
+      const apply = (list: Item[]): Item[] =>
+        list.map((it) =>
           idSet.has(it.id) ? ({ ...it, isStarred: true } as Item) : it,
-        ),
+        )
+      set({
+        items: apply(get().items),
+        searchResults: apply(get().searchResults),
       })
       try {
         // 无批量星标端点，逐条切换（仅对传入的未星标项）。
