@@ -2,6 +2,7 @@ package fetcher
 
 import (
 	"bytes"
+	"net/url"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -10,7 +11,7 @@ import (
 
 // dangerousTags 这些元素及其子树将被整体移除。
 var dangerousTags = map[string]bool{
-	"script": true, "style": true, "iframe": true, "object": true,
+	"script": true, "style": true, "object": true,
 	"embed": true, "applet": true, "form": true, "input": true,
 	"textarea": true, "button": true, "select": true, "option": true,
 	"link": true, "meta": true, "base": true, "frame": true,
@@ -31,15 +32,17 @@ var allowedTags = map[string]bool{
 	"dl": true, "dt": true, "dd": true, "abbr": true, "cite": true,
 	"kbd": true, "mark": true, "small": true, "time": true,
 	"video": true, "audio": true, "source": true, "picture": true,
+	"iframe": true,
 }
 
 // allowedAttrs 每个标签允许保留的属性。
 var allowedAttrs = map[string]map[string]bool{
 	"a":      {"href": true, "title": true, "target": true, "rel": true},
 	"img":    {"src": true, "alt": true, "title": true, "width": true, "height": true},
-	"video":  {"src": true, "controls": true, "width": true, "height": true, "poster": true},
-	"audio":  {"src": true, "controls": true},
+	"video":  {"src": true, "controls": true, "width": true, "height": true, "poster": true, "preload": true, "playsinline": true},
+	"audio":  {"src": true, "controls": true, "preload": true},
 	"source": {"src": true, "srcset": true, "type": true},
+	"iframe": {"src": true, "title": true, "width": true, "height": true, "allow": true, "allowfullscreen": true, "frameborder": true, "loading": true, "referrerpolicy": true},
 	"time":   {"datetime": true},
 	"td":     {"colspan": true, "rowspan": true},
 	"th":     {"colspan": true, "rowspan": true},
@@ -48,6 +51,20 @@ var allowedAttrs = map[string]map[string]bool{
 
 // urlAttrs 需要做协议安全检查的属性。
 var urlAttrs = map[string]bool{"href": true, "src": true, "poster": true}
+
+var mediaDataAttrs = map[string]bool{
+	"data-src":       true,
+	"data-video":     true,
+	"data-video-src": true,
+	"data-video-url": true,
+	"data-hls":       true,
+	"data-mp4":       true,
+	"data-url":       true,
+}
+
+var mediaTags = map[string]bool{
+	"video": true, "audio": true, "source": true, "iframe": true,
+}
 
 // Sanitize 清洗 HTML：移除脚本/样式等危险元素、事件处理属性与危险协议，
 // 仅保留白名单内的标签与属性，以防止 XSS。
@@ -58,6 +75,17 @@ var urlAttrs = map[string]bool{"href": true, "src": true, "poster": true}
 //   - 无效 UTF-8 字节经 xml.Decoder 读取后生成
 //   - 来源于 Feed 本身携带的垃圾字节
 func Sanitize(input string) string {
+	return sanitizeWithBase(input, nil)
+}
+
+// SanitizeWithBase 清洗 HTML，并按文章 URL 解析其中的媒体与嵌入地址。
+// 用于读取历史缓存文章时补齐旧版本未处理的媒体地址。
+func SanitizeWithBase(input, baseURL string) string {
+	return sanitizeWithBase(input, parseBase(baseURL))
+}
+
+// sanitizeWithBase 清洗 HTML，并将正文中的 URL 属性解析为绝对地址。
+func sanitizeWithBase(input string, base *url.URL) string {
 	if strings.TrimSpace(input) == "" {
 		return ""
 	}
@@ -74,7 +102,7 @@ func Sanitize(input string) string {
 
 	var buf bytes.Buffer
 	for _, n := range nodes {
-		for _, c := range cleanNode(n) {
+		for _, c := range cleanNode(n, base) {
 			_ = html.Render(&buf, c)
 		}
 	}
@@ -82,7 +110,7 @@ func Sanitize(input string) string {
 }
 
 // cleanNode 递归清洗节点，返回应保留的节点列表（可能展开子节点）。
-func cleanNode(n *html.Node) []*html.Node {
+func cleanNode(n *html.Node, base *url.URL) []*html.Node {
 	switch n.Type {
 	case html.TextNode:
 		return []*html.Node{{Type: html.TextNode, Data: n.Data}}
@@ -91,16 +119,20 @@ func cleanNode(n *html.Node) []*html.Node {
 		if dangerousTags[n.Data] {
 			return nil
 		}
-		children := cleanChildren(n)
+		children := cleanChildren(n, base)
 		// 非白名单元素：展开，保留其子节点。
 		if !allowedTags[n.Data] {
 			return children
+		}
+		attrs := filterAttrs(n.Data, n.Attr, base)
+		if n.Data == "iframe" && !hasAttr(attrs, "src") {
+			return nil
 		}
 		el := &html.Node{
 			Type:     html.ElementNode,
 			Data:     n.Data,
 			DataAtom: n.DataAtom,
-			Attr:     filterAttrs(n.Data, n.Attr),
+			Attr:     attrs,
 		}
 		for _, c := range children {
 			el.AppendChild(c)
@@ -113,32 +145,144 @@ func cleanNode(n *html.Node) []*html.Node {
 }
 
 // cleanChildren 清洗并返回脱离父节点的子节点切片。
-func cleanChildren(n *html.Node) []*html.Node {
+func cleanChildren(n *html.Node, base *url.URL) []*html.Node {
 	var out []*html.Node
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		out = append(out, cleanNode(c)...)
+		out = append(out, cleanNode(c, base)...)
 	}
 	return out
 }
 
 // filterAttrs 过滤属性：丢弃事件处理器、style 及危险协议，仅保留白名单属性。
-func filterAttrs(tag string, attrs []html.Attribute) []html.Attribute {
+func filterAttrs(tag string, attrs []html.Attribute, base *url.URL) []html.Attribute {
 	allowed := allowedAttrs[tag]
 	var out []html.Attribute
+	hasSrc := false
+	var deferredSrc string
 	for _, a := range attrs {
 		key := strings.ToLower(a.Key)
 		if strings.HasPrefix(key, "on") || key == "style" {
 			continue
 		}
+		if mediaTags[tag] && mediaDataAttrs[key] {
+			if deferredSrc == "" {
+				deferredSrc = a.Val
+			}
+			continue
+		}
+		if mediaDataAttrs[key] {
+			if key == "data-url" && !mediaTags[tag] {
+				continue
+			}
+			if !safeMediaURL(a.Val) {
+				continue
+			}
+			value := a.Val
+			if base != nil {
+				value = resolveURL(base, value)
+			}
+			out = append(out, html.Attribute{Key: key, Val: value})
+			continue
+		}
 		if allowed == nil || !allowed[key] {
 			continue
 		}
-		if urlAttrs[key] && !safeURL(a.Val) {
-			continue
+		value := a.Val
+		if key == "srcset" {
+			value = sanitizeSrcset(value, base)
+			if value == "" {
+				continue
+			}
+		} else if urlAttrs[key] {
+			if mediaTags[tag] && (key == "src" || key == "poster") {
+				if !safeMediaURL(value) {
+					continue
+				}
+			} else if !safeURL(value) {
+				continue
+			}
+			if base != nil {
+				value = resolveURL(base, value)
+			}
+			if tag == "iframe" && key == "src" && !safeEmbedURL(value) {
+				continue
+			}
 		}
-		out = append(out, html.Attribute{Key: key, Val: a.Val})
+		if key == "src" {
+			hasSrc = true
+		}
+		out = append(out, html.Attribute{Key: key, Val: value})
+	}
+	if mediaTags[tag] && !hasSrc && deferredSrc != "" && allowed != nil && allowed["src"] {
+		if safeMediaURL(deferredSrc) {
+			value := deferredSrc
+			if base != nil {
+				value = resolveURL(base, value)
+			}
+			if tag != "iframe" || safeEmbedURL(value) {
+				out = append(out, html.Attribute{Key: "src", Val: value})
+			}
+		}
 	}
 	return out
+}
+
+func hasAttr(attrs []html.Attribute, key string) bool {
+	for _, a := range attrs {
+		if a.Key == key {
+			return true
+		}
+	}
+	return false
+}
+
+// sanitizeSrcset 清洗并解析 srcset 中的每个候选地址。
+func sanitizeSrcset(raw string, base *url.URL) string {
+	var out []string
+	for _, candidate := range strings.Split(raw, ",") {
+		fields := strings.Fields(strings.TrimSpace(candidate))
+		if len(fields) == 0 || !safeURL(fields[0]) {
+			continue
+		}
+		if base != nil {
+			fields[0] = resolveURL(base, fields[0])
+		}
+		out = append(out, strings.Join(fields, " "))
+	}
+	return strings.Join(out, ", ")
+}
+
+var safeEmbedDomains = []string{
+	"youtube.com", "youtube-nocookie.com", "youtu.be", "vimeo.com",
+	"bilibili.com", "dailymotion.com", "twitch.tv", "thepaper.cn",
+}
+
+func safeMediaURL(raw string) bool {
+	v := strings.TrimSpace(raw)
+	lower := strings.ToLower(v)
+	if strings.HasPrefix(lower, "data:") || strings.HasPrefix(lower, "blob:") {
+		return false
+	}
+	if i := strings.IndexByte(lower, ':'); i >= 0 && !strings.ContainsAny(lower[:i], "/?#") {
+		scheme := lower[:i]
+		return scheme == "http" || scheme == "https"
+	}
+	return safeURL(v)
+}
+
+// safeEmbedURL 只允许常见视频平台的 HTTPS/HTTP 播放器地址进入 iframe。
+func safeEmbedURL(raw string) bool {
+	u, err := url.Parse(raw)
+	if err != nil || u.User != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" {
+		return false
+	}
+	host := strings.ToLower(strings.TrimSuffix(u.Hostname(), "."))
+	for _, domain := range safeEmbedDomains {
+		if host == domain || strings.HasSuffix(host, "."+domain) {
+			return true
+		}
+	}
+	return false
 }
 
 // safeURL 拒绝 javascript:/vbscript: 等危险协议，data: 仅允许图片。

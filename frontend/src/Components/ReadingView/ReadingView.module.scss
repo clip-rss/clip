@@ -389,6 +389,32 @@
     cursor: zoom-in;
   }
 
+  video,
+  audio,
+  iframe {
+    display: block;
+    max-width: 100%;
+    margin: 1em auto;
+  }
+
+  video {
+    width: 100%;
+    height: auto;
+    background-color: var(--bg-tertiary);
+  }
+
+  audio {
+    width: 100%;
+  }
+
+  iframe {
+    width: 100%;
+    min-height: 220px;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    border: 0;
+  }
+
   blockquote {
     margin: 0 0 1em;
     padding: 0.5em 1em;

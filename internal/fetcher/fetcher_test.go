@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -142,6 +143,35 @@ func TestCleanFeedResolvesRelativeLinks(t *testing.T) {
 	}
 	if feed.Items[0].Enclosure != "https://example.com/files/a.mp3" {
 		t.Errorf("relative enclosure not resolved: %q", feed.Items[0].Enclosure)
+	}
+}
+
+func TestCleanFeedResolvesRelativeMediaURLs(t *testing.T) {
+	feed := &ParsedFeed{
+		Link: "https://example.com/blog/",
+		Items: []ParsedItem{{
+			Link: "posts/1",
+			Content: `<video src="../media/clip.mp4" poster="cover.jpg" controls>` +
+				`<source src="part.mp4" type="video/mp4"></video>` +
+				`<iframe src="https://www.youtube.com/embed/demo"></iframe>` +
+				`<iframe src="https://evil.example/embed/demo"></iframe>`,
+		}},
+	}
+
+	CleanFeed(feed)
+	content := feed.Items[0].Content
+	for _, want := range []string{
+		`src="https://example.com/blog/media/clip.mp4"`,
+		`poster="https://example.com/blog/posts/cover.jpg"`,
+		`src="https://example.com/blog/posts/part.mp4"`,
+		`src="https://www.youtube.com/embed/demo"`,
+	} {
+		if !strings.Contains(content, want) {
+			t.Errorf("content missing %q: %s", want, content)
+		}
+	}
+	if strings.Contains(content, "evil.example") {
+		t.Errorf("untrusted iframe should be removed: %s", content)
 	}
 }
 

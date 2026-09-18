@@ -104,7 +104,7 @@ func (f *Fetcher) fetch(ctx context.Context, feedURL string, cond ConditionalHea
 		return nil, result, err
 	}
 
-	CleanFeed(feed)
+	cleanFeed(feed, feedURL)
 	feed.Items = Dedup(feed.Items)
 	// 仅在内容成功解析后更新 validator，避免损坏响应的 ETag 导致下次 304 被误判为成功。
 	f.setCond(feedURL, ConditionalHeaders{ETag: result.ETag, LastModified: result.LastModified})
@@ -204,6 +204,22 @@ func (f *Fetcher) setCond(feedURL string, cond ConditionalHeaders) {
 
 // CleanFeed 就地清洗 Feed：清洗正文 HTML、生成纯文本摘要、解析相对链接。
 func CleanFeed(feed *ParsedFeed) {
+	cleanFeed(feed, "")
+}
+
+func cleanFeed(feed *ParsedFeed, feedURL string) {
+	if feed == nil {
+		return
+	}
+
+	base := parseBase(feed.Link)
+	if base == nil {
+		base = parseBase(feed.FeedLink)
+	}
+	if base == nil {
+		base = parseBase(feedURL)
+	}
+
 	for i := range feed.Items {
 		item := &feed.Items[i]
 
@@ -213,17 +229,19 @@ func CleanFeed(feed *ParsedFeed) {
 			summarySource = item.Content
 		}
 		item.Summary = Summarize(summarySource, summaryLength)
-		item.Content = Sanitize(item.Content)
 
-		// 将相对链接解析为绝对地址。
-		if feed.Link != "" {
-			base := parseBase(feed.Link)
-			if item.Link != "" {
-				item.Link = resolveURL(base, item.Link)
-			}
-			if item.Enclosure != "" {
-				item.Enclosure = resolveURL(base, item.Enclosure)
-			}
+		// 文章正文中的媒体地址通常相对于文章 URL，而不是 Feed 首页。
+		if base != nil && item.Link != "" {
+			item.Link = resolveURL(base, item.Link)
+		}
+		itemBase := base
+		if itemURL := parseBase(item.Link); itemURL != nil && itemURL.Scheme != "" && itemURL.Host != "" {
+			itemBase = itemURL
+		}
+		item.Content = sanitizeWithBase(item.Content, itemBase)
+
+		if base != nil && item.Enclosure != "" {
+			item.Enclosure = resolveURL(base, item.Enclosure)
 		}
 	}
 }

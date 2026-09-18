@@ -53,6 +53,7 @@ function ReaderArticle(props: ReaderArticleProps): JSX.Element {
       <div className={styles.divider} />
       <ReaderContent
         html={item.content}
+        baseURL={item.url}
         style={contentStyle}
         onImageClick={onImageClick}
         onLinkHover={onLinkHover}

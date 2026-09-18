@@ -3,6 +3,7 @@ package api
 import (
 	"strings"
 
+	"github.com/clip-rss/clip/internal/fetcher"
 	"github.com/clip-rss/clip/internal/store"
 )
 
@@ -24,6 +25,7 @@ func cleanItemFields(item *store.Item) {
 	item.Enclosure = cleanUFFFD(item.Enclosure)
 	item.Categories = cleanUFFFD(item.Categories)
 	item.Note = cleanUFFFD(item.Note)
+	item.Content = fetcher.SanitizeWithBase(item.Content, item.URL)
 }
 
 // cleanItemLightFields 移除 ItemLight 所有文本字段中的 U+FFFD。

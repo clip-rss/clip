@@ -10,7 +10,8 @@ func TestSanitizeRemovesDangerous(t *testing.T) {
 		`<p onclick="evil()">click</p>` +
 		`<a href="javascript:alert(1)">bad</a>` +
 		`<a href="https://ok.com" onmouseover="x()">good</a>` +
-		`<img src="https://ok.com/a.png" alt="a" style="x">`
+		`<img src="https://ok.com/a.png" alt="a" style="x">` +
+		`<iframe src="https://evil.example/embed/1"></iframe>`
 
 	out := Sanitize(in)
 
@@ -26,6 +27,9 @@ func TestSanitizeRemovesDangerous(t *testing.T) {
 	if strings.Contains(out, "javascript:") {
 		t.Errorf("javascript URL not removed: %q", out)
 	}
+	if strings.Contains(out, "evil.example") {
+		t.Errorf("untrusted iframe should be removed: %q", out)
+	}
 	if strings.Contains(out, "style=") {
 		t.Errorf("style attribute not removed: %q", out)
 	}
@@ -37,6 +41,49 @@ func TestSanitizeRemovesDangerous(t *testing.T) {
 	}
 	if !strings.Contains(out, "click") {
 		t.Errorf("text content should be preserved: %q", out)
+	}
+}
+
+func TestSanitizeAllowsTrustedEmbed(t *testing.T) {
+	out := Sanitize(`<iframe src="https://www.youtube.com/embed/demo" allowfullscreen></iframe>`)
+	if !strings.Contains(out, `<iframe`) || !strings.Contains(out, `src="https://www.youtube.com/embed/demo"`) {
+		t.Errorf("trusted iframe should be preserved: %q", out)
+	}
+}
+
+func TestSanitizePromotesLazyMediaURL(t *testing.T) {
+	input := `<video data-video-src="https://cloudvideo.thepaper.cn/demo.mp4" controls></video>` +
+		`<iframe data-src="https://www.thepaper.cn/video/player?vid=1"></iframe>`
+	out := Sanitize(input)
+	for _, want := range []string{
+		`src="https://cloudvideo.thepaper.cn/demo.mp4"`,
+		`src="https://www.thepaper.cn/video/player?vid=1"`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("lazy media URL missing %q: %s", want, out)
+		}
+	}
+}
+
+func TestSanitizeKeepsLazyMediaContainer(t *testing.T) {
+	out := Sanitize(`<div class="video-player" data-video-url="/media/demo.m3u8"></div>`)
+	if !strings.Contains(out, `data-video-url="/media/demo.m3u8"`) {
+		t.Errorf("lazy media container URL should be retained: %q", out)
+	}
+}
+
+func TestSanitizeWithBaseResolvesLegacyContent(t *testing.T) {
+	out := SanitizeWithBase(
+		`<video src="../media/demo.mp4"></video><iframe src="//www.thepaper.cn/video/player"></iframe>`,
+		"https://www.thepaper.cn/news/123",
+	)
+	for _, want := range []string{
+		`src="https://www.thepaper.cn/media/demo.mp4"`,
+		`src="https://www.thepaper.cn/video/player"`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("legacy content missing %q: %s", want, out)
+		}
 	}
 }
 

@@ -44,4 +44,44 @@ describe('sanitizeHtml', () => {
   it('空输入返回空串', () => {
     expect(sanitizeHtml('')).toBe('')
   })
+
+  it('preserves trusted video embeds', () => {
+    const out = sanitizeHtml(
+      '<iframe src="https://www.youtube.com/embed/demo" allowfullscreen></iframe>',
+    )
+    expect(out).toContain('<iframe')
+    expect(out).toContain('src="https://www.youtube.com/embed/demo"')
+  })
+
+  it('removes untrusted video embeds', () => {
+    const out = sanitizeHtml(
+      '<iframe src="https://evil.example/embed/demo"></iframe>',
+    )
+    expect(out).not.toContain('evil.example')
+  })
+
+  it('promotes trusted lazy media attributes', () => {
+    const out = sanitizeHtml(
+      '<video data-video-src="https://cloudvideo.thepaper.cn/demo.mp4"></video>' +
+        '<iframe data-src="https://www.thepaper.cn/video/player?vid=1"></iframe>',
+    )
+    expect(out).toContain('src="https://cloudvideo.thepaper.cn/demo.mp4"')
+    expect(out).toContain('src="https://www.thepaper.cn/video/player?vid=1"')
+  })
+
+  it('keeps lazy media containers for the reader player', () => {
+    const out = sanitizeHtml(
+      '<div class="video-player" data-video-url="/media/demo.m3u8"></div>',
+    )
+    expect(out).toContain('data-video-url="/media/demo.m3u8"')
+  })
+
+  it('resolves media URLs against the article URL', () => {
+    const out = sanitizeHtml(
+      '<video src="../media/demo.mp4"></video>',
+      'https://www.thepaper.cn/news/123',
+    )
+    expect(out).toContain('src="https://www.thepaper.cn/media/demo.mp4"')
+  })
+
 })
