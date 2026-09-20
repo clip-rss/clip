@@ -569,6 +569,8 @@
   border-radius: 50%;
   background-color: rgba(0, 0, 0, 0.4);
   color: #ffffff;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 1;
 
   &:hover {
@@ -586,6 +588,8 @@
   padding: 6px;
   border-radius: 10px;
   background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 1;
 }
 
