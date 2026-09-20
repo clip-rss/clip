@@ -4,7 +4,12 @@ import clsx from 'clsx'
 import { useLayoutStore, useReaderStore, useSidebarStore } from '../../Stores'
 import { useArticleNavigation, usePlatform, useSelectedItem } from '../../Hooks'
 import { readerBackgroundClass, readerContentStyle } from '../../Utils'
-import { ReaderArticle, Lightbox, NotePanel } from '../ReadingView'
+import {
+  ReaderArticle,
+  Lightbox,
+  NotePanel,
+  type LightboxKind,
+} from '../ReadingView'
 import FocusControlBar from './FocusControlBar'
 import styles from './FocusMode.module.scss'
 
@@ -76,10 +81,13 @@ function FocusMode(): JSX.Element | null {
     }
   }, [mounted, flashBar])
 
-  // ===== 图片灯箱 =====
-  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
-  const lightboxRef = useRef<string | null>(null)
-  lightboxRef.current = lightboxSrc
+  // ===== 媒体灯箱（图片/视频） =====
+  const [lightbox, setLightbox] = useState<{
+    kind: LightboxKind
+    src: string
+  } | null>(null)
+  const lightboxRef = useRef(lightbox)
+  lightboxRef.current = lightbox
 
   // ===== 切换文章：回到顶部 + 标题闪现 =====
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -184,7 +192,8 @@ function FocusMode(): JSX.Element | null {
               item={item}
               sourceName={sourceName}
               contentStyle={contentStyle}
-              onImageClick={setLightboxSrc}
+              onImageClick={(src) => setLightbox({ kind: 'image', src })}
+              onVideoClick={(src) => setLightbox({ kind: 'video', src })}
             />
           </div>
         ) : (
@@ -196,7 +205,11 @@ function FocusMode(): JSX.Element | null {
         <NotePanel item={item} onClose={closeNotePanel} />
       ) : null}
 
-      <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+      <Lightbox
+        kind={lightbox?.kind}
+        src={lightbox?.src ?? null}
+        onClose={() => setLightbox(null)}
+      />
     </div>
   )
 }

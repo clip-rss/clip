@@ -11,9 +11,15 @@ import { useSelectedItem } from '../../Hooks'
 import { readerBackgroundClass, readerContentStyle } from '../../Utils'
 import ReaderToolbar from './ReaderToolbar'
 import ReaderArticle from './ReaderArticle'
-import Lightbox from './Lightbox'
+import Lightbox, { type LightboxKind } from './Lightbox'
 import NotePanel from './NotePanel'
 import styles from './ReadingView.module.scss'
+
+/** 灯箱状态：媒体类型 + 来源 URL，图片与视频共用一个弹层位。 */
+interface MediaLightbox {
+  kind: LightboxKind
+  src: string
+}
 
 function ReadingView(): JSX.Element {
   const { t } = useTranslation()
@@ -24,7 +30,7 @@ function ReadingView(): JSX.Element {
   const notePanelOpen = useLayoutStore((s) => s.notePanelOpen)
   const closeNotePanel = useLayoutStore((s) => s.closeNotePanel)
 
-  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
+  const [lightbox, setLightbox] = useState<MediaLightbox | null>(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const [previewVisible, setPreviewVisible] = useState(false)
 
@@ -109,7 +115,8 @@ function ReadingView(): JSX.Element {
             item={item}
             sourceName={sourceName}
             contentStyle={contentStyle}
-            onImageClick={setLightboxSrc}
+            onImageClick={(src) => setLightbox({ kind: 'image', src })}
+            onVideoClick={(src) => setLightbox({ kind: 'video', src })}
             onLinkHover={handleLinkHover}
           />
         )}
@@ -125,7 +132,11 @@ function ReadingView(): JSX.Element {
       {notePanelOpen ? (
         <NotePanel item={item} onClose={closeNotePanel} />
       ) : null}
-      <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+      <Lightbox
+        kind={lightbox?.kind}
+        src={lightbox?.src ?? null}
+        onClose={() => setLightbox(null)}
+      />
     </div>
   )
 }

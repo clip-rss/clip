@@ -158,7 +158,9 @@
       "download": "Download image",
       "saved": "Saved",
       "failed": "Download failed"
-    }
+    },
+    "videoPlay": "Play video",
+    "videoFailed": "Video failed to load"
   },
   "focus": {
     "exit": "Exit Focus",

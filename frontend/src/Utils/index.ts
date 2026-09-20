@@ -63,6 +63,6 @@ export { showToast } from './Toast'
 export { markdownToHtml } from './Markdown'
 
 // 阅读视图：HTML 清洗与排版样式
-export { sanitizeHtml } from './Sanitize'
+export { sanitizeHtml, videoFailedPlaceholder } from './Sanitize'
 export { readerContentStyle, readerBackgroundClass } from './ReaderStyle'
 export type { ReaderContentStyle } from './ReaderStyle'

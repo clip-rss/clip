@@ -440,6 +440,64 @@
     border: none;
     border-top: 1px solid var(--border);
   }
+
+  /* 正文视频贴片：无原生控件，叠加居中的播放按钮。
+     data-video-box / .video-play 类名由 Sanitize.ts 注入正文字符串，是全局类，
+     需用 :global 包裹避免被 CSS Module 加哈希。整块点击进视频灯箱。 */
+  :global(.video-box) {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 1em 0;
+    border-radius: 6px;
+    overflow: hidden;
+    background-color: #000;
+    cursor: zoom-in;
+
+    video {
+      display: block;
+      max-width: 100%;
+      max-height: 70vh;
+      width: auto;
+      height: auto;
+    }
+
+    :global(.video-play) {
+      position: absolute;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      // video 会被提升为合成层，加 z-index 确保按钮压在画面之上
+      z-index: 1;
+      height: 32px;
+      padding: 0 16px;
+      border: none;
+      border-radius: var(--radius-button);
+      background-color: var(--accent);
+      color: #ffffff;
+      font-size: var(--font-size-base);
+      font-weight: 500;
+      white-space: nowrap;
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: default;
+      transition: opacity 0.15s;
+
+      &:hover {
+        opacity: 0.9;
+      }
+    }
+  }
+
+  /* 无法加载的视频（无源，或运行时加载失败）：用提示文案代替。*/
+  :global(.video-failed) {
+    display: inline-block;
+    margin: 1em 0;
+    font-style: italic;
+    font-size: var(--font-size-small);
+    color: var(--text-secondary);
+  }
 }
 
 /* ===== 空状态 ===== */
@@ -474,6 +532,19 @@
   cursor: default;
   transition: transform 0.2s ease;
   user-select: none;
+}
+
+/* 视频灯箱：遮罩光标用默认（图片模式是 zoom-out「点击关闭」的暗示） */
+.lightboxVideoMode {
+  cursor: default;
+}
+
+.lightboxVideo {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 6px;
+  background-color: #000;
+  outline: none;
 }
 
 .lightboxImgGrab {

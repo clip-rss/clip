@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import clsx from 'clsx'
 import { CloseIcon } from './Icons'
 import { SystemService } from '../../Utils'
 import styles from './ReadingView.module.scss'
 
+/** 灯箱承载的媒体类型：图片（现有逻辑）或视频。 */
+export type LightboxKind = 'image' | 'video'
+
 interface LightboxProps {
+  kind?: LightboxKind
   src: string | null
   onClose: () => void
 }
@@ -22,9 +27,10 @@ interface Position {
 /** 下载按钮的状态：空闲 / 下载中 / 成功 / 失败。 */
 type DownloadState = 'idle' | 'downloading' | 'saved' | 'failed'
 
-/** 图片灯箱：鼠标滚轮缩放、拖动平移、工具栏操作，Esc 或点击遮罩关闭。 */
+/** 媒体灯箱：图片模式支持缩放/平移/下载，视频模式只展示居中播放器。
+ *  两者共用遮罩、关闭按钮与 Esc 关闭。 */
 function Lightbox(props: LightboxProps): JSX.Element | null {
-  const { src, onClose } = props
+  const { kind = 'image', src, onClose } = props
   const { t } = useTranslation()
   const [scale, setScale] = useState(1)
   const [rotation, setRotation] = useState(0)
@@ -41,6 +47,9 @@ function Lightbox(props: LightboxProps): JSX.Element | null {
 
   // 下载状态提示的自动隐藏定时器
   const statusTimerRef = useRef<number | null>(null)
+
+  // 视频灯箱的播放器引用（自动播放兜底用）
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   // 切换图片时重置所有变换
   useEffect(() => {
@@ -63,6 +72,15 @@ function Lightbox(props: LightboxProps): JSX.Element | null {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [src, onClose])
+
+  // 视频自动播放：<video autoPlay> 在用户手势（点击正文视频）后通常直接生效，
+  // 这里再补一次 play() 兜底；被自动播放策略拒绝（返回 rejected Promise）时静默忽略，
+  // 用户点播放器的播放键即可。
+  useEffect(() => {
+    if (kind !== 'video' || !src) return
+    const p = videoRef.current?.play()
+    if (p && typeof p.catch === 'function') p.catch(() => {})
+  }, [kind, src])
 
   // ---- 鼠标滚轮缩放 ----
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -159,6 +177,40 @@ function Lightbox(props: LightboxProps): JSX.Element | null {
   )
 
   if (!src) return null
+
+  if (kind === 'video') {
+    // 视频灯箱：没有缩放/旋转/下载工具栏，只有居中的原生播放器。
+    // 播放器自带 controls（含全屏/进度条），点击视频本体不关闭（stopPropagation），
+    // 点击遮罩空白处或 Esc 关闭。
+    return (
+      <div
+        className={clsx(styles.lightbox, styles.lightboxVideoMode)}
+        onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+      >
+        <button
+          type="button"
+          className={styles.lightboxClose}
+          onClick={onClose}
+          title={t('reader.lightbox.close')}
+          aria-label={t('reader.lightbox.close')}
+        >
+          <CloseIcon size={20} />
+        </button>
+
+        <video
+          ref={videoRef}
+          src={src}
+          controls
+          autoPlay
+          playsInline
+          className={styles.lightboxVideo}
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    )
+  }
 
   const cursorClass = dragging
     ? styles.lightboxImgDragging

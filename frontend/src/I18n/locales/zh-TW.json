@@ -158,7 +158,9 @@
       "download": "下載圖片",
       "saved": "已儲存",
       "failed": "下載失敗"
-    }
+    },
+    "videoPlay": "播放影片",
+    "videoFailed": "影片載入失敗"
   },
   "focus": {
     "exit": "登出專注",
