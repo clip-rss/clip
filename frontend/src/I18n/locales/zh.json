@@ -148,6 +148,7 @@
     "backgroundDesc": "阅读区独立背景色，可与全局主题不同",
     "empty": "选择一篇文章以阅读",
     "loadingContent": "正在加载内容…",
+    "noContent": "该文章暂无正文",
     "endOfContent": "已是全部内容",
     "lightbox": {
       "close": "关闭",

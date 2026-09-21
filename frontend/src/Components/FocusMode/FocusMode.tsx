@@ -89,6 +89,9 @@ function FocusMode(): JSX.Element | null {
   const lightboxRef = useRef(lightbox)
   lightboxRef.current = lightbox
 
+  // item 有正文才渲染文章体，否则展示空状态
+  const hasBody = item ? item.content.trim() !== '' : false
+
   // ===== 切换文章：回到顶部 + 标题闪现 =====
   const scrollRef = useRef<HTMLDivElement>(null)
   const itemId = item?.id ?? null
@@ -186,7 +189,7 @@ function FocusMode(): JSX.Element | null {
       />
 
       <div ref={scrollRef} className={styles.scroll} data-reader-scroll="focus">
-        {item ? (
+        {item && hasBody ? (
           <div key={item.id} className={styles.fadeIn}>
             <ReaderArticle
               item={item}
@@ -197,7 +200,9 @@ function FocusMode(): JSX.Element | null {
             />
           </div>
         ) : (
-          <div className={styles.empty}>{t('focus.empty')}</div>
+          <div className={styles.empty}>
+            {item ? t('reader.noContent') : t('focus.empty')}
+          </div>
         )}
       </div>
 

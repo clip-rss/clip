@@ -96,6 +96,8 @@ function ReadingView(): JSX.Element {
 
   // content 正在加载中（首次点击文章，后端拉取完整正文）
   const isLoadingContent = loadingContentId === item.id && !item.content
+  // 加载完成后仍无正文（该条目本身没有正文）时展示空状态
+  const hasBody = item.content.trim() !== ''
 
   return (
     <div className={styles.reader}>
@@ -110,7 +112,7 @@ function ReadingView(): JSX.Element {
           <div className={styles.loading}>
             <p>{t('reader.loadingContent')}</p>
           </div>
-        ) : (
+        ) : hasBody ? (
           <ReaderArticle
             item={item}
             sourceName={sourceName}
@@ -119,6 +121,10 @@ function ReadingView(): JSX.Element {
             onVideoClick={(src) => setLightbox({ kind: 'video', src })}
             onLinkHover={handleLinkHover}
           />
+        ) : (
+          <div className={styles.empty}>
+            <p>{t('reader.noContent')}</p>
+          </div>
         )}
       </div>
       <div
