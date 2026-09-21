@@ -114,9 +114,13 @@ function FeedInfoModal(props: FeedInfoModalProps): JSX.Element {
               </div>
               <InfoRow
                 label={t('feed.info.updateInterval')}
-                value={t('feed.info.intervalUnit', {
-                  count: feed.updateInterval,
-                })}
+                value={
+                  feed.updateInterval === 0
+                    ? t('feed.info.intervalManual')
+                    : t('feed.info.intervalUnit', {
+                        count: feed.updateInterval,
+                      })
+                }
               />
               <InfoRow
                 label={t('feed.info.maxItems')}

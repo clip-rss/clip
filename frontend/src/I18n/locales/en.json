@@ -465,6 +465,7 @@
       },
       "updateInterval": "Update interval",
       "intervalUnit": "{{count}} min",
+      "intervalManual": "Manual",
       "maxItems": "Max items",
       "itemUnit": "{{count}} items",
       "unreadCount": "Unread",

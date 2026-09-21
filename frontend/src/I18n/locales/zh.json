@@ -465,6 +465,7 @@
       },
       "updateInterval": "更新间隔",
       "intervalUnit": "{{count}} 分钟",
+      "intervalManual": "手动",
       "maxItems": "保留上限",
       "itemUnit": "{{count}} 篇",
       "unreadCount": "未读文章",
