@@ -35,8 +35,15 @@ export {
 export type { CategoryOption } from './FeedTree'
 export { formatRelativeTime, latestUpdated } from './Time'
 
-// 「显示哪份正文」的唯一判定（RSS 正文 vs 提取出的全文）
-export { articleBody, hasArticleBody } from './ArticleBody'
+// 「显示哪份正文」的唯一判定（RSS 正文 vs 提取出的全文）+ 全文按钮形态
+export {
+  articleBody,
+  hasArticleBody,
+  hasRssContent,
+  fullTextButtonMode,
+  FULL_TEXT_TITLE_KEY,
+  type FullTextButtonMode,
+} from './ArticleBody'
 
 // 未读 badge 相对保留上限的负载（黄→红渐变配色）
 export { BADGE_WARN_THRESHOLD, badgeLoad, badgeWarnProgress } from './BadgeLoad'

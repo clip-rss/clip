@@ -169,7 +169,19 @@
   }
 }
 
-/* 全文已提取：按钮转为完成态（禁用），与阅读视图工具栏保持一致的视觉 */
+/* 正在显示全文：开关的按下态，与阅读视图工具栏保持一致 */
+.fullTextActive {
+  background-color: var(--bg-secondary);
+  color: var(--accent);
+
+  &:hover {
+    background-color: var(--bg-secondary);
+    color: var(--accent);
+  }
+}
+
+/* 全文已提取但 RSS 没给正文（无摘要可切）：按钮转为完成态（禁用），
+   与阅读视图工具栏保持一致的视觉 */
 .fullTextDone {
   color: var(--accent);
 
@@ -182,19 +194,6 @@
     background: transparent;
     color: var(--accent);
   }
-}
-
-/* 全文提取失败的提示：不阻断阅读，在正文上方一行说明 */
-.fullTextError {
-  max-width: 680px;
-  margin: 0 auto 16px;
-  padding: 6px 12px;
-  border-radius: var(--radius-button);
-  background-color: var(--bg-secondary);
-  font-size: 12px;
-  font-style: italic;
-  color: var(--text-secondary);
-  text-align: center;
 }
 
 /* ===== 滚动正文区 ===== */

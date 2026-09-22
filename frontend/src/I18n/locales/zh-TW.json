@@ -154,7 +154,9 @@
       "fetch": "取得全文",
       "fetching": "正在取得全文…",
       "done": "已取得全文",
-      "failed": "取得全文失敗"
+      "showFull": "顯示全文",
+      "showSummary": "顯示摘要",
+      "summaryOnly": "目前顯示的是摘要"
     },
     "lightbox": {
       "close": "關閉",

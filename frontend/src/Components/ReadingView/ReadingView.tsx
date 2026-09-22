@@ -29,7 +29,7 @@ function ReadingView(): JSX.Element {
   const { t } = useTranslation()
   const item = useSelectedItem()
   const loadingContentId = useArticleStore((s) => s.loadingContentId)
-  const fullTextError = useArticleStore((s) => s.fullTextError)
+  const showSummary = useArticleStore((s) => s.showSummary)
   const feeds = useSidebarStore((s) => s.feeds)
   const prefs = useReaderStore()
   const notePanelOpen = useLayoutStore((s) => s.notePanelOpen)
@@ -102,24 +102,13 @@ function ReadingView(): JSX.Element {
   // content 正在加载中（首次点击文章，从本地库补拉列表接口未带的正文）
   const isLoadingContent = loadingContentId === item.id && !item.content
   // 加载完成后仍无正文（该条目本身没有正文）时展示空状态。
-  // 判定与 ReaderArticle 共用 hasArticleBody：提取过全文的文章也不会落到空状态。
-  const hasBody = hasArticleBody(item)
-  // 提取失败的提示只属于当前这篇，切换文章后不再显示。
-  const errorMessage =
-    fullTextError?.id === item.id ? fullTextError.message : null
+  // 判定与 ReaderArticle 共用 hasArticleBody，且要带上同一个显示模式：
+  // 只看摘要时正文得按 content 判，否则空状态与渲染结果会分叉。
+  const hasBody = hasArticleBody(item, showSummary)
 
   return (
     <div className={styles.reader}>
       <ReaderToolbar item={item} />
-      {errorMessage ? (
-        <div
-          className={styles.fullTextError}
-          role="status"
-          aria-label={t('reader.fullText.failed')}
-        >
-          {errorMessage}
-        </div>
-      ) : null}
       <div
         ref={scrollRef}
         className={clsx(styles.scroll, bgClass)}

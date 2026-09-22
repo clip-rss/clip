@@ -99,9 +99,10 @@ function FocusMode(): JSX.Element | null {
   lightboxRef.current = lightbox
 
   // item 有正文才渲染文章体，否则展示空状态。
-  // 与阅读视图共用 hasArticleBody，两处对「提取到全文后」的判断不会分叉。
-  const hasBody = item ? hasArticleBody(item) : false
-  const fullTextError = useArticleStore((s) => s.fullTextError)
+  // 与阅读视图共用 hasArticleBody，两处对「提取到全文后」的判断不会分叉；
+  // 显示模式也要一起传，否则空状态判定会与 ReaderArticle 实际渲染的正文对不上。
+  const showSummary = useArticleStore((s) => s.showSummary)
+  const hasBody = item ? hasArticleBody(item, showSummary) : false
 
   // ===== 切换文章：回到顶部 + 标题闪现 =====
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -200,11 +201,6 @@ function FocusMode(): JSX.Element | null {
       />
 
       <div ref={scrollRef} className={styles.scroll} data-reader-scroll="focus">
-        {item && fullTextError?.id === item.id ? (
-          <div className={styles.fullTextError} role="status">
-            {fullTextError.message}
-          </div>
-        ) : null}
         {item && hasBody ? (
           <div key={item.id} className={styles.fadeIn}>
             <ReaderArticle

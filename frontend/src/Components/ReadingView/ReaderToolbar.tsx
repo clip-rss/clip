@@ -1,7 +1,12 @@
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import { useArticleStore, useLayoutStore } from '../../Stores'
-import { modKey, openURL } from '../../Utils'
+import {
+  modKey,
+  openURL,
+  fullTextButtonMode,
+  FULL_TEXT_TITLE_KEY,
+} from '../../Utils'
 import { usePlatform } from '../../Hooks'
 import type { Item } from '../../Types'
 import {
@@ -33,16 +38,18 @@ function ReaderToolbar(props: ReaderToolbarProps): JSX.Element {
   const toggleFocus = useLayoutStore((s) => s.toggleFocus)
   const fetchFullContent = useArticleStore((s) => s.fetchFullContent)
   const fullTextLoadingId = useArticleStore((s) => s.fullTextLoadingId)
+  const showSummary = useArticleStore((s) => s.showSummary)
+  const toggleBodyMode = useArticleStore((s) => s.toggleBodyMode)
   const hasNote = item.note.trim() !== ''
 
-  // 全文提取的三态：已提取 / 提取中 / 可提取，按钮的禁用与提示随之变化。
-  const hasFullText = item.fullContent !== ''
-  const fetchingFullText = fullTextLoadingId === item.id
-  const fullTextTitle = hasFullText
-    ? t('reader.fullText.done')
-    : fetchingFullText
-      ? t('reader.fullText.fetching')
-      : t('reader.fullText.fetch')
+  // 全文按钮：未提取时是抓取按钮，提取完成后变成摘要/全文开关（形态判定见 Utils/ArticleBody）。
+  const fullTextMode = fullTextButtonMode(
+    item,
+    fullTextLoadingId === item.id,
+    showSummary,
+  )
+  const canToggleBody = fullTextMode === 'full' || fullTextMode === 'summary'
+  const fullTextTitle = t(FULL_TEXT_TITLE_KEY[fullTextMode])
 
   const focusShortcut = platform === 'mac' ? '⇧F' : '+Shift+F'
   const focusTitle = `${t('toolbar.focusMode')} (${modKey(platform)}${focusShortcut})`
@@ -122,12 +129,17 @@ function ReaderToolbar(props: ReaderToolbarProps): JSX.Element {
           type="button"
           className={clsx(
             styles.toolbarBtn,
-            hasFullText && styles.fullTextDone,
+            // 开关形态下高亮表示「当前正在看全文」；没有摘要可切时保持原来的完成态。
+            canToggleBody && fullTextMode === 'full' && styles.fullTextActive,
+            fullTextMode === 'done' && styles.fullTextDone,
           )}
-          onClick={() => void fetchFullContent(item.id)}
-          disabled={hasFullText || fetchingFullText}
+          onClick={() =>
+            canToggleBody ? toggleBodyMode() : void fetchFullContent(item.id)
+          }
+          disabled={fullTextMode === 'fetching' || fullTextMode === 'done'}
           title={fullTextTitle}
           aria-label={fullTextTitle}
+          aria-pressed={canToggleBody ? fullTextMode === 'full' : undefined}
         >
           <FullTextIcon size={18} />
         </button>

@@ -6,6 +6,7 @@ import {
   parseCategories,
   type ReaderContentStyle,
 } from '../../Utils'
+import { useArticleStore } from '../../Stores'
 import type { Item } from '../../Types'
 import ReaderContent from './ReaderContent'
 import styles from './ReadingView.module.scss'
@@ -34,8 +35,10 @@ function ReaderArticle(props: ReaderArticleProps): JSX.Element {
     () => parseCategories(item.categories),
     [item.categories],
   )
-  // 提取过全文就显示全文，否则回落到 RSS 给的正文。
-  const body = articleBody(item)
+  // 提取过全文就显示全文，手动切回摘要时显示 RSS 那份。判定在 Utils/ArticleBody，
+  // 与工具栏按钮共用同一条规则。
+  const showSummary = useArticleStore((s) => s.showSummary)
+  const body = articleBody(item, showSummary)
 
   return (
     <div className={styles.article} style={{ maxWidth: contentStyle.maxWidth }}>
@@ -70,7 +73,12 @@ function ReaderArticle(props: ReaderArticleProps): JSX.Element {
         onVideoClick={onVideoClick}
         onLinkHover={onLinkHover}
       />
-      <div className={styles.endHint}>{t('reader.endOfContent')}</div>
+      {/* 正在看摘要、而全文已经在库里时，「已是全部内容」是句假话。 */}
+      <div className={styles.endHint}>
+        {showSummary && item.fullContent
+          ? t('reader.fullText.summaryOnly')
+          : t('reader.endOfContent')}
+      </div>
     </div>
   )
 }

@@ -11,15 +11,71 @@ import type { Item } from '../Types'
 type ArticleBodyFields = Pick<Item, 'content' | 'fullContent'>
 
 /**
- * 实际要渲染的正文 HTML：提取过全文就用全文，否则回落到 RSS 正文。
+ * 实际要渲染的正文 HTML。
  *
- * 两份都没有时返回空串，调用方据此展示空状态。
+ * showSummary 为真时强制用 RSS 正文（手动切回摘要，不看 fullContent）；否则提取过
+ * 全文就用全文，再回落 RSS 正文。两份都没有时返回空串，调用方据此展示空状态。
  */
-export function articleBody(item: ArticleBodyFields): string {
+export function articleBody(
+  item: ArticleBodyFields,
+  showSummary = false,
+): string {
+  if (showSummary) return item.content
   return item.fullContent || item.content
 }
 
 /** 是否有正文可渲染（空白正文视同没有）。 */
-export function hasArticleBody(item: ArticleBodyFields): boolean {
-  return articleBody(item).trim() !== ''
+export function hasArticleBody(
+  item: ArticleBodyFields,
+  showSummary = false,
+): boolean {
+  return articleBody(item, showSummary).trim() !== ''
+}
+
+/** RSS 正文是否非空——只有它为真时才有「切回摘要」这条路可走。 */
+export function hasRssContent(item: ArticleBodyFields): boolean {
+  return item.content.trim() !== ''
+}
+
+/**
+ * 「获取全文」按钮当前的形态。五态而非三态，因为提取完成后按钮从
+ * 「一次性抓取」变成了「摘要 ⇄ 全文」开关。
+ *
+ * - `fetch`     未提取，点击去抓原文
+ * - `fetching`  提取中，禁用
+ * - `done`      已有全文，但 RSS 根本没给正文，没有摘要可切（禁用，保持原完成态）
+ * - `full`      正在看全文，点击切回摘要
+ * - `summary`   正在看摘要，点击切回全文
+ */
+export type FullTextButtonMode =
+  | 'fetch'
+  | 'fetching'
+  | 'done'
+  | 'full'
+  | 'summary'
+
+export function fullTextButtonMode(
+  item: ArticleBodyFields,
+  fetching: boolean,
+  showSummary: boolean,
+): FullTextButtonMode {
+  if (fetching) return 'fetching'
+  if (!item.fullContent) return 'fetch'
+  if (!hasRssContent(item)) return 'done'
+  return showSummary ? 'summary' : 'full'
+}
+
+/**
+ * 每种形态对应的提示文案 key。
+ *
+ * 放在这里而不是各工具栏里：文案描述的是「点下去会发生什么」，两处工具栏必须
+ * 给出同一句，分散写迟早分叉。`full` 提示的是切回摘要，所以是 `showSummary`
+ * 而不是 `showFull` —— 别按名字望文生义。
+ */
+export const FULL_TEXT_TITLE_KEY: Record<FullTextButtonMode, string> = {
+  fetch: 'reader.fullText.fetch',
+  fetching: 'reader.fullText.fetching',
+  done: 'reader.fullText.done',
+  full: 'reader.fullText.showSummary',
+  summary: 'reader.fullText.showFull',
 }

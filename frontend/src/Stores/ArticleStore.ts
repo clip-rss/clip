@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { ItemService, toApiError } from '../Utils'
+import { ItemService, showToast, toApiError } from '../Utils'
 import { useSidebarStore } from './SidebarStore'
 import { useSettingsStore } from './SettingsStore'
 import { useSearchHistoryStore } from './SearchHistoryStore'
@@ -77,11 +77,20 @@ interface ArticleState {
   fetchFullContent: (id: number) => Promise<void>
   /** 正在提取全文的文章 ID。 */
   fullTextLoadingId: number | null
+
   /**
-   * 最近一次提取失败的提示，带文章 ID。
-   * 存 ID 是为了让它只在该文章上显示——切换文章不该继承上一篇的错误。
+   * 当前选中的文章是否正在显示 RSS 摘要（而不是提取出的全文）。
+   *
+   * 只对当前这一篇有效，切换文章即复位：阅读视图与专注模式同时只渲染一篇，
+   * 所以不需要按文章 ID 存一份映射。默认 false —— 有全文就显示全文，
+   * 与加这个开关之前的行为完全一致。
+   *
+   * 不持久化是刻意的：这是「这篇文章现在看哪一份」，属于会话状态而非用户偏好，
+   * 后端 Settings 里没有它的位置。
    */
-  fullTextError: { id: number; message: string } | null
+  showSummary: boolean
+  /** 在摘要与全文之间切换（仅两份正文都在时由工具栏按钮调用）。 */
+  toggleBodyMode: () => void
 
   /** 仅更新搜索框文本（不触发请求；防抖在调用方）。 */
   setSearchQuery: (q: string) => void
@@ -180,6 +189,11 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
         loading: false,
         selectedItemId: selectedId,
         pendingSelectId: null,
+        // 摘要态只属于它被切换时的那一篇。这里也要复位，因为通知定位
+        // （pendingSelectId）这条路不走 selectItem，否则会把上一篇的显示模式带过来；
+        // reload 保持同一篇时则要留着——正文刷新不该把正在读的摘要顶回全文。
+        showSummary:
+          selectedId === prev.selectedItemId ? prev.showSummary : false,
       })
     } catch (err) {
       set({ error: toApiError(err), loading: false })
@@ -201,7 +215,7 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     pendingSelectId: null,
     loadingContentId: null,
     fullTextLoadingId: null,
-    fullTextError: null,
+    showSummary: false,
 
     async load(selection) {
       set({
@@ -242,8 +256,8 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     selectItem(id) {
       // 切换文章先取消上一篇仍未触发的延迟标记。
       window.clearTimeout(autoMarkTimer)
-      // 上一篇的全文提取失败提示只属于那一篇，切换即清除。
-      set({ selectedItemId: id, fullTextError: null })
+      // 上一篇的「正在看摘要」的切换只属于那一篇，切换即清除。
+      set({ selectedItemId: id, showSummary: false })
       const { items, searchResults } = get()
       const item =
         items.find((it) => it.id === id) ??
@@ -381,22 +395,28 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
       // 已有提取结果，无需再联网——后端也会直接返回库里的那份。
       if (existing?.fullContent) return
 
-      set({ fullTextLoadingId: id, fullTextError: null })
+      set({ fullTextLoadingId: id })
       try {
         const html = await ItemService.FetchFullContent(id)
         if (html) {
           patchItem(id, { fullContent: html })
         }
       } catch (err) {
-        // 提取失败不阻断阅读：正文照常显示 RSS 给的内容，只在工具栏附近提示。
+        // 提取失败不阻断阅读：正文照常显示 RSS 给的内容，只弹一条 toast。
         // 后端已把错误本地化过（见 internal/i18n），这里直接展示即可。
-        set({ fullTextError: { id, message: toApiError(err) } })
+        // 用 toast 而不是内联提示：阅读区是正文的地盘，失败属于「刚才那个操作」，
+        // 且切换文章时不该留下一条属于上一篇的提示。
+        showToast(toApiError(err), 'error')
       } finally {
         // 只在仍是同一篇文章时清除 loading（避免快速切换时错误清除）。
         if (get().fullTextLoadingId === id) {
           set({ fullTextLoadingId: null })
         }
       }
+    },
+
+    toggleBodyMode() {
+      set((s) => ({ showSummary: !s.showSummary }))
     },
 
     async batchStar(ids) {

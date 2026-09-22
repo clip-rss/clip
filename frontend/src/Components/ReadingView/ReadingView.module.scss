@@ -106,7 +106,19 @@
   }
 }
 
-/* 全文已提取：按钮转为完成态（禁用），用同色高亮说明「这篇已取过全文」 */
+/* 正在显示全文：开关的按下态，与 .noteActive 同一套视觉 */
+.fullTextActive {
+  background-color: var(--bg-secondary);
+  color: var(--accent);
+
+  &:hover {
+    background-color: var(--bg-secondary);
+    color: var(--accent);
+  }
+}
+
+/* 全文已提取但 RSS 没给正文（无摘要可切）：按钮转为完成态（禁用），
+   用同色高亮说明「这篇已取过全文」 */
 .fullTextDone {
   color: var(--accent);
 
@@ -119,17 +131,6 @@
     background: transparent;
     color: var(--accent);
   }
-}
-
-/* 全文提取失败的提示条：不阻断阅读，只在工具栏下方一行说明 */
-.fullTextError {
-  flex-shrink: 0;
-  padding: 6px 16px;
-  border-bottom: 1px solid var(--border);
-  background-color: var(--bg-secondary);
-  font-size: 12px;
-  font-style: italic;
-  color: var(--text-secondary);
 }
 
 /* 专注模式激活态 */

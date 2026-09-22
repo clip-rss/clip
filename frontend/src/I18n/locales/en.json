@@ -154,7 +154,9 @@
       "fetch": "Fetch full text",
       "fetching": "Fetching full text…",
       "done": "Full text fetched",
-      "failed": "Failed to fetch full text"
+      "showFull": "Show full text",
+      "showSummary": "Show summary",
+      "summaryOnly": "Showing the summary"
     },
     "lightbox": {
       "close": "Close",

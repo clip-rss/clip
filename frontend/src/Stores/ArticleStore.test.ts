@@ -60,6 +60,7 @@ function reset(): void {
     searchResults: [],
     searching: false,
     searchActive: false,
+    showSummary: false,
   })
 }
 
@@ -195,6 +196,26 @@ describe('ArticleStore', () => {
     expect(useArticleStore.getState().items.every((i) => i.isStarred)).toBe(
       true,
     )
+  })
+
+  it('toggleBodyMode 在摘要与全文之间来回切', () => {
+    expect(useArticleStore.getState().showSummary).toBe(false)
+    useArticleStore.getState().toggleBodyMode()
+    expect(useArticleStore.getState().showSummary).toBe(true)
+    useArticleStore.getState().toggleBodyMode()
+    expect(useArticleStore.getState().showSummary).toBe(false)
+  })
+
+  it('切换文章复位摘要态，不继承上一篇的显示模式', () => {
+    useArticleStore.setState({
+      items: [item(1, { isRead: true }), item(2, { isRead: true })],
+    })
+    useArticleStore.getState().selectItem(1)
+    useArticleStore.getState().toggleBodyMode()
+    expect(useArticleStore.getState().showSummary).toBe(true)
+
+    useArticleStore.getState().selectItem(2)
+    expect(useArticleStore.getState().showSummary).toBe(false)
   })
 
   it('saveNote 乐观更新 note 并调用 AddNote', async () => {
