@@ -185,6 +185,31 @@ func (f *Fetcher) FetchPage(ctx context.Context, pageURL string) ([]byte, error)
 	return body, nil
 }
 
+// FetchArticle 抓取文章原文页面，返回 HTML 响应体，供 internal/reader 提取正文。
+//
+// 与 FetchPage 的差别只在对错误状态的态度：favicon 发现拿到 403 页面仍有用
+// （图标声明就在那页上），正文提取拿到 403/404 页面只会提出一段错误页文字，
+// 不如直接报错让用户看到。所以这里走 Fetch —— 非 2xx 一律视为失败，并带上
+// Fetch 的退避重试。
+//
+// 命中反爬挑战时同样求解凭据并重取一次，不递归；求解失败则沿用首份响应体，
+// 交给 reader.Extract 去判定「提不出正文」。
+//
+// 不带条件 GET 头：条件缓存按 Feed URL 维护，文章页不属于那套缓存。
+func (f *Fetcher) FetchArticle(ctx context.Context, pageURL string) ([]byte, error) {
+	res, err := f.client.Fetch(ctx, pageURL, ConditionalHeaders{})
+	if err != nil {
+		return nil, err
+	}
+	if !looksLikeWAFChallenge(res.Body) || !f.client.solveChallenge(pageURL, res.Body) {
+		return res.Body, nil
+	}
+	if retry, rerr := f.client.Fetch(ctx, pageURL, ConditionalHeaders{}); rerr == nil {
+		return retry.Body, nil
+	}
+	return res.Body, nil
+}
+
 // SeedConditional 预置某 Feed 的条件 GET 头（例如从持久化层恢复）。
 func (f *Fetcher) SeedConditional(feedURL string, cond ConditionalHeaders) {
 	f.setCond(feedURL, cond)

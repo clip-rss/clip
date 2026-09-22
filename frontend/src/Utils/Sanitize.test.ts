@@ -41,6 +41,86 @@ describe('sanitizeHtml', () => {
     expect(out.toLowerCase()).not.toContain('javascript:')
   })
 
+  it('给出 articleUrl 时把正文图片改写成代理地址，并留下原始地址', () => {
+    const out = sanitizeHtml('<img src="https://cdn.com/a.png" alt="图">', {
+      articleUrl: 'https://site.com/post/1',
+    })
+
+    // src 指向代理，原始地址挪到 data-origin-src（灯箱与「下载图片」要用它）
+    expect(out).toMatch(/\ssrc="\/__clip\/media\?u=/)
+    expect(out).toContain('data-origin-src="https://cdn.com/a.png"')
+    expect(out).toContain(`r=${encodeURIComponent('https://site.com')}`)
+  })
+
+  it('给出 articleUrl 时 srcset 的每个候选都被改写（否则浏览器会挑到未代理的那个）', () => {
+    const out = sanitizeHtml(
+      '<img src="https://cdn.com/a.png" srcset="https://cdn.com/a.png 1x, https://cdn.com/b.png 2x">',
+      { articleUrl: 'https://site.com/post/1' },
+    )
+
+    const srcset = out.match(/srcset="([^"]*)"/)?.[1] ?? ''
+    expect(srcset).toContain(encodeURIComponent('https://cdn.com/a.png'))
+    expect(srcset).toContain(encodeURIComponent('https://cdn.com/b.png'))
+  })
+
+  it('相对图片地址按 articleUrl 解析后再代理（RSS 正文没解析过相对地址）', () => {
+    const out = sanitizeHtml('<img src="/img/a.png">', {
+      articleUrl: 'https://site.com/post/1',
+    })
+
+    expect(out).toContain(encodeURIComponent('https://site.com/img/a.png'))
+  })
+
+  it('没有 articleUrl 时不改写地址（更新日志弹窗等）', () => {
+    const out = sanitizeHtml('<img src="https://cdn.com/a.png">')
+
+    expect(out).toContain('src="https://cdn.com/a.png"')
+    expect(out).not.toContain('__clip/media')
+    expect(out).not.toContain('data-origin-src')
+  })
+
+  it('data: 内联图片既不代理，也不把整串 base64 抄进 data-origin-src', () => {
+    const inline = 'data:image/gif;base64,R0lGODlhAQABAAAAACw='
+    const out = sanitizeHtml(`<img src="${inline}">`, {
+      articleUrl: 'https://site.com/post/1',
+    })
+
+    expect(out).toContain(`src="${inline}"`)
+    expect(out).not.toContain('__clip/media')
+    expect(out).not.toContain('data-origin-src')
+  })
+
+  it('视频的 src 与 poster 同样走代理', () => {
+    const out = sanitizeHtml(
+      '<video src="https://cdn.com/v.mp4" poster="https://cdn.com/p.jpg"></video>',
+      { articleUrl: 'https://site.com/post/1' },
+    )
+
+    expect(out).toContain(encodeURIComponent('https://cdn.com/v.mp4'))
+    expect(out).toContain(encodeURIComponent('https://cdn.com/p.jpg'))
+  })
+
+  // 阅读视图的真实调用组合：videoSticker 会把 HTML 过一遍 DOMParser 再序列化回来，
+  // 代理地址必须能扛过这一趟往返。
+  it('videoSticker 与 articleUrl 同时开启时，代理地址在贴片重排后仍完好', () => {
+    const out = sanitizeHtml(
+      '<p><img src="https://cdn.com/a.png" alt="图"></p>' +
+        '<p><video src="https://cdn.com/v.mp4"></video></p>',
+      {
+        videoSticker: true,
+        playLabel: '播放视频',
+        failedLabel: '[视频加载失败]',
+        articleUrl: 'https://site.com/post/1',
+      },
+    )
+
+    expect(out).toContain('video-box')
+    expect(out).toMatch(/\ssrc="\/__clip\/media\?u=/)
+    expect(out).toContain(encodeURIComponent('https://cdn.com/a.png'))
+    expect(out).toContain(encodeURIComponent('https://cdn.com/v.mp4'))
+    expect(out).toContain('data-origin-src="https://cdn.com/a.png"')
+  })
+
   it('空输入返回空串', () => {
     expect(sanitizeHtml('')).toBe('')
   })

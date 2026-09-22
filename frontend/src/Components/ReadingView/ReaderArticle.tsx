@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  articleBody,
   formatRelativeTime,
   parseCategories,
   type ReaderContentStyle,
@@ -33,6 +34,8 @@ function ReaderArticle(props: ReaderArticleProps): JSX.Element {
     () => parseCategories(item.categories),
     [item.categories],
   )
+  // 提取过全文就显示全文，否则回落到 RSS 给的正文。
+  const body = articleBody(item)
 
   return (
     <div className={styles.article} style={{ maxWidth: contentStyle.maxWidth }}>
@@ -60,8 +63,9 @@ function ReaderArticle(props: ReaderArticleProps): JSX.Element {
       ) : null}
       <div className={styles.divider} />
       <ReaderContent
-        html={item.content}
+        html={body}
         style={contentStyle}
+        articleUrl={item.url}
         onImageClick={onImageClick}
         onVideoClick={onVideoClick}
         onLinkHover={onLinkHover}

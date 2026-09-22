@@ -539,11 +539,20 @@ export class Item {
         }
         if (!("content" in $$source)) {
             /**
-             * 完整内容
+             * RSS 给的正文（可能只是摘要）
              * @member
              * @type {string}
              */
             this["content"] = "";
+        }
+        if (!("fullContent" in $$source)) {
+            /**
+             * FullContent 是按需从原文页面提取的正文。空串表示尚未提取。
+             * 与 Content 并存：提取结果不覆盖 RSS 原文，抓错了可以回退。
+             * @member
+             * @type {string}
+             */
+            this["fullContent"] = "";
         }
         if (!("summary" in $$source)) {
             /**

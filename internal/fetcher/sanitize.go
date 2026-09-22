@@ -36,7 +36,7 @@ var allowedTags = map[string]bool{
 // allowedAttrs 每个标签允许保留的属性。
 var allowedAttrs = map[string]map[string]bool{
 	"a":      {"href": true, "title": true, "target": true, "rel": true},
-	"img":    {"src": true, "alt": true, "title": true, "width": true, "height": true},
+	"img":    {"src": true, "srcset": true, "alt": true, "title": true, "width": true, "height": true},
 	"video":  {"src": true, "controls": true, "width": true, "height": true, "poster": true},
 	"audio":  {"src": true, "controls": true},
 	"source": {"src": true, "srcset": true, "type": true},

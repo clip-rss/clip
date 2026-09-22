@@ -68,8 +68,8 @@ func (s *Store) CreateItemIfNotExists(item *Item) (bool, error) {
 // GetItem 根据 ID 获取文章
 func (s *Store) GetItem(id int64) (*Item, error) {
 	query := `
-		SELECT id, feed_id, title, author, published_at, updated_at, url, content, summary,
-		       enclosure, categories, is_read, is_starred, read_at, note, created_at
+		SELECT id, feed_id, title, author, published_at, updated_at, url, content, full_content,
+		       summary, enclosure, categories, is_read, is_starred, read_at, note, created_at
 		FROM items WHERE id = ?
 	`
 	item := &Item{}
@@ -82,6 +82,7 @@ func (s *Store) GetItem(id int64) (*Item, error) {
 		&item.UpdatedAt,
 		&item.URL,
 		&item.Content,
+		&item.FullContent,
 		&item.Summary,
 		&item.Enclosure,
 		&item.Categories,
@@ -103,8 +104,8 @@ func (s *Store) GetItem(id int64) (*Item, error) {
 // ListItemsByFeed 获取指定订阅源的文章列表
 func (s *Store) ListItemsByFeed(feedID int64, limit, offset int) ([]Item, error) {
 	query := `
-		SELECT id, feed_id, title, author, published_at, updated_at, url, content, summary,
-		       enclosure, categories, is_read, is_starred, read_at, note, created_at
+		SELECT id, feed_id, title, author, published_at, updated_at, url, content, full_content,
+		       summary, enclosure, categories, is_read, is_starred, read_at, note, created_at
 		FROM items
 		WHERE feed_id = ?
 		ORDER BY published_at DESC
@@ -122,8 +123,8 @@ func (s *Store) ListItemsByFeed(feedID int64, limit, offset int) ([]Item, error)
 // ListAllItems 获取所有文章列表
 func (s *Store) ListAllItems(limit, offset int) ([]Item, error) {
 	query := `
-		SELECT id, feed_id, title, author, published_at, updated_at, url, content, summary,
-		       enclosure, categories, is_read, is_starred, read_at, note, created_at
+		SELECT id, feed_id, title, author, published_at, updated_at, url, content, full_content,
+		       summary, enclosure, categories, is_read, is_starred, read_at, note, created_at
 		FROM items
 		ORDER BY published_at DESC
 		LIMIT ? OFFSET ?
@@ -140,8 +141,8 @@ func (s *Store) ListAllItems(limit, offset int) ([]Item, error) {
 // ListUnreadItems 获取未读文章列表
 func (s *Store) ListUnreadItems(limit, offset int) ([]Item, error) {
 	query := `
-		SELECT id, feed_id, title, author, published_at, updated_at, url, content, summary,
-		       enclosure, categories, is_read, is_starred, read_at, note, created_at
+		SELECT id, feed_id, title, author, published_at, updated_at, url, content, full_content,
+		       summary, enclosure, categories, is_read, is_starred, read_at, note, created_at
 		FROM items
 		WHERE is_read = 0
 		ORDER BY published_at DESC
@@ -159,8 +160,8 @@ func (s *Store) ListUnreadItems(limit, offset int) ([]Item, error) {
 // ListStarredItems 获取星标文章列表
 func (s *Store) ListStarredItems(limit, offset int) ([]Item, error) {
 	query := `
-		SELECT id, feed_id, title, author, published_at, updated_at, url, content, summary,
-		       enclosure, categories, is_read, is_starred, read_at, note, created_at
+		SELECT id, feed_id, title, author, published_at, updated_at, url, content, full_content,
+		       summary, enclosure, categories, is_read, is_starred, read_at, note, created_at
 		FROM items
 		WHERE is_starred = 1
 		ORDER BY published_at DESC
@@ -336,9 +337,31 @@ func (s *Store) UpdateItemNote(id int64, note string) error {
 	return nil
 }
 
+// SaveFullContent 落库按需提取出的原文正文。
+//
+// 只写 full_content，**不动 content** —— RSS 原文要留着，提取错了才能回退。
+// 落库而非每次重抓，是为了第二次打开同一篇时不再请求原文站。
+//
+// 这条 UPDATE 会触发 items_fts_update，但索引列（title/summary/note）的值没变，
+// 触发器只是原值删了再插回去，搜索结果不受影响。
+func (s *Store) SaveFullContent(id int64, html string) error {
+	result, err := s.db.Exec(`UPDATE items SET full_content = ? WHERE id = ?`, html, id)
+	if err != nil {
+		return fmt.Errorf("failed to save full content: %w", err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get affected rows: %w", err)
+	}
+	if rows == 0 {
+		return fmt.Errorf("item not found")
+	}
+	return nil
+}
+
 // 列字段，搜索两种查询路径共用。
 const itemColumns = `i.id, i.feed_id, i.title, i.author, i.published_at, i.updated_at, i.url,
-	       i.content, i.summary, i.enclosure, i.categories, i.is_read, i.is_starred,
+	       i.content, i.full_content, i.summary, i.enclosure, i.categories, i.is_read, i.is_starred,
 	       i.read_at, i.note, i.created_at`
 
 // SearchItems 全文搜索文章（标题/摘要/笔记）。
@@ -503,6 +526,7 @@ func (s *Store) scanItems(rows *sql.Rows) ([]Item, error) {
 			&item.UpdatedAt,
 			&item.URL,
 			&item.Content,
+			&item.FullContent,
 			&item.Summary,
 			&item.Enclosure,
 			&item.Categories,

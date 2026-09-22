@@ -35,6 +35,9 @@ export {
 export type { CategoryOption } from './FeedTree'
 export { formatRelativeTime, latestUpdated } from './Time'
 
+// 「显示哪份正文」的唯一判定（RSS 正文 vs 提取出的全文）
+export { articleBody, hasArticleBody } from './ArticleBody'
+
 // 未读 badge 相对保留上限的负载（黄→红渐变配色）
 export { BADGE_WARN_THRESHOLD, badgeLoad, badgeWarnProgress } from './BadgeLoad'
 
@@ -64,5 +67,7 @@ export { markdownToHtml } from './Markdown'
 
 // 阅读视图：HTML 清洗与排版样式
 export { sanitizeHtml, videoFailedPlaceholder } from './Sanitize'
+// 正文媒体代理地址改写（防盗链）
+export { mediaProxyUrl } from './Media'
 export { readerContentStyle, readerBackgroundClass } from './ReaderStyle'
 export type { ReaderContentStyle } from './ReaderStyle'

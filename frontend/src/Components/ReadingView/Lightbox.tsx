@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import { CloseIcon } from './Icons'
-import { SystemService } from '../../Utils'
+import { SystemService, mediaProxyUrl } from '../../Utils'
 import styles from './ReadingView.module.scss'
 
 /** 灯箱承载的媒体类型：图片（现有逻辑）或视频。 */
@@ -11,6 +11,12 @@ export type LightboxKind = 'image' | 'video'
 interface LightboxProps {
   kind?: LightboxKind
   src: string | null
+  /**
+   * 文章原文地址。图片的 src 是**未代理**的原始地址（div 上的 data-origin-src），
+   * 展示时要换成代理地址才不会被 CDN 防盗链 403；下载时则要把原始地址与它一起
+   * 交给后端，让后端带着源站 Referer 去抓。
+   */
+  articleUrl?: string
   onClose: () => void
 }
 
@@ -30,7 +36,7 @@ type DownloadState = 'idle' | 'downloading' | 'saved' | 'failed'
 /** 媒体灯箱：图片模式支持缩放/平移/下载，视频模式只展示居中播放器。
  *  两者共用遮罩、关闭按钮与 Esc 关闭。 */
 function Lightbox(props: LightboxProps): JSX.Element | null {
-  const { kind = 'image', src, onClose } = props
+  const { kind = 'image', src, articleUrl = '', onClose } = props
   const { t } = useTranslation()
   const [scale, setScale] = useState(1)
   const [rotation, setRotation] = useState(0)
@@ -124,7 +130,8 @@ function Lightbox(props: LightboxProps): JSX.Element | null {
     if (!src || downloadState === 'downloading') return
     setDownloadState('downloading')
     try {
-      const saved = await SystemService.DownloadImage(src)
+      // src 是未代理的原始地址，articleUrl 供后端补上防盗链要的 Referer。
+      const saved = await SystemService.DownloadImage(src, articleUrl)
       // 用户取消（saved=false）不打扰，回到空闲即可
       setDownloadState(saved ? 'saved' : 'idle')
       if (saved) scheduleStatusReset()
@@ -132,7 +139,7 @@ function Lightbox(props: LightboxProps): JSX.Element | null {
       setDownloadState('failed')
       scheduleStatusReset()
     }
-  }, [src, downloadState, scheduleStatusReset])
+  }, [src, articleUrl, downloadState, scheduleStatusReset])
 
   // ---- 图片拖动平移 ----
   const handleImgMouseDown = useCallback((e: React.MouseEvent) => {
@@ -178,6 +185,10 @@ function Lightbox(props: LightboxProps): JSX.Element | null {
 
   if (!src) return null
 
+  // 展示用地址：图片要换成代理地址才不会被防盗链 403；视频拿到的已经是代理地址
+  // （mediaProxyUrl 幂等，原样返回）。
+  const displaySrc = mediaProxyUrl(src, articleUrl)
+
   if (kind === 'video') {
     // 视频灯箱：没有缩放/旋转/下载工具栏，只有居中的原生播放器。
     // 播放器自带 controls（含全屏/进度条），点击视频本体不关闭（stopPropagation），
@@ -201,7 +212,7 @@ function Lightbox(props: LightboxProps): JSX.Element | null {
 
         <video
           ref={videoRef}
-          src={src}
+          src={displaySrc}
           controls
           autoPlay
           playsInline
@@ -294,7 +305,7 @@ function Lightbox(props: LightboxProps): JSX.Element | null {
       ) : null}
 
       <img
-        src={src}
+        src={displaySrc}
         alt=""
         className={`${styles.lightboxImg} ${cursorClass ?? ''}`}
         style={{

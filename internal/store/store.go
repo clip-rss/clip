@@ -320,6 +320,10 @@ CREATE TABLE IF NOT EXISTS items (
 	updated_at DATETIME,
 	url TEXT NOT NULL,
 	content TEXT,
+	-- 按需提取的原文正文。与 content 并存而非覆盖：覆盖后 RSS 原文
+	-- 当场丢失，提取错了无法回退。NOT NULL DEFAULT '' 让 ALTER 补列的旧行也能
+	-- 直接扫进 string，不必到处改成 sql.NullString。
+	full_content TEXT NOT NULL DEFAULT '',
 	summary TEXT,
 	enclosure TEXT,
 	categories TEXT,
@@ -395,33 +399,63 @@ CREATE TABLE IF NOT EXISTS settings (
 	if err := s.migrateSchedulingMetadata(); err != nil {
 		return err
 	}
+	if err := s.migrateItemFullContent(); err != nil {
+		return err
+	}
 	if err := s.migrateFTSTokenizer(); err != nil {
 		return err
 	}
 	return s.migrateDropFeedURLConstraint()
 }
 
-// migrateSchedulingMetadata 为旧数据库补充抓取尝试时间与已见文章表。
-// 不使用 user_version 门控，避免与独立的 FTS 迁移相互耦合。
-func (s *Store) migrateSchedulingMetadata() error {
-	rows, err := s.db.Query(`PRAGMA table_info(feeds)`)
+// hasColumn 报告表中是否已存在某列。列嗅探是本项目补列迁移的统一手段——
+// 它与 user_version 无关，因此可以反复执行且与其他迁移互不耦合。
+//
+// table 只接受调用方写死的表名：PRAGMA 不支持占位符参数，只能拼串。
+func (s *Store) hasColumn(table, column string) (bool, error) {
+	rows, err := s.db.Query(`PRAGMA table_info(` + table + `)`)
 	if err != nil {
-		return fmt.Errorf("failed to inspect feeds schema: %w", err)
+		return false, fmt.Errorf("failed to inspect %s schema: %w", table, err)
 	}
-	hasLastAttempted := false
+	defer rows.Close()
 	for rows.Next() {
 		var cid, notNull, pk int
 		var name, columnType string
 		var defaultValue any
 		if err := rows.Scan(&cid, &name, &columnType, &notNull, &defaultValue, &pk); err != nil {
-			rows.Close()
-			return fmt.Errorf("failed to scan feeds schema: %w", err)
+			return false, fmt.Errorf("failed to scan %s schema: %w", table, err)
 		}
-		if name == "last_attempted" {
-			hasLastAttempted = true
+		if name == column {
+			return true, rows.Err()
 		}
 	}
-	if err := rows.Close(); err != nil {
+	return false, rows.Err()
+}
+
+// migrateItemFullContent 为旧数据库补充 items.full_content 列（全文提取）。
+//
+// 与 migrateFTSTokenizer 一样刻意不共用 user_version 门槛（原因见 migrate 中的注释）。
+// FTS 不受影响：items_fts 的索引列是 title/summary/note，本来就不含正文，
+// full_content 也不进索引，加列对索引与触发器完全无感。
+func (s *Store) migrateItemFullContent() error {
+	has, err := s.hasColumn("items", "full_content")
+	if err != nil {
+		return err
+	}
+	if has {
+		return nil
+	}
+	if _, err := s.db.Exec(`ALTER TABLE items ADD COLUMN full_content TEXT NOT NULL DEFAULT ''`); err != nil {
+		return fmt.Errorf("failed to add items.full_content: %w", err)
+	}
+	return nil
+}
+
+// migrateSchedulingMetadata 为旧数据库补充抓取尝试时间与已见文章表。
+// 不使用 user_version 门控，避免与独立的 FTS 迁移相互耦合。
+func (s *Store) migrateSchedulingMetadata() error {
+	hasLastAttempted, err := s.hasColumn("feeds", "last_attempted")
+	if err != nil {
 		return err
 	}
 	if !hasLastAttempted {
@@ -510,7 +544,6 @@ func (s *Store) migrateFTSTokenizer() error {
 	return tx.Commit()
 }
 
-
 // migrateDropFeedURLConstraint removes the UNIQUE(feed_id, url) constraint from items.
 //
 // Digest format feeds (e.g. Anyway.Now) have all items sharing the same URL,
@@ -546,6 +579,7 @@ func (s *Store) migrateDropFeedURLConstraint() error {
 			updated_at DATETIME,
 			url TEXT NOT NULL,
 			content TEXT,
+			full_content TEXT NOT NULL DEFAULT '',
 			summary TEXT,
 			enclosure TEXT,
 			categories TEXT,
@@ -556,7 +590,15 @@ func (s *Store) migrateDropFeedURLConstraint() error {
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (feed_id) REFERENCES feeds(id) ON DELETE CASCADE
 		)`,
-		`INSERT INTO items_v2 SELECT * FROM items`,
+		// 显式列出列名而不是 SELECT *：重建后的表必须与 items 的列顺序一一对应，
+		// 用 * 时只要 items 加过列（如 full_content）这里就会错位报
+		// 「has N columns but M values were supplied」。
+		`INSERT INTO items_v2 (id, feed_id, title, author, published_at, updated_at, url,
+			content, full_content, summary, enclosure, categories, is_read, is_starred,
+			read_at, note, created_at)
+		 SELECT id, feed_id, title, author, published_at, updated_at, url,
+			content, full_content, summary, enclosure, categories, is_read, is_starred,
+			read_at, note, created_at FROM items`,
 		`DROP TABLE items`,
 		`ALTER TABLE items_v2 RENAME TO items`,
 		`CREATE INDEX IF NOT EXISTS idx_items_feed ON items(feed_id)`,

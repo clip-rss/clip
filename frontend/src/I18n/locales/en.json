@@ -150,6 +150,12 @@
     "loadingContent": "Loading content…",
     "noContent": "This article has no content",
     "endOfContent": "End of content",
+    "fullText": {
+      "fetch": "Fetch full text",
+      "fetching": "Fetching full text…",
+      "done": "Full text fetched",
+      "failed": "Failed to fetch full text"
+    },
     "lightbox": {
       "close": "Close",
       "zoomOut": "Zoom out",

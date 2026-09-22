@@ -266,7 +266,7 @@ func TestFeedCRUDAndPauseResume(t *testing.T) {
 func TestItemServiceOps(t *testing.T) {
 	st := newTestStore(t)
 	feedID := seedFeed(t, st, "https://i.example/feed", "I")
-	svc := NewItemService(st)
+	svc := NewItemService(st, nil)
 
 	a := &store.Item{FeedID: feedID, Title: "Alpha", URL: "https://i.example/a", Summary: "alpha summary"}
 	b := &store.Item{FeedID: feedID, Title: "Beta", URL: "https://i.example/b", Summary: "beta summary"}
@@ -333,7 +333,7 @@ func TestItemServiceOps(t *testing.T) {
 func TestSearchItemsServiceChinese(t *testing.T) {
 	st := newTestStore(t)
 	feedID := seedFeed(t, st, "https://s.example/feed", "S")
-	svc := NewItemService(st)
+	svc := NewItemService(st, nil)
 
 	it := &store.Item{FeedID: feedID, Title: "科技爱好者周刊", URL: "https://s.example/1"}
 	if _, err := st.CreateItemIfNotExists(it); err != nil {
@@ -656,10 +656,10 @@ func TestExtFromContentType(t *testing.T) {
 
 func TestDownloadImageRejectsEmptyURL(t *testing.T) {
 	svc := &SystemService{HTTPClient: fetcher.NewClient()}
-	if _, err := svc.DownloadImage("   "); err == nil {
+	if _, err := svc.DownloadImage("   ", ""); err == nil {
 		t.Fatal("expected error for empty URL")
 	}
-	if _, err := svc.DownloadImage(""); err == nil {
+	if _, err := svc.DownloadImage("", ""); err == nil {
 		t.Fatal("expected error for empty URL")
 	}
 }

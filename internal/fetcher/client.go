@@ -279,6 +279,46 @@ func (c *Client) get(ctx context.Context, rawURL string) (body []byte, contentTy
 	return body, resp.Header.Get("Content-Type"), false, nil
 }
 
+// FetchMedia 取回媒体资源（图片/视频）的原始响应，供 internal/mediaproxy 代理转发。
+//
+// 与 Fetch / Get 的三点差别：
+//   - **可携带 Referer**：国内 CDN 普遍做防盗链，某类站点对空 Referer 直接
+//     403、对任意非空 Referer 放行。正文图片由 app 代抓，必须自己补上文章源站的
+//     Referer，否则一律裂图。
+//   - **Range 原样透传**：视频要靠 206 才能拖动进度，这里把 WebView 的 Range
+//     转发给源站，并把 206/Content-Range 原样带回。
+//   - **不读 body、不判状态码**：403/404 要如实透给 WebView（渲染成裂图），
+//     而不是像 Fetch 那样当成错误吞掉。**调用方负责关闭 resp.Body。**
+//
+// 复用同一个 http.Client，因此代理、超时、UA 与 cookie jar 都与订阅抓取一致。
+func (c *Client) FetchMedia(ctx context.Context, rawURL, referer string, hdr http.Header) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("fetcher: build media request: %w", err)
+	}
+	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("Accept", "image/avif,image/webp,image/apng,image/*,video/*,*/*;q=0.8")
+	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+	// 刻意不像 setCommonHeaders 那样发 Cache-Control: no-cache —— 媒体希望走缓存，
+	// 而条件头交给下面的透传统一处理。
+	if referer != "" {
+		req.Header.Set("Referer", referer)
+	}
+	if hdr != nil {
+		for _, k := range []string{"Range", "If-None-Match", "If-Modified-Since"} {
+			if v := hdr.Get(k); v != "" {
+				req.Header.Set(k, v)
+			}
+		}
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("fetcher: media request: %w", err)
+	}
+	return resp, nil
+}
+
 // setCommonHeaders 设置浏览器标配的请求头，用于掩盖爬虫特征。
 func setCommonHeaders(req *http.Request) {
 	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")

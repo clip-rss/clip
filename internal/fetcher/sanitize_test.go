@@ -40,6 +40,18 @@ func TestSanitizeRemovesDangerous(t *testing.T) {
 	}
 }
 
+func TestSanitizeKeepsImgSrcset(t *testing.T) {
+	// 响应式图片的候选地址必须留着：前端要逐个改写成代理地址，浏览器才不会从
+	// srcset 里挑一个未代理的候选去加载（那样防盗链照样 403）。
+	in := `<img src="https://ok.com/a.png" srcset="https://ok.com/a.png 1x, https://ok.com/a@2x.png 2x" alt="a">`
+
+	out := Sanitize(in)
+
+	if !strings.Contains(out, `srcset="https://ok.com/a.png 1x, https://ok.com/a@2x.png 2x"`) {
+		t.Errorf("img 的 srcset 应被保留：%q", out)
+	}
+}
+
 func TestStripTags(t *testing.T) {
 	in := `<p>Hello   <b>World</b></p><script>ignore()</script>`
 	got := StripTags(in)

@@ -96,6 +96,10 @@ var messages = map[string]map[string]string{
 		"image.downloadUnavailable":      "Image download is unavailable",
 		"image.downloadFailed":           "Failed to download image",
 		"image.writeFailed":              "Failed to save image",
+		"fulltext.unavailable":           "Full-text extraction is unavailable; restart the application",
+		"fulltext.urlMissing":            "This article has no original address to fetch",
+		"fulltext.fetchFailed":           "Failed to fetch the original page",
+		"fulltext.extractFailed":         "No article body could be extracted from this page",
 	},
 	SimplifiedChinese: {
 		"feed.urlEmpty":                  "订阅地址不能为空",
@@ -178,6 +182,10 @@ var messages = map[string]map[string]string{
 		"image.downloadUnavailable":      "图片下载不可用",
 		"image.downloadFailed":           "下载图片失败",
 		"image.writeFailed":              "保存图片失败",
+		"fulltext.unavailable":           "全文提取不可用，请重启应用",
+		"fulltext.urlMissing":            "该文章没有可抓取的原文地址",
+		"fulltext.fetchFailed":           "抓取原文页面失败",
+		"fulltext.extractFailed":         "未能从该页面提取出正文",
 	},
 	TraditionalChinese: {}, // populated from the complete catalog in init
 }

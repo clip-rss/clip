@@ -38,7 +38,10 @@ type Item struct {
 	PublishedAt time.Time  `json:"publishedAt"`
 	UpdatedAt   *time.Time `json:"updatedAt"` // 可为 NULL
 	URL         string     `json:"url"`
-	Content     string     `json:"content"`    // 完整内容
+	Content     string     `json:"content"` // RSS 给的正文（可能只是摘要）
+	// FullContent 是按需从原文页面提取的正文。空串表示尚未提取。
+	// 与 Content 并存：提取结果不覆盖 RSS 原文，抓错了可以回退。
+	FullContent string     `json:"fullContent"`
 	Summary     string     `json:"summary"`    // 摘要
 	Enclosure   string     `json:"enclosure"`  // 附件 URL（音频/视频）
 	Categories  string     `json:"categories"` // JSON 数组字符串

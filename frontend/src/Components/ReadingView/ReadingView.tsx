@@ -8,7 +8,11 @@ import {
   useLayoutStore,
 } from '../../Stores'
 import { useSelectedItem } from '../../Hooks'
-import { readerBackgroundClass, readerContentStyle } from '../../Utils'
+import {
+  hasArticleBody,
+  readerBackgroundClass,
+  readerContentStyle,
+} from '../../Utils'
 import ReaderToolbar from './ReaderToolbar'
 import ReaderArticle from './ReaderArticle'
 import Lightbox, { type LightboxKind } from './Lightbox'
@@ -25,6 +29,7 @@ function ReadingView(): JSX.Element {
   const { t } = useTranslation()
   const item = useSelectedItem()
   const loadingContentId = useArticleStore((s) => s.loadingContentId)
+  const fullTextError = useArticleStore((s) => s.fullTextError)
   const feeds = useSidebarStore((s) => s.feeds)
   const prefs = useReaderStore()
   const notePanelOpen = useLayoutStore((s) => s.notePanelOpen)
@@ -94,14 +99,27 @@ function ReadingView(): JSX.Element {
 
   const sourceName = feeds.find((f) => f.id === item.feedId)?.title ?? ''
 
-  // content 正在加载中（首次点击文章，后端拉取完整正文）
+  // content 正在加载中（首次点击文章，从本地库补拉列表接口未带的正文）
   const isLoadingContent = loadingContentId === item.id && !item.content
-  // 加载完成后仍无正文（该条目本身没有正文）时展示空状态
-  const hasBody = item.content.trim() !== ''
+  // 加载完成后仍无正文（该条目本身没有正文）时展示空状态。
+  // 判定与 ReaderArticle 共用 hasArticleBody：提取过全文的文章也不会落到空状态。
+  const hasBody = hasArticleBody(item)
+  // 提取失败的提示只属于当前这篇，切换文章后不再显示。
+  const errorMessage =
+    fullTextError?.id === item.id ? fullTextError.message : null
 
   return (
     <div className={styles.reader}>
       <ReaderToolbar item={item} />
+      {errorMessage ? (
+        <div
+          className={styles.fullTextError}
+          role="status"
+          aria-label={t('reader.fullText.failed')}
+        >
+          {errorMessage}
+        </div>
+      ) : null}
       <div
         ref={scrollRef}
         className={clsx(styles.scroll, bgClass)}
@@ -141,6 +159,7 @@ function ReadingView(): JSX.Element {
       <Lightbox
         kind={lightbox?.kind}
         src={lightbox?.src ?? null}
+        articleUrl={item.url}
         onClose={() => setLightbox(null)}
       />
     </div>

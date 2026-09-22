@@ -44,6 +44,24 @@ export function CleanReadByFeed(feedID) {
 }
 
 /**
+ * FetchFullContent 按需抓取文章原文并提取正文，成功时返回正文 HTML。
+ * 
+ * 「RSS 只给摘要」的源在阅读界面只有摘要，这个方法是那类文章
+ * 的补充路径。结果落库到 items.full_content，**不覆盖 items.content** ——
+ * RSS 原文必须留着，提取错了才有回退余地；同一篇第二次调用直接读库、不再联网。
+ * 
+ * 已提取过的文章直接返回库里的结果，不再联网。
+ * 
+ * 提取失败一律不写库、不碰 feeds.error_count —— 那是订阅源的字段，混用会让
+ * 「已失效」分组误判。错误按可行动程度分级返回给前端做提示。
+ * @param {number} id
+ * @returns {$CancellablePromise<string>}
+ */
+export function FetchFullContent(id) {
+    return $Call.ByID(721915261, id);
+}
+
+/**
  * GetItem 按 ID 获取文章。
  * @param {number} id
  * @returns {$CancellablePromise<store$0.Item | null>}

@@ -1,9 +1,18 @@
 import { useTranslation } from 'react-i18next'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
-import { useLayoutStore, useReaderStore, useSidebarStore } from '../../Stores'
+import {
+  useArticleStore,
+  useLayoutStore,
+  useReaderStore,
+  useSidebarStore,
+} from '../../Stores'
 import { useArticleNavigation, usePlatform, useSelectedItem } from '../../Hooks'
-import { readerBackgroundClass, readerContentStyle } from '../../Utils'
+import {
+  hasArticleBody,
+  readerBackgroundClass,
+  readerContentStyle,
+} from '../../Utils'
 import {
   ReaderArticle,
   Lightbox,
@@ -89,8 +98,10 @@ function FocusMode(): JSX.Element | null {
   const lightboxRef = useRef(lightbox)
   lightboxRef.current = lightbox
 
-  // item 有正文才渲染文章体，否则展示空状态
-  const hasBody = item ? item.content.trim() !== '' : false
+  // item 有正文才渲染文章体，否则展示空状态。
+  // 与阅读视图共用 hasArticleBody，两处对「提取到全文后」的判断不会分叉。
+  const hasBody = item ? hasArticleBody(item) : false
+  const fullTextError = useArticleStore((s) => s.fullTextError)
 
   // ===== 切换文章：回到顶部 + 标题闪现 =====
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -189,6 +200,11 @@ function FocusMode(): JSX.Element | null {
       />
 
       <div ref={scrollRef} className={styles.scroll} data-reader-scroll="focus">
+        {item && fullTextError?.id === item.id ? (
+          <div className={styles.fullTextError} role="status">
+            {fullTextError.message}
+          </div>
+        ) : null}
         {item && hasBody ? (
           <div key={item.id} className={styles.fadeIn}>
             <ReaderArticle
@@ -213,6 +229,7 @@ function FocusMode(): JSX.Element | null {
       <Lightbox
         kind={lightbox?.kind}
         src={lightbox?.src ?? null}
+        articleUrl={item?.url ?? ''}
         onClose={() => setLightbox(null)}
       />
     </div>

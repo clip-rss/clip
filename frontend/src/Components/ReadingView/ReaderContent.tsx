@@ -11,6 +11,8 @@ import styles from './ReadingView.module.scss'
 interface ReaderContentProps {
   html: string
   style: ReaderContentStyle
+  /** 文章原文地址：正文媒体走代理时用它作 Referer，并作为相对地址的解析基准。 */
+  articleUrl: string
   onImageClick: (src: string) => void
   onVideoClick: (src: string) => void
   onLinkHover?: (url: string | null) => void
@@ -19,7 +21,8 @@ interface ReaderContentProps {
 /** 渲染清洗后的正文 HTML，委托处理链接（系统浏览器）、图片与视频（灯箱）点击。 */
 function ReaderContent(props: ReaderContentProps): JSX.Element {
   const { t } = useTranslation()
-  const { html, style, onImageClick, onVideoClick, onLinkHover } = props
+  const { html, style, articleUrl, onImageClick, onVideoClick, onLinkHover } =
+    props
   const videoFailedLabel = t('reader.videoFailed')
   const contentRef = useRef<HTMLElement>(null)
 
@@ -29,8 +32,9 @@ function ReaderContent(props: ReaderContentProps): JSX.Element {
         videoSticker: true,
         playLabel: t('reader.videoPlay'),
         failedLabel: t('reader.videoFailed'),
+        articleUrl,
       }),
-    [html, t],
+    [html, t, articleUrl],
   )
 
   // 有视频源、但实际拉取失败（地址失效 / 403 / 断网）时，把贴片换成失败文案。
@@ -88,8 +92,10 @@ function ReaderContent(props: ReaderContentProps): JSX.Element {
     }
     const img = target.closest('img')
     if (img) {
-      const src =
-        (img as HTMLImageElement).currentSrc || (img as HTMLImageElement).src
+      // 优先取 data-origin-src：清洗时图片 src 已被换成 /__clip/media?... 代理地址，
+      // 而灯箱展示与「下载图片」要的是未代理的原始地址（后端会自己补 Referer）。
+      const el = img as HTMLImageElement
+      const src = el.dataset.originSrc || el.currentSrc || el.src
       if (src) onImageClick(src)
     }
   }

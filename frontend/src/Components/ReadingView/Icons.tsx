@@ -180,3 +180,17 @@ export function BackIcon(props: IconProps): JSX.Element {
     </svg>
   )
 }
+
+/**
+ * 获取全文（去原文页面提取正文）。
+ * 折角文档 + 两行正文，与 CloseIcon / BackIcon 同为描边风格。
+ */
+export function FullTextIcon(props: IconProps): JSX.Element {
+  return (
+    <svg {...svgProps(props)}>
+      <path d="M9 2H5.5A1.5 1.5 0 0 0 4 3.5v8A1.5 1.5 0 0 0 5.5 13h4A1.5 1.5 0 0 0 11 11.5V4z" />
+      <path d="M9 2v2.5h2.5" />
+      <path d="M6.5 9.5h2M6.5 7h1" />
+    </svg>
+  )
+}

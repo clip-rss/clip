@@ -106,6 +106,32 @@
   }
 }
 
+/* 全文已提取：按钮转为完成态（禁用），用同色高亮说明「这篇已取过全文」 */
+.fullTextDone {
+  color: var(--accent);
+
+  &:disabled {
+    opacity: 1;
+    color: var(--accent);
+  }
+
+  &:disabled:hover {
+    background: transparent;
+    color: var(--accent);
+  }
+}
+
+/* 全文提取失败的提示条：不阻断阅读，只在工具栏下方一行说明 */
+.fullTextError {
+  flex-shrink: 0;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--bg-secondary);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
 /* 专注模式激活态 */
 .focusActive {
   background-color: var(--bg-secondary);

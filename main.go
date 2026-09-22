@@ -15,6 +15,7 @@ import (
 	"github.com/clip-rss/clip/api"
 	"github.com/clip-rss/clip/internal/fetcher"
 	"github.com/clip-rss/clip/internal/i18n"
+	"github.com/clip-rss/clip/internal/mediaproxy"
 	"github.com/clip-rss/clip/internal/notify"
 	"github.com/clip-rss/clip/internal/scheduler"
 	"github.com/clip-rss/clip/internal/secret"
@@ -597,6 +598,11 @@ func main() {
 	opmlSvc := api.NewOPMLService(st, ft.Client(), wailsEmitter{}.Emit)
 	opmlBackupSvc := api.NewOPMLBackupService(st, webdavConfigSvc, opmlSvc)
 
+	// itemSvc 提成变量：注入抓取器以支持「获取全文」。
+	// 与订阅抓取共用同一个 Fetcher —— 代理、超时、WAF 挑战求解、cookie jar 都跟着走，
+	// 不再另起第二条 HTTP 路径。
+	itemSvc := api.NewItemService(st, ft)
+
 	sysSvc := &api.SystemService{
 		AppVersion:      currentVersion,
 		ChangelogURL:    changelogURL,
@@ -610,11 +616,18 @@ func main() {
 		},
 		HTTPClient: ft.Client(),
 	}
+	// 正文媒体代理：正文图片由 app 代抓，国内 CDN 的防盗链会按 Referer
+	// 判定，必须由服务端补上文章源站的 Referer。挂在资产服务器中间件链的最前面，
+	// 只接管 /__clip/media，其余请求（页面、HMR）原样透传。
+	// 复用抓取客户端，因此用户配置的代理对正文图片同样生效。
+	mediaProxy := mediaproxy.New(ft.Client())
+
 	app := application.New(application.Options{
 		Name:        "clip",
 		Description: i18n.T(settings.Language, "app.description"),
 		Assets: application.AssetOptions{
-			Handler: application.AssetFileServerFS(assets),
+			Handler:    application.AssetFileServerFS(assets),
+			Middleware: mediaProxy.Middleware,
 		},
 		Mac: application.MacOptions{
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
@@ -622,7 +635,7 @@ func main() {
 		Services: []application.Service{
 			application.NewService(sysSvc),
 			application.NewService(api.NewFeedService(st, ft, sch)),
-			application.NewService(api.NewItemService(st)),
+			application.NewService(itemSvc),
 			application.NewService(api.NewCategoryService(st)),
 			application.NewService(settingsSvc),
 			application.NewService(webdavConfigSvc),

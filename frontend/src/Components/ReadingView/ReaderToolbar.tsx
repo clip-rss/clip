@@ -11,6 +11,7 @@ import {
   NoteIcon,
   ExternalLinkIcon,
   EnterFullScreenIcon,
+  FullTextIcon,
 } from './Icons'
 import ReaderSettingsMenu from './ReaderSettingsMenu'
 import styles from './ReadingView.module.scss'
@@ -30,7 +31,18 @@ function ReaderToolbar(props: ReaderToolbarProps): JSX.Element {
   const toggleNotePanel = useLayoutStore((s) => s.toggleNotePanel)
   const focusMode = useLayoutStore((s) => s.focusMode)
   const toggleFocus = useLayoutStore((s) => s.toggleFocus)
+  const fetchFullContent = useArticleStore((s) => s.fetchFullContent)
+  const fullTextLoadingId = useArticleStore((s) => s.fullTextLoadingId)
   const hasNote = item.note.trim() !== ''
+
+  // 全文提取的三态：已提取 / 提取中 / 可提取，按钮的禁用与提示随之变化。
+  const hasFullText = item.fullContent !== ''
+  const fetchingFullText = fullTextLoadingId === item.id
+  const fullTextTitle = hasFullText
+    ? t('reader.fullText.done')
+    : fetchingFullText
+      ? t('reader.fullText.fetching')
+      : t('reader.fullText.fetch')
 
   const focusShortcut = platform === 'mac' ? '⇧F' : '+Shift+F'
   const focusTitle = `${t('toolbar.focusMode')} (${modKey(platform)}${focusShortcut})`
@@ -105,6 +117,19 @@ function ReaderToolbar(props: ReaderToolbarProps): JSX.Element {
           aria-label={t('reader.toolbar.openInBrowser')}
         >
           <ExternalLinkIcon size={18} />
+        </button>
+        <button
+          type="button"
+          className={clsx(
+            styles.toolbarBtn,
+            hasFullText && styles.fullTextDone,
+          )}
+          onClick={() => void fetchFullContent(item.id)}
+          disabled={hasFullText || fetchingFullText}
+          title={fullTextTitle}
+          aria-label={fullTextTitle}
+        >
+          <FullTextIcon size={18} />
         </button>
         <ReaderSettingsMenu />
         <button

@@ -11,6 +11,7 @@ import {
   StarIcon,
   ExternalLinkIcon,
   NoteIcon,
+  FullTextIcon,
 } from '../ReadingView/Icons'
 import styles from './FocusMode.module.scss'
 
@@ -31,6 +32,17 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
   const toggleStar = useArticleStore((s) => s.toggleStar)
   const notePanelOpen = useLayoutStore((s) => s.notePanelOpen)
   const toggleNotePanel = useLayoutStore((s) => s.toggleNotePanel)
+  const fetchFullContent = useArticleStore((s) => s.fetchFullContent)
+  const fullTextLoadingId = useArticleStore((s) => s.fullTextLoadingId)
+
+  // 与阅读视图工具栏同一套三态逻辑（已提取 / 提取中 / 可提取）。
+  const hasFullText = item != null && item.fullContent !== ''
+  const fetchingFullText = item != null && fullTextLoadingId === item.id
+  const fullTextTitle = hasFullText
+    ? t('reader.fullText.done')
+    : fetchingFullText
+      ? t('reader.fullText.fetching')
+      : t('reader.fullText.fetch')
 
   return (
     <div
@@ -97,6 +109,19 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
               }
             >
               {item.isRead ? <ReadIcon size={18} /> : <UnreadIcon size={18} />}
+            </button>
+            <button
+              type="button"
+              className={clsx(
+                styles.barBtn,
+                hasFullText && styles.fullTextDone,
+              )}
+              onClick={() => void fetchFullContent(item.id)}
+              disabled={hasFullText || fetchingFullText}
+              title={fullTextTitle}
+              aria-label={fullTextTitle}
+            >
+              <FullTextIcon size={18} />
             </button>
             <button
               type="button"

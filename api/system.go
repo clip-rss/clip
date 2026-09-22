@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/url"
@@ -23,6 +25,9 @@ const (
 	changelogFetchTimeout = 30 * time.Second
 	changelogMaxBytes     = 512 << 10
 )
+
+// downloadImageMaxBytes 单张图片下载落盘的上限，防止正文里的超大图撑爆内存。
+const downloadImageMaxBytes = 50 << 20
 
 // SystemService 提供与运行平台相关的信息，暴露给前端用于平台差异化渲染。
 type SystemService struct {
@@ -199,9 +204,12 @@ func (s *SystemService) SetOnline(online bool) {
 
 // DownloadImage 下载图片到用户指定的目录：弹出保存对话框选择位置后写盘。
 //
+// referer 是文章源站地址：正文图片普遍有防盗链（空 Referer 直接 403），
+// 下载与正文渲染必须带同一条 Referer，否则点「下载」会以「下载失败」告终。
+//
 // 返回 (true, nil) 表示已保存；(false, nil) 表示用户取消；(false, err) 表示失败。
 // 文件名从 URL 路径推断，无法推断时回退为 "image"；扩展名缺失时按 Content-Type 补全。
-func (s *SystemService) DownloadImage(rawURL string) (bool, error) {
+func (s *SystemService) DownloadImage(rawURL, referer string) (bool, error) {
 	lang := i18n.English
 	if s.LanguageFn != nil {
 		lang = s.LanguageFn()
@@ -222,10 +230,20 @@ func (s *SystemService) DownloadImage(rawURL string) (bool, error) {
 	// 先下载，再弹保存对话框：避免用户选完路径后才发现下载失败。
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	body, contentType, err := s.HTTPClient.Get(ctx, rawURL)
+	resp, err := s.HTTPClient.FetchMedia(ctx, rawURL, referer, nil)
 	if err != nil {
 		return false, i18n.Error(lang, "image.downloadFailed", err)
 	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return false, i18n.Error(lang, "image.downloadFailed",
+			fmt.Errorf("unexpected status %s", resp.Status))
+	}
+	body, err := io.ReadAll(io.LimitReader(resp.Body, downloadImageMaxBytes))
+	if err != nil {
+		return false, i18n.Error(lang, "image.downloadFailed", err)
+	}
+	contentType := resp.Header.Get("Content-Type")
 
 	filename := imageFilename(rawURL, contentType)
 	dest, err := app.Dialog.SaveFile().

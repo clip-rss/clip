@@ -150,6 +150,12 @@
     "loadingContent": "正在載入內容…",
     "noContent": "該文章暫無內文",
     "endOfContent": "已是全部內容",
+    "fullText": {
+      "fetch": "取得全文",
+      "fetching": "正在取得全文…",
+      "done": "已取得全文",
+      "failed": "取得全文失敗"
+    },
     "lightbox": {
       "close": "關閉",
       "zoomOut": "缩小",

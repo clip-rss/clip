@@ -32,13 +32,17 @@ export function CheckForUpdatesSilent() {
 /**
  * DownloadImage 下载图片到用户指定的目录：弹出保存对话框选择位置后写盘。
  * 
+ * referer 是文章源站地址：正文图片普遍有防盗链（空 Referer 直接 403），
+ * 下载与正文渲染必须带同一条 Referer，否则点「下载」会以「下载失败」告终。
+ * 
  * 返回 (true, nil) 表示已保存；(false, nil) 表示用户取消；(false, err) 表示失败。
  * 文件名从 URL 路径推断，无法推断时回退为 "image"；扩展名缺失时按 Content-Type 补全。
  * @param {string} rawURL
+ * @param {string} referer
  * @returns {$CancellablePromise<boolean>}
  */
-export function DownloadImage(rawURL) {
-    return $Call.ByID(2976514266, rawURL);
+export function DownloadImage(rawURL, referer) {
+    return $Call.ByID(2976514266, rawURL, referer);
 }
 
 /**
@@ -88,9 +92,11 @@ export function SetOnline(online) {
 }
 
 /**
- * SetTheme 在非 Windows 平台上是空操作。
+ * SetTheme 将原生窗口标题栏切换为指定的主题。
  * 
- * macOS 使用隐藏式标题栏（MacTitleBarHiddenInset），无需切换原生主题。
+ * mode 的值：
+ *   - "dark"  — 暗色主题
+ *   - 其它值  — 亮色主题（默认）
  * @param {string} mode
  * @returns {$CancellablePromise<void>}
  */

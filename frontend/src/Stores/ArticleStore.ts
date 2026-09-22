@@ -14,9 +14,9 @@ import type {
 /** 单次拉取上限：客户端筛选/排序 + 虚拟滚动，足够覆盖常规留存量。 */
 const LOAD_LIMIT = 2000
 
-/** 将 ItemLight 转换为 Item（content 为空字符串）。 */
+/** 将 ItemLight 转换为 Item（content / fullContent 为空字符串）。 */
 function lightToItem(light: ItemLight): Item {
-  return { ...light, content: '' }
+  return { ...light, content: '', fullContent: '' }
 }
 
 /** 自动标记已读的待定计时器（延迟模式下生效，切换文章时清除）。 */
@@ -66,6 +66,22 @@ interface ArticleState {
   loadFullContent: (id: number) => Promise<void>
   /** content 正在加载中的文章 ID。 */
   loadingContentId: number | null
+
+  /**
+   * 抓取原文页面并提取正文（「RSS 只给摘要」的源用）。
+   *
+   * 与 loadFullContent 是两条不同的路径，别混：那个读的是**本地库**里 RSS 没随
+   * 列表接口带出来的 content，零网络请求；这个真的会去请求文章原站，结果落在
+   * fullContent 上，不覆盖 content。
+   */
+  fetchFullContent: (id: number) => Promise<void>
+  /** 正在提取全文的文章 ID。 */
+  fullTextLoadingId: number | null
+  /**
+   * 最近一次提取失败的提示，带文章 ID。
+   * 存 ID 是为了让它只在该文章上显示——切换文章不该继承上一篇的错误。
+   */
+  fullTextError: { id: number; message: string } | null
 
   /** 仅更新搜索框文本（不触发请求；防抖在调用方）。 */
   setSearchQuery: (q: string) => void
@@ -132,17 +148,20 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
         lights = (await ItemService.ListItemsLight(feedId, LOAD_LIMIT, 0)) ?? []
       }
       const prev = get()
-      // 轻量列表不含正文；回填已加载过的 content，避免阅读中的文章被清成空正文。
+      // 回填已加载/已提取过的正文，避免阅读中的文章被清成空正文或退回 RSS 摘要。
       const loadedContent = new Map<number, string>()
+      const loadedFullContent = new Map<number, string>()
       if (preserveSelection) {
         for (const it of prev.items) {
           if (it.content) loadedContent.set(it.id, it.content)
+          if (it.fullContent) loadedFullContent.set(it.id, it.fullContent)
         }
       }
       const items = (lights ?? []).map((light) => {
         const base = lightToItem(light)
-        const content = loadedContent.get(base.id)
-        return content ? { ...base, content } : base
+        const content = loadedContent.get(base.id) ?? base.content
+        const fullContent = loadedFullContent.get(base.id) ?? base.fullContent
+        return { ...base, content, fullContent }
       })
       const pending = prev.pendingSelectId
       // 选中恢复优先级：通知定位 > 原选中（仍存在于新列表时）> 清空。
@@ -181,6 +200,8 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     searchActive: false,
     pendingSelectId: null,
     loadingContentId: null,
+    fullTextLoadingId: null,
+    fullTextError: null,
 
     async load(selection) {
       set({
@@ -221,7 +242,8 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
     selectItem(id) {
       // 切换文章先取消上一篇仍未触发的延迟标记。
       window.clearTimeout(autoMarkTimer)
-      set({ selectedItemId: id })
+      // 上一篇的全文提取失败提示只属于那一篇，切换即清除。
+      set({ selectedItemId: id, fullTextError: null })
       const { items, searchResults } = get()
       const item =
         items.find((it) => it.id === id) ??
@@ -346,6 +368,33 @@ export const useArticleStore = create<ArticleState>()((set, get) => {
         // 只在仍是同一篇文章时清除 loading 状态（避免快速切换时错误清除）。
         if (get().loadingContentId === id) {
           set({ loadingContentId: null })
+        }
+      }
+    },
+
+    async fetchFullContent(id) {
+      // 防重复：同一篇已在提取中就不要再发一次（后端会再抓一遍原文）。
+      if (get().fullTextLoadingId === id) return
+      const existing =
+        get().items.find((it) => it.id === id) ??
+        get().searchResults.find((it) => it.id === id)
+      // 已有提取结果，无需再联网——后端也会直接返回库里的那份。
+      if (existing?.fullContent) return
+
+      set({ fullTextLoadingId: id, fullTextError: null })
+      try {
+        const html = await ItemService.FetchFullContent(id)
+        if (html) {
+          patchItem(id, { fullContent: html })
+        }
+      } catch (err) {
+        // 提取失败不阻断阅读：正文照常显示 RSS 给的内容，只在工具栏附近提示。
+        // 后端已把错误本地化过（见 internal/i18n），这里直接展示即可。
+        set({ fullTextError: { id, message: toApiError(err) } })
+      } finally {
+        // 只在仍是同一篇文章时清除 loading（避免快速切换时错误清除）。
+        if (get().fullTextLoadingId === id) {
+          set({ fullTextLoadingId: null })
         }
       }
     },
