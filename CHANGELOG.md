@@ -1,3 +1,76 @@
+## 0.7.0
+
+#### 2026-09-23
+
+### 新增
+- 支持获取原文正文：RSS 只给摘要的源可一键提取全文，并可在文章摘要与全文之间手动切换
+- 正文视频支持播放
+- 文章列表新增「有笔记」筛选
+- 支持清理单独订阅源的已读文章
+
+### 修复
+- 修复正文图片因防盗链无法加载的问题
+- 修复部分订阅源图标无法加载的问题
+- 修复 XML 非法字符导致订阅源解析失败的问题
+- 修复文章阅读顺序颠倒的问题
+- 修复星标筛选与星标切换异常的问题
+- 修复重复导入 OPML 时分类重复的问题
+- 修复重复订阅源的提示文案错误的问题
+
+### 优化
+- 更新间隔提示文案优化
+- 正文为空时显示空状态提示
+- Windows 平台可从「关于」版本号处手动检查更新
+- 统一过渡动画
+- 移除侧栏主题切换按钮
+- 部分 UI 与文案优化
+
+### New Features
+- Extract the full text for sources that only publish summaries, and switch manually between the summary and the full text
+- Play videos embedded in articles
+- Added a "Has note" filter to the article list
+- Clean up read articles for an individual feed
+
+### Bug Fixes
+- Fixed article images failing to load due to hotlink protection
+- Fixed some feed icons failing to load
+- Fixed feeds failing to parse because of illegal XML characters
+- Fixed the reversed article reading order
+- Fixed the starred filter and star toggling
+- Fixed duplicated categories when re-importing an OPML file
+- Fixed the incorrect wording shown for duplicate feeds
+
+### Improvements
+- Improved the update interval wording
+- Show an empty state when an article has no body
+- Check for updates manually from the version number in "About" on Windows
+- Unified transition animations
+- Removed the sidebar theme toggle
+- Minor UI and copy polish
+
+### 新增
+- 支援取得原文正文：僅提供摘要的來源可一鍵擷取全文，並可在文章摘要與全文之間手動切換
+- 正文影片支援播放
+- 文章列表新增「有筆記」篩選
+- 支援清理單一訂閱來源的已讀文章
+
+### 修復
+- 修復正文圖片因防盜連無法載入的問題
+- 修復部分訂閱來源圖示無法載入的問題
+- 修復 XML 非法字元導致訂閱來源解析失敗的問題
+- 修復文章閱讀順序顛倒的問題
+- 修復星號篩選與星號切換異常的問題
+- 修復重複匯入 OPML 時分類重複的問題
+- 修復重複訂閱來源的提示文案錯誤的問題
+
+### 優化
+- 更新間隔提示文案優化
+- 正文為空時顯示空狀態提示
+- Windows 平台可從「關於」版本號處手動檢查更新
+- 統一轉場動畫
+- 移除側欄主題切換按鈕
+- 部分 UI 與文案優化
+
 ## 0.6.2
 
 #### 2026-09-13

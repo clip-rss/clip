@@ -61,7 +61,7 @@ const (
 )
 
 const (
-	currentVersion = "0.6.2"
+	currentVersion = "0.7.0"
 	repo           = "clip-rss/clip"
 	changelogURL   = "https://raw.githubusercontent.com/clip-rss/clip/main/CHANGELOG.md"
 	// latestReleaseURL 是「用浏览器下载」在没有具体 release 信息时的落点。
