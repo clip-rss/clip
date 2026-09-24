@@ -3,8 +3,11 @@ package api
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
+	"reflect"
+	"strings"
 	"time"
 
 	"github.com/clip-rss/clip/internal/i18n"
@@ -89,6 +92,11 @@ func (s *SettingsService) UpdateSettings(settings store.Settings) error {
 	if err != nil {
 		return err
 	}
+	// 记录变更的字段名（不含值）：theme/language/proxy 等的变更是排障时的关键线索，
+	// 只记名字避免把 proxyHost 之类的值写进日志。
+	if changed := changedSettingsFields(current, settings); len(changed) > 0 {
+		log.Printf("settings changed: %s", strings.Join(changed, ", "))
+	}
 	if s.sched != nil && settings.DefaultUpdateInterval >= 0 {
 		s.sched.SetDefaultInterval(time.Duration(settings.DefaultUpdateInterval) * time.Minute)
 	}
@@ -102,6 +110,26 @@ func (s *SettingsService) UpdateSettings(settings store.Settings) error {
 		s.onChanged.notifySettingsChanged()
 	}
 	return nil
+}
+
+// changedSettingsFields 返回 old→cur 之间发生变化的字段名（用 json tag，回退字段名）。
+//
+// 只返回名字、不返回值：日志用于排障，字段名足以定位，而值里可能有 proxyHost 之类
+// 不宜落盘的信息。用反射遍历以便将来新增 Settings 标量字段时自动覆盖。
+func changedSettingsFields(old, cur store.Settings) []string {
+	var changed []string
+	ov, cv := reflect.ValueOf(old), reflect.ValueOf(cur)
+	t := ov.Type()
+	for i := 0; i < t.NumField(); i++ {
+		if ov.Field(i).Interface() != cv.Field(i).Interface() {
+			name := t.Field(i).Tag.Get("json")
+			if name == "" {
+				name = t.Field(i).Name
+			}
+			changed = append(changed, name)
+		}
+	}
+	return changed
 }
 
 // TestProxy 测试代理连通性：用指定代理请求一个测试 URL，成功返回 nil。

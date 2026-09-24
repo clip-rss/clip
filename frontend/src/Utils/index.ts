@@ -69,6 +69,10 @@ export { modKey, shortcutHint } from './Shortcut'
 // Toast 通知
 export { showToast } from './Toast'
 
+// 前端运行时日志桥（经 SystemService.Log 落盘）
+export { logDebug, logInfo, logWarn, logError } from './Log'
+export type { LogLevel } from './Log'
+
 // 更新日志：Markdown → HTML
 export { markdownToHtml } from './Markdown'
 

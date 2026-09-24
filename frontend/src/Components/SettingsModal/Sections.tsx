@@ -22,6 +22,8 @@ import {
   onDatabaseRestoreProgress,
   showToast,
   toApiError,
+  logInfo,
+  logError,
 } from '../../Utils'
 import type {
   OPMLImportProgressPayload,
@@ -525,12 +527,17 @@ export function DataSection(): JSX.Element {
         }),
         'success',
       )
+      logInfo(
+        'settings/data',
+        `opml import ok: ${res.feeds} feeds, ${res.skipped} skipped, ${res.categories} categories`,
+      )
       return true
     } catch (err) {
       showToast(
         `${t('settings.data.importError')}：${toApiError(err)}`,
         'error',
       )
+      logError('settings/data', `opml import failed: ${toApiError(err)}`)
       return false
     } finally {
       setBusy(false)
@@ -566,11 +573,13 @@ export function DataSection(): JSX.Element {
       // 用户在系统保存框里取消既不是成功也不是失败，用 info（备份/恢复同理）。
       if (ok) showToast(t('settings.data.exportSuccess'), 'success')
       else showToast(t('settings.data.exportCancelled'), 'info')
+      logInfo('settings/data', `opml export: ${ok ? 'saved' : 'cancelled'}`)
     } catch (err) {
       showToast(
         `${t('settings.data.exportError')}：${toApiError(err)}`,
         'error',
       )
+      logError('settings/data', `opml export failed: ${toApiError(err)}`)
     }
   }
 
@@ -580,11 +589,13 @@ export function DataSection(): JSX.Element {
       const ok = await SettingsService.BackupDatabase()
       if (ok) showToast(t('settings.data.backupSuccess'), 'success')
       else showToast(t('settings.data.backupCancelled'), 'info')
+      logInfo('settings/data', `db backup: ${ok ? 'saved' : 'cancelled'}`)
     } catch (err) {
       showToast(
         `${t('settings.data.backupError')}：${toApiError(err)}`,
         'error',
       )
+      logError('settings/data', `db backup failed: ${toApiError(err)}`)
     } finally {
       setBusy(false)
     }
@@ -597,14 +608,28 @@ export function DataSection(): JSX.Element {
       const ok = await SettingsService.RestoreDatabase()
       if (ok) showToast(t('settings.data.restoreSuccess'), 'success')
       else showToast(t('settings.data.restoreCancelled'), 'info')
+      logInfo('settings/data', `db restore staged: ${ok ? 'yes' : 'cancelled'}`)
     } catch (err) {
       showToast(
         `${t('settings.data.restoreError')}：${toApiError(err)}`,
         'error',
       )
+      logError('settings/data', `db restore failed: ${toApiError(err)}`)
     } finally {
       setBusy(false)
       setRestoreProgress(null)
+    }
+  }
+
+  // 打开日志目录：路径由后端解析（<configDir>/clip/logs），前端只负责触发与报错。
+  async function handleOpenLogDir(): Promise<void> {
+    try {
+      await SystemService.OpenLogDir()
+    } catch (err) {
+      showToast(
+        `${t('settings.log.openDirError')}：${toApiError(err)}`,
+        'error',
+      )
     }
   }
 
@@ -873,6 +898,15 @@ export function DataSection(): JSX.Element {
           </div>
         </SettingRow>
       ) : null}
+
+      <SettingRow
+        label={t('settings.log.title')}
+        description={t('settings.log.desc')}
+      >
+        <button type="button" className={styles.btn} onClick={handleOpenLogDir}>
+          {t('settings.log.openDir')}
+        </button>
+      </SettingRow>
     </div>
   )
 }

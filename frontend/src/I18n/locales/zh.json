@@ -397,6 +397,12 @@
       "restoreProgressValidating": "正在校验备份文件完整性…",
       "restoreProgressCount": "正在复制备份文件… {{percent}}%"
     },
+    "log": {
+      "title": "日志",
+      "desc": "运行日志保存在本地，用于排查问题；可能包含订阅源地址与标题，但绝不记录密码。",
+      "openDir": "打开日志目录",
+      "openDirError": "打开日志目录失败"
+    },
     "about": {
       "appName": "Clip",
       "version": "v{{version}}",

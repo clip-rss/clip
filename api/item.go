@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -204,6 +205,7 @@ func (s *ItemService) FetchFullContent(id int64) (string, error) {
 	if err != nil {
 		// 失败原因（超时/404/断网）对用户没有可操作性上的区别，统一成一句
 		// 「抓取原文失败」，原始错误留在链路上供日志与 errors.Is 使用。
+		log.Printf("fulltext: fetch failed for item %d (%s): %v", id, item.URL, err)
 		return "", i18n.Error(lang, "fulltext.fetchFailed", err)
 	}
 
@@ -212,6 +214,7 @@ func (s *ItemService) FetchFullContent(id int64) (string, error) {
 	if err != nil {
 		// 「提不出正文」与「解析出错」对用户是同一件事：这个页面拿不到正文。
 		// 原始错误留在链路上，errors.Is(err, reader.ErrNoContent) 仍可判别。
+		log.Printf("fulltext: extract failed for item %d (%s): %v", id, item.URL, err)
 		return "", i18n.Error(lang, "fulltext.extractFailed", err)
 	}
 	// readability 返回的片段按未清洗 HTML 看待，落库前先过 fetcher 的清洗器，

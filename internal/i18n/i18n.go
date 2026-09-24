@@ -100,6 +100,7 @@ var messages = map[string]map[string]string{
 		"fulltext.urlMissing":            "This article has no original address to fetch",
 		"fulltext.fetchFailed":           "Failed to fetch the original page",
 		"fulltext.extractFailed":         "No article body could be extracted from this page",
+		"log.openDirFailed":              "Failed to open the log folder",
 	},
 	SimplifiedChinese: {
 		"feed.urlEmpty":                  "订阅地址不能为空",
@@ -186,6 +187,7 @@ var messages = map[string]map[string]string{
 		"fulltext.urlMissing":            "该文章没有可抓取的原文地址",
 		"fulltext.fetchFailed":           "抓取原文页面失败",
 		"fulltext.extractFailed":         "未能从该页面提取出正文",
+		"log.openDirFailed":              "打开日志目录失败",
 	},
 	TraditionalChinese: {}, // populated from the complete catalog in init
 }
@@ -222,6 +224,7 @@ func traditionalChineseMessages() map[string]string {
 		{"错误", "錯誤"}, {"检查", "檢查"}, {"获取", "取得"}, {"请输入", "請輸入"},
 		{"请选择", "請選擇"}, {"无效", "無效"}, {"无法", "無法"}, {"为空", "不可為空"},
 		{"返回", "回傳"}, {"响应", "回應"}, {"请求", "請求"}, {"目录", "目錄"},
+		{"打开", "打開"}, {"日志", "日誌"},
 		{"路径", "路徑"}, {"远端", "遠端"}, {"资源", "資源"}, {"重试", "重試"},
 		{"导出", "匯出"}, {"导入", "匯入"}, {"备份", "備份"}, {"恢复", "還原"},
 		{"生成", "產生"}, {"删除", "刪除"},

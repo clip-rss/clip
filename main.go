@@ -5,8 +5,10 @@ import (
 	"embed"
 	"encoding/json"
 	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,6 +17,7 @@ import (
 	"github.com/clip-rss/clip/api"
 	"github.com/clip-rss/clip/internal/fetcher"
 	"github.com/clip-rss/clip/internal/i18n"
+	"github.com/clip-rss/clip/internal/logging"
 	"github.com/clip-rss/clip/internal/mediaproxy"
 	"github.com/clip-rss/clip/internal/notify"
 	"github.com/clip-rss/clip/internal/scheduler"
@@ -541,6 +544,12 @@ func saveWindowSize(st *store.Store, window application.Window) {
 }
 
 func main() {
+	// 运行时日志：必须在任何 log.Print* 之前接好全局输出（log.SetOutput 是进程级副作用）。
+	// 失败不致命——logging.Init 已把输出降级到 stderr，这里只留一条痕迹。
+	if err := logging.Init(); err != nil {
+		log.Printf("logging init failed, continuing without file logs: %v", err)
+	}
+
 	// 清理遗留的更新包目录（孤儿临时文件）。
 	cleanOrphanedUpdateDirs()
 
@@ -552,6 +561,10 @@ func main() {
 
 	// 读取设置以决定窗口启动行为（最小化等）。读取失败时退回默认值。
 	settings, _ := st.GetSettings()
+
+	// 会话头：为每份日志钉上排障所需的环境快照（版本 / 平台 / 配置目录 / 代理是否启用）。
+	logging.SessionHeader(currentVersion, runtime.GOOS, filepath.Dir(st.Path()),
+		settings.ProxyHost != "" && settings.ProxyPort > 0)
 
 	// 通知服务（需同时注册为 application.Service 并注入调度器）。
 	notifSvc := notifications.New()
@@ -625,6 +638,11 @@ func main() {
 	app := application.New(application.Options{
 		Name:        "clip",
 		Description: i18n.T(settings.Language, "app.description"),
+		// 注入我们的文件 logger：修复生产构建下 Wails DefaultLogger 走 io.Discard
+		// 把 app.Logger.*（更新流程那 5 处）全部丢弃的黑洞。级别由 logging 内部的
+		// LevelVar 控制，这里的 LogLevel 仅在 Logger 为 nil 时才会被 Wails 使用。
+		Logger:   logging.Logger(),
+		LogLevel: slog.LevelInfo,
 		Assets: application.AssetOptions{
 			Handler:    application.AssetFileServerFS(assets),
 			Middleware: mediaProxy.Middleware,
@@ -753,11 +771,12 @@ func main() {
 
 	// OPML 云备份为纯手动触发，无后台任务需要启动。
 
-	// 退出时优雅停机：先停调度，打断可能在进行的手动备份，再关数据库。
+	// 退出时优雅停机：先停调度，打断可能在进行的手动备份，再关数据库，最后关日志文件。
 	app.OnShutdown(func() {
 		sch.Stop()
 		api.StopOPMLBackup(opmlBackupSvc)
 		_ = st.Close()
+		_ = logging.Close()
 	})
 
 	windowWidth, windowHeight := savedWindowSize(settings)

@@ -397,6 +397,12 @@
       "restoreProgressValidating": "正在校驗備份檔案完整性…",
       "restoreProgressCount": "正在複製備份檔案… {{percent}}%"
     },
+    "log": {
+      "title": "日誌",
+      "desc": "執行日誌儲存在本機，用於排查問題；可能包含訂閱來源位址與標題，但絕不記錄密碼。",
+      "openDir": "打開日誌目錄",
+      "openDirError": "打開日誌目錄失敗"
+    },
     "about": {
       "appName": "Clip",
       "version": "v{{version}}",

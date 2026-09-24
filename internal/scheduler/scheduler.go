@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -246,7 +247,8 @@ func (s *Scheduler) SetOfflineMode(offline bool) {
 func (s *Scheduler) tickSafe(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("scheduler: panic recovered in Tick: %v", r)
+			// 补打完整调用栈：调度器 goroutine 里的 panic 一旦被吞，光有 %v 无从定位。
+			log.Printf("scheduler: panic recovered in Tick: %v\n%s", r, debug.Stack())
 		}
 	}()
 	// 离线模式下跳过 tick，不发起网络请求
@@ -557,6 +559,7 @@ func (s *Scheduler) syncFeedMeta(ctx context.Context, feed store.Feed, parsed *f
 }
 
 func (s *Scheduler) recordFailure(feedID int64, attemptedAt time.Time, cause error) RefreshResult {
+	log.Printf("scheduler: feed %d refresh failed: %v", feedID, cause)
 	if err := s.store.RecordFeedFailure(feedID, attemptedAt, cause.Error()); err != nil {
 		cause = errors.Join(cause, err)
 	}

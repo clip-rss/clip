@@ -16,6 +16,7 @@ import (
 
 	"github.com/clip-rss/clip/internal/fetcher"
 	"github.com/clip-rss/clip/internal/i18n"
+	"github.com/clip-rss/clip/internal/logging"
 	"github.com/clip-rss/clip/internal/store"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -200,6 +201,38 @@ func (s *SystemService) SetOnline(online bool) {
 	if s.OnlineChangedFn != nil {
 		s.OnlineChangedFn(online)
 	}
+}
+
+// OpenLogDir 在系统文件管理器中打开运行日志目录（<configDir>/clip/logs）。
+//
+// 目录路径的唯一定义在后端（同 DatabasePath 的既有原则），前端不重复拼接。
+// Dir() 会确保目录存在，再交给系统的默认处理器打开（Explorer / Finder / xdg-open）。
+func (s *SystemService) OpenLogDir() error {
+	lang := i18n.English
+	if s.LanguageFn != nil {
+		lang = s.LanguageFn()
+	}
+	dir, err := logging.Dir()
+	if err != nil {
+		return i18n.Error(lang, "log.openDirFailed", err)
+	}
+	app := application.Get()
+	if app == nil {
+		return errors.New(i18n.T(lang, "app.unavailable"))
+	}
+	if err := app.Browser.OpenFile(dir); err != nil {
+		return i18n.Error(lang, "log.openDirFailed", err)
+	}
+	return nil
+}
+
+// Log 记录一条来自前端的运行时日志，落进与后端同一个日志文件。
+//
+// level 取 debug/info/warn/error（其它值按 info 处理），scope 是来源（组件/store），
+// message 是内容。前端封装见 Utils/Log.ts。刻意无返回值：日志尽力而为，
+// 不该因桥接失败反过来打断用户操作。
+func (s *SystemService) Log(level, scope, message string) {
+	logging.FromFrontend(level, scope, message)
 }
 
 // DownloadImage 下载图片到用户指定的目录：弹出保存对话框选择位置后写盘。

@@ -397,6 +397,12 @@
       "restoreProgressValidating": "Verifying backup file…",
       "restoreProgressCount": "Copying backup file… {{percent}}%"
     },
+    "log": {
+      "title": "Logs",
+      "desc": "Runtime logs are saved locally to help diagnose problems. They may include feed addresses and titles, but never passwords.",
+      "openDir": "Open log folder",
+      "openDirError": "Failed to open the log folder"
+    },
     "about": {
       "appName": "Clip",
       "version": "v{{version}}",
