@@ -61,6 +61,7 @@
     },
     "feedError": "订阅源获取失败",
     "refresh": "手动更新 (R)",
+    "refreshing": "正在更新…",
     "addMenu": "添加菜单",
     "toggleMultiSelect": "选择或取消选择，用于批量操作",
     "sort": {

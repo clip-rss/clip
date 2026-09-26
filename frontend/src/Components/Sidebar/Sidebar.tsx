@@ -222,6 +222,7 @@ function Sidebar(props: SidebarProps): JSX.Element {
           </span>
           <IconAction
             label={t('sidebar.refresh')}
+            hint={refreshing ? t('sidebar.refreshing') : undefined}
             onClick={handleRefresh}
             disabled={refreshing}
           >
@@ -361,28 +362,31 @@ function AddMenu(props: {
 /** 底部带 Tooltip 的图标按钮。 */
 function IconAction(props: {
   label: string
+  hint?: string
   onClick: () => void
   children: React.ReactNode
   disabled?: boolean
 }): JSX.Element {
-  const { label, onClick, children, disabled } = props
+  const { label, hint, onClick, children, disabled } = props
   return (
     <Tooltip.Provider delayDuration={300}>
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
-          <button
-            type="button"
-            className={styles.footerButton}
-            onClick={onClick}
-            disabled={disabled}
-            aria-label={label}
-          >
-            {children}
-          </button>
+          <span className={styles.footerButtonWrap}>
+            <button
+              type="button"
+              className={styles.footerButton}
+              onClick={onClick}
+              disabled={disabled}
+              aria-label={label}
+            >
+              {children}
+            </button>
+          </span>
         </Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content className={styles.tooltip} sideOffset={6}>
-            {label}
+            {hint ?? label}
             <Tooltip.Arrow className={styles.tooltipArrow} />
           </Tooltip.Content>
         </Tooltip.Portal>

@@ -61,6 +61,7 @@
     },
     "feedError": "Failed to fetch feed",
     "refresh": "Refresh (R)",
+    "refreshing": "Updating…",
     "addMenu": "Add menu",
     "toggleMultiSelect": "Toggle multi-select for batch actions",
     "sort": {

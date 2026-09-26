@@ -61,6 +61,7 @@
     },
     "feedError": "訂閱來源取得失敗",
     "refresh": "手动更新 (R)",
+    "refreshing": "正在更新…",
     "addMenu": "新增菜单",
     "toggleMultiSelect": "選擇或取消選擇，用於批次操作",
     "sort": {

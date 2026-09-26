@@ -327,6 +327,10 @@
   gap: 4px;
 }
 
+.footerButtonWrap {
+  display: flex;
+}
+
 .footerButton {
   display: flex;
   align-items: center;
@@ -354,6 +358,7 @@
   &:disabled {
     cursor: default;
     color: var(--text-secondary);
+    pointer-events: none;
   }
 }
 
