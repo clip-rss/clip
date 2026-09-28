@@ -46,6 +46,17 @@ var allowedAttrs = map[string]map[string]bool{
 	"col":    {"span": true},
 }
 
+// globalAttrs 不分标签、一律放行的属性。
+//
+// id 必须放行：正文里的锚点全靠它落点 —— WordPress 站点的目录是 `<h2 id="…">` 配
+// `<a href="#…">`，论文站点（gfw.report 那类）是 `<a id="cite:rfc9114">` 当引用目标。
+// 白名单里原先没有 id，于是整篇正文的 id 在入库时被剥光，阅读视图里的目录项与引用
+// 链接点了既跳不动也打不开（issue #7；崩溃是另一码事，在前端）。
+//
+// 放行 id 不扩大 XSS 面：script/iframe/object 等已被 dangerousTags 整棵摘除，on* 与
+// style 在下面被过滤，属性值由 html.Render 转义。
+var globalAttrs = map[string]bool{"id": true}
+
 // urlAttrs 需要做协议安全检查的属性。
 var urlAttrs = map[string]bool{"href": true, "src": true, "poster": true}
 
@@ -121,7 +132,8 @@ func cleanChildren(n *html.Node) []*html.Node {
 	return out
 }
 
-// filterAttrs 过滤属性：丢弃事件处理器、style 及危险协议，仅保留白名单属性。
+// filterAttrs 过滤属性：丢弃事件处理器、style 及危险协议，仅保留白名单与
+// globalAttrs 里的属性。
 func filterAttrs(tag string, attrs []html.Attribute) []html.Attribute {
 	allowed := allowedAttrs[tag]
 	var out []html.Attribute
@@ -130,7 +142,7 @@ func filterAttrs(tag string, attrs []html.Attribute) []html.Attribute {
 		if strings.HasPrefix(key, "on") || key == "style" {
 			continue
 		}
-		if allowed == nil || !allowed[key] {
+		if !globalAttrs[key] && (allowed == nil || !allowed[key]) {
 			continue
 		}
 		if urlAttrs[key] && !safeURL(a.Val) {

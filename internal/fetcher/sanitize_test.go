@@ -3,6 +3,8 @@ package fetcher
 import (
 	"strings"
 	"testing"
+
+	"golang.org/x/net/html"
 )
 
 func TestSanitizeRemovesDangerous(t *testing.T) {
@@ -50,6 +52,66 @@ func TestSanitizeKeepsImgSrcset(t *testing.T) {
 	if !strings.Contains(out, `srcset="https://ok.com/a.png 1x, https://ok.com/a@2x.png 2x"`) {
 		t.Errorf("img 的 srcset 应被保留：%q", out)
 	}
+}
+
+func TestSanitizeKeepsID(t *testing.T) {
+	// 正文里的锚点靠 id 落点：站点给标题/引用目标带 id，`<a href="#…">` 才跳得过去。
+	// 剥掉 id 会让阅读视图里的目录项与引用链接点了毫无反应（issue #7）。
+	in := `<h2 id="570-个漏洞都有哪些？">570 个漏洞都有哪些？</h2>` +
+		`<a href="#570-个漏洞都有哪些？">570 个漏洞都有哪些？</a>` +
+		`<a id="cite:rfc9114">[7]</a>` +
+		`<div id="wrapper"><span id="note">x</span></div>`
+
+	out := Sanitize(in)
+
+	// 标题与引用目标：既有逐标签白名单里的 h2/a，也有原本 allowed==nil 的 div/span
+	for _, want := range []string{
+		`id="570-个漏洞都有哪些？"`,
+		`id="cite:rfc9114"`,
+		`id="wrapper"`,
+		`id="note"`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("应保留 %s：%q", want, out)
+		}
+	}
+	if !strings.Contains(out, `href="#570-个漏洞都有哪些？"`) {
+		t.Errorf("锚点链接本身应保留：%q", out)
+	}
+}
+
+func TestSanitizeIDDoesNotSmuggleAnything(t *testing.T) {
+	// 放行 id 不能顺手放过同元素上的事件处理器/style，也不能让 id 的值在输出里
+	// 撑开一个新属性（值里带引号的情形）。
+	in := `<h2 id="x" onclick="evil()" style="color:red">t</h2>` +
+		`<a id="a&quot; onmouseover=&quot;evil()" href="https://ok.com">l</a>`
+
+	out := Sanitize(in)
+
+	if !strings.Contains(out, `id="x"`) {
+		t.Errorf("id 应保留：%q", out)
+	}
+	// 把输出重新解析一遍：只要 DOM 里多出一个 on*/style 属性就说明逃逸了。
+	// （不能直接对字符串断言 onmouseover —— 它会作为 id 的值被转义后留在正文里。）
+	doc, err := html.Parse(strings.NewReader(out))
+	if err != nil {
+		t.Fatalf("输出应仍是可解析的 HTML: %v", err)
+	}
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if n.Type == html.ElementNode {
+			for _, a := range n.Attr {
+				k := strings.ToLower(a.Key)
+				if strings.HasPrefix(k, "on") || k == "style" {
+					t.Errorf("输出里解析出了 %s 属性：%q", k, out)
+				}
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walk(c)
+		}
+	}
+	walk(doc)
 }
 
 func TestStripTags(t *testing.T) {
