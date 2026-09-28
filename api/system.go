@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/url"
 	"os"
@@ -132,7 +131,7 @@ func (s *SystemService) FetchChangelog() (string, error) {
 			Version:  s.AppVersion,
 			Markdown: md,
 		}); err != nil {
-			log.Printf("changelog: save cache: %v", err)
+			logging.Printf("changelog", "save cache: %v", err)
 		}
 	}
 	return md, nil
@@ -146,7 +145,7 @@ func (s *SystemService) changelogCache() (store.ChangelogCache, bool) {
 	}
 	cache, found, err := s.Store.GetChangelogCache()
 	if err != nil {
-		log.Printf("changelog: read cache: %v", err)
+		logging.Printf("changelog", "read cache: %v", err)
 		return store.ChangelogCache{}, false
 	}
 	if !found || cache.Version != s.AppVersion || cache.Markdown == "" {

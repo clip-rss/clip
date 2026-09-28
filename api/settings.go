@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/clip-rss/clip/internal/i18n"
+	"github.com/clip-rss/clip/internal/logging"
 	"github.com/clip-rss/clip/internal/scheduler"
 	"github.com/clip-rss/clip/internal/store"
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -95,7 +95,7 @@ func (s *SettingsService) UpdateSettings(settings store.Settings) error {
 	// 记录变更的字段名（不含值）：theme/language/proxy 等的变更是排障时的关键线索，
 	// 只记名字避免把 proxyHost 之类的值写进日志。
 	if changed := changedSettingsFields(current, settings); len(changed) > 0 {
-		log.Printf("settings changed: %s", strings.Join(changed, ", "))
+		logging.Printf("settings", "changed: %s", strings.Join(changed, ", "))
 	}
 	if s.sched != nil && settings.DefaultUpdateInterval >= 0 {
 		s.sched.SetDefaultInterval(time.Duration(settings.DefaultUpdateInterval) * time.Minute)

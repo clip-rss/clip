@@ -273,14 +273,14 @@ func (c *updateController) wire() {
 	on(updater.EventUserInstall, func(*application.CustomEvent) {
 		go func() {
 			if err := c.updater.DownloadAndInstall(context.Background()); err != nil {
-				c.app.Logger.Error("update", "stage", "download", "error", err)
+				logging.Errorf("updater", "download failed: %v", err)
 			}
 		}()
 	})
 	on(updater.EventUserRestart, func(*application.CustomEvent) {
 		go func() {
 			if err := c.updater.Restart(context.Background()); err != nil {
-				c.app.Logger.Error("update", "stage", "restart", "error", err)
+				logging.Errorf("updater", "restart failed: %v", err)
 			}
 		}()
 	})
@@ -292,7 +292,7 @@ func (c *updateController) wire() {
 	// inline event shim 的 Emit 不带 payload，所以这里自己解析该开哪个 URL。
 	on(eventUserOpenBrowser, func(*application.CustomEvent) {
 		if err := c.app.Browser.OpenURL(c.downloadPageURL()); err != nil {
-			c.app.Logger.Error("update", "stage", "open-browser", "error", err)
+			logging.Errorf("updater", "open download page failed: %v", err)
 		}
 	})
 
@@ -412,7 +412,7 @@ func (c *updateController) check() {
 		c.recordCheck(rel, err)
 		if err != nil {
 			// Check 已发过 EventError；记录重放（携带错误信息由 Updater 内部 emit 决定）。
-			c.app.Logger.Error("update", "stage", "check", "error", err)
+			logging.Errorf("updater", "check failed: %v", err)
 		}
 	}()
 }
@@ -424,7 +424,7 @@ func (c *updateController) checkSilent() {
 		rel, err := c.updater.Check(context.Background())
 		c.recordCheck(rel, err)
 		if err != nil {
-			c.app.Logger.Error("update", "stage", "check-silent", "error", err)
+			logging.Errorf("updater", "silent check failed: %v", err)
 			return
 		}
 		if rel != nil {
@@ -455,7 +455,7 @@ func cleanOrphanedUpdateDirs() {
 func cleanOrphanedUpdateDirsIn(tmpDir string) {
 	entries, err := os.ReadDir(tmpDir)
 	if err != nil {
-		log.Printf("clean orphaned updates: read temp dir: %v", err)
+		logging.Printf("app", "clean orphaned updates: read temp dir: %v", err)
 		return
 	}
 
@@ -504,9 +504,9 @@ func cleanOrphanedUpdateDirsIn(tmpDir string) {
 		}
 		// 删除超过 24 小时且非最新的孤儿目录
 		if err := os.RemoveAll(dir.path); err != nil {
-			log.Printf("clean orphaned updates: remove %s: %v", dir.path, err)
+			logging.Printf("app", "clean orphaned updates: remove %s: %v", dir.path, err)
 		} else {
-			log.Printf("clean orphaned updates: removed %s (age: %v)", dir.path, age.Round(time.Minute))
+			logging.Printf("app", "clean orphaned updates: removed %s (age: %v)", dir.path, age.Round(time.Minute))
 		}
 	}
 }
@@ -533,13 +533,13 @@ func saveWindowSize(st *store.Store, window application.Window) {
 	}
 	settings, err := st.GetSettings()
 	if err != nil {
-		log.Printf("failed to load settings before saving window size: %v", err)
+		logging.Printf("app", "failed to load settings before saving window size: %v", err)
 		return
 	}
 	settings.WindowWidth = width
 	settings.WindowHeight = height
 	if err := st.UpdateSettings(settings); err != nil {
-		log.Printf("failed to save window size: %v", err)
+		logging.Printf("app", "failed to save window size: %v", err)
 	}
 }
 
@@ -547,7 +547,7 @@ func main() {
 	// 运行时日志：必须在任何 log.Print* 之前接好全局输出（log.SetOutput 是进程级副作用）。
 	// 失败不致命——logging.Init 已把输出降级到 stderr，这里只留一条痕迹。
 	if err := logging.Init(); err != nil {
-		log.Printf("logging init failed, continuing without file logs: %v", err)
+		logging.Printf("app", "logging init failed, continuing without file logs: %v", err)
 	}
 
 	// 清理遗留的更新包目录（孤儿临时文件）。
@@ -596,7 +596,7 @@ func main() {
 	// 会让涉及凭据的方法返回明确错误，而不是崩在 nil 解引用上。
 	var cipher *secret.Cipher
 	if c, err := secret.NewCipher(filepath.Join(filepath.Dir(st.Path()), secret.KeyFileName)); err != nil {
-		log.Printf("failed to init credential cipher, backup disabled: %v", err)
+		logging.Printf("app", "failed to init credential cipher, backup disabled: %v", err)
 	} else {
 		cipher = c
 	}
@@ -639,7 +639,8 @@ func main() {
 		Name:        "clip",
 		Description: i18n.T(settings.Language, "app.description"),
 		// 注入我们的文件 logger：修复生产构建下 Wails DefaultLogger 走 io.Discard
-		// 把 app.Logger.*（更新流程那 5 处）全部丢弃的黑洞。级别由 logging 内部的
+		// 把 app.Logger.* 全部丢弃的黑洞（更新流程那 5 处已显式改用 logging.Errorf，
+		// 这里兜住 Wails 内部及后续新增的 app.Logger 调用）。级别由 logging 内部的
 		// LevelVar 控制，这里的 LogLevel 仅在 Logger 为 nil 时才会被 Wails 使用。
 		Logger:   logging.Logger(),
 		LogLevel: slog.LevelInfo,
@@ -732,7 +733,7 @@ func main() {
 	var mainWindow application.Window
 	notifSvc.OnNotificationResponse(func(result notifications.NotificationResult) {
 		if result.Error != nil {
-			log.Printf("notification response error: %v", result.Error)
+			logging.Printf("notify", "notification response error: %v", result.Error)
 			return
 		}
 		rawID, _ := result.Response.UserInfo["articleId"].(string)
@@ -756,11 +757,11 @@ func main() {
 	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(event *application.ApplicationEvent) {
 		granted, err := notifSvc.RequestNotificationAuthorization()
 		if err != nil {
-			log.Printf("notification authorization failed: %v", err)
+			logging.Printf("notify", "notification authorization failed: %v", err)
 			return
 		}
 		if !granted {
-			log.Printf("notification authorization was not granted")
+			logging.Println("notify", "notification authorization was not granted")
 		}
 	})
 
