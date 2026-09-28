@@ -76,5 +76,8 @@ export { markdownToHtml } from './Markdown'
 export { sanitizeHtml, videoFailedPlaceholder } from './Sanitize'
 // 正文媒体代理地址改写（防盗链）
 export { mediaProxyUrl } from './Media'
+// 正文链接落点判定（相对地址解析 / 页内锚点 / 打不开的地址）
+export { resolveLink } from './Links'
+export type { LinkTarget } from './Links'
 export { readerContentStyle, readerBackgroundClass } from './ReaderStyle'
 export type { ReaderContentStyle } from './ReaderStyle'

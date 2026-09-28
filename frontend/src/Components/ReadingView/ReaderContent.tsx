@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
   sanitizeHtml,
   openURL,
+  resolveLink,
   videoFailedPlaceholder,
   type ReaderContentStyle,
 } from '../../Utils'
@@ -16,6 +17,13 @@ interface ReaderContentProps {
   onImageClick: (src: string) => void
   onVideoClick: (src: string) => void
   onLinkHover?: (url: string | null) => void
+}
+
+/** 系统「减弱动态」偏好或设置里的「关闭动画」生效时，锚点跳转不做平滑滚动。
+ *  CSS 的 `scroll-behavior: auto` 管不到 `scrollIntoView` 显式传入的 behavior，只能在这判。 */
+function prefersReducedMotion(): boolean {
+  if (document.documentElement.classList.contains('reduce-motion')) return true
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
 /** 渲染清洗后的正文 HTML，委托处理链接（系统浏览器）、图片与视频（灯箱）点击。 */
@@ -69,8 +77,12 @@ function ReaderContent(props: ReaderContentProps): JSX.Element {
     const anchor = target.closest('a')
     if (anchor) {
       e.preventDefault()
-      const href = anchor.getAttribute('href')
-      if (href) openURL(href)
+      // 裸 href 不能直接丢给 openURL：`#toc` 这类锚点没有 scheme，会被后端判废并
+      // reject，最终炸成整页崩溃。落点必须先判定（见 Utils/Links.ts）。
+      const link = resolveLink(anchor.getAttribute('href') ?? '', articleUrl)
+      if (link.kind === 'anchor') scrollToAnchor(link.id)
+      else if (link.kind === 'external') openURL(link.url)
+      // kind === 'invalid'：javascript: / mailto: / 解析不出来的地址，静默忽略。
       return
     }
     // 视频贴片：点击本体或叠加的播放按钮（按钮经事件冒泡到这里）都交给视频灯箱。
@@ -100,12 +112,24 @@ function ReaderContent(props: ReaderContentProps): JSX.Element {
     }
   }
 
+  // 正文里的「目录」锚点：滚到正文内对应的 id。限定在 contentRef 里查，
+  // 免得撞上应用外壳的同名 id（如 #root 那一层的布局节点）。
+  function scrollToAnchor(id: string): void {
+    const el = contentRef.current?.querySelector(`#${CSS.escape(id)}`)
+    if (!el) return
+    el.scrollIntoView({
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+      block: 'start',
+    })
+  }
+
   function handleMouseOver(e: React.MouseEvent<HTMLElement>): void {
     const anchor = (e.target as HTMLElement).closest('a')
-    if (anchor) {
-      const href = anchor.getAttribute('href')
-      if (href) onLinkHover?.(href)
-    }
+    if (!anchor) return
+    // 预览条显示的是「点了会去哪」。页内锚点和打不开的地址都不去别处，
+    // 显示 `#toc` 或解析失败的空串只会误导，直接清空。
+    const link = resolveLink(anchor.getAttribute('href') ?? '', articleUrl)
+    onLinkHover?.(link.kind === 'external' ? link.url : null)
   }
 
   function handleMouseOut(e: React.MouseEvent<HTMLElement>): void {

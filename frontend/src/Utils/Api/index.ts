@@ -58,7 +58,11 @@ export function toApiError(err: unknown): string {
 export function openURL(url: string): void {
   if (!url) return
   try {
-    Browser.OpenURL(url)
+    // 后端会拒绝它打不开的地址（空 scheme、javascript:、含 shell 元字符等），而拒绝是
+    // **Promise reject** —— 下面的 try/catch 接不住，不挂 catch 就会冒成未处理拒绝，
+    // 被 CrashBoundary 接手成整页崩溃（issue #7）。
+    // 这里只负责把它咽下去，不做二次跳转：后端明确拒绝的地址，换 window.open 也一样打不开。
+    void Browser.OpenURL(url).catch(() => {})
   } catch {
     window.open(url, '_blank', 'noopener,noreferrer')
   }
