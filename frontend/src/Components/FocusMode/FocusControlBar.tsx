@@ -12,6 +12,7 @@ import {
   ExternalLinkIcon,
   NoteIcon,
   FullTextIcon,
+  ResetIcon,
 } from '../ReadingView/Icons'
 import styles from './FocusMode.module.scss'
 
@@ -19,6 +20,10 @@ interface FocusControlBarProps {
   item: Item | null
   visible: boolean
   platform: Platform | null
+  /** 是否有「返回上一个阅读位置」记忆（切文章即清空）。 */
+  canBackToPosition: boolean
+  /** 回到锚点跳转前的阅读位置（一次性，返回后按钮消失）。 */
+  onBackToPosition: () => void
   onExit: () => void
   onBarEnter: () => void
   onBarLeave: () => void
@@ -26,7 +31,16 @@ interface FocusControlBarProps {
 
 function FocusControlBar(props: FocusControlBarProps): JSX.Element {
   const { t } = useTranslation()
-  const { item, visible, platform, onExit, onBarEnter, onBarLeave } = props
+  const {
+    item,
+    visible,
+    platform,
+    canBackToPosition,
+    onBackToPosition,
+    onExit,
+    onBarEnter,
+    onBarLeave,
+  } = props
   const markRead = useArticleStore((s) => s.markRead)
   const markUnread = useArticleStore((s) => s.markUnread)
   const toggleStar = useArticleStore((s) => s.toggleStar)
@@ -75,6 +89,18 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
       <div className={styles.barActions}>
         {item ? (
           <>
+            {/* 发生了正文内锚点跳转时才出现：回到跳转前的阅读位置，置于首位 */}
+            {canBackToPosition ? (
+              <button
+                type="button"
+                className={styles.barBtn}
+                onClick={onBackToPosition}
+                title={t('reader.toolbar.backToPosition')}
+                aria-label={t('reader.toolbar.backToPosition')}
+              >
+                <ResetIcon size={18} />
+              </button>
+            ) : null}
             <button
               type="button"
               className={clsx(styles.barBtn, item.isStarred && styles.starred)}

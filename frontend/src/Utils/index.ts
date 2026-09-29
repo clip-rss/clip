@@ -81,3 +81,10 @@ export { resolveLink } from './Links'
 export type { LinkTarget } from './Links'
 export { readerContentStyle, readerBackgroundClass } from './ReaderStyle'
 export type { ReaderContentStyle } from './ReaderStyle'
+// 阅读区滚动工具（锚点跳转前位置快照/恢复）
+export {
+  prefersReducedMotion,
+  clampRatio,
+  scrollFraction,
+  restoreScrollFraction,
+} from './Scroll'

@@ -8,6 +8,8 @@ interface LayoutState {
   focusMode: boolean
   /** 笔记面板（阅读区底部抽屉）是否展开。会话态，不持久化。 */
   notePanelOpen: boolean
+  /** 锚点跳转前的阅读进度（0..1 比例）。非 null 且属于当前文章时，工具条显示「返回上一个阅读位置」按钮。会话态，不持久化。 */
+  readerReturnRatio: number | null
   setSidebarWidth: (width: number) => void
   setListWidth: (width: number) => void
   resizeSidebar: (delta: number) => void
@@ -17,6 +19,8 @@ interface LayoutState {
   toggleFocus: () => void
   toggleNotePanel: () => void
   closeNotePanel: () => void
+  saveReaderReturnRatio: (ratio: number) => void
+  clearReaderReturnRatio: () => void
 }
 
 const SIDEBAR_MIN = 200
@@ -38,6 +42,7 @@ export const useLayoutStore = create<LayoutState>()(
       listWidth: LIST_DEFAULT,
       focusMode: false,
       notePanelOpen: false,
+      readerReturnRatio: null,
       setSidebarWidth(width: number) {
         set({ sidebarWidth: clamp(width, SIDEBAR_MIN, SIDEBAR_MAX) })
       },
@@ -68,6 +73,12 @@ export const useLayoutStore = create<LayoutState>()(
       },
       closeNotePanel() {
         set({ notePanelOpen: false })
+      },
+      saveReaderReturnRatio(ratio: number) {
+        set({ readerReturnRatio: ratio })
+      },
+      clearReaderReturnRatio() {
+        set({ readerReturnRatio: null })
       },
     }),
     {

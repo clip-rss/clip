@@ -124,7 +124,7 @@ export function LetterCaseIcon(props: IconProps): JSX.Element {
 
 /**
  * 全屏/专注模式入口图标。
- * 15x15 实心填充路径（源自 public/enter-full-screen.svg），与 LetterCaseIcon 同风格。
+ * 15x15 实心填充路径。
  */
 export function EnterFullScreenIcon(props: IconProps): JSX.Element {
   const size = props.size ?? 18
@@ -177,6 +177,24 @@ export function BackIcon(props: IconProps): JSX.Element {
     <svg {...svgProps(props)}>
       <path d="M19 12H5" />
       <path d="m12 19-7-7 7-7" />
+    </svg>
+  )
+}
+
+/**
+ * 返回上一个阅读位置。15x15 实心填充路径（源自 public/reset.svg）。
+ */
+export function ResetIcon(props: IconProps): JSX.Element {
+  const size = props.size ?? 18
+  return (
+    <svg
+      width={size}
+      height={size}
+      className={props.className}
+      viewBox="0 0 15 15"
+      fill="currentColor"
+    >
+      <path d="M4.22457 2.08224C4.41865 1.95407 4.68261 1.97583 4.85348 2.14669C5.02434 2.31756 5.0461 2.58152 4.91793 2.7756L4.85348 2.85372L3.70699 4.00021H8.99996C11.4852 4.00021 13.5 6.01493 13.5 8.50021C13.5 10.9855 11.4852 13.0002 8.99996 13.0002H4.99996C4.72382 13.0002 4.49996 12.7764 4.49996 12.5002C4.49996 12.2241 4.72382 12.0002 4.99996 12.0002H8.99996C10.933 12.0002 12.5 10.4332 12.5 8.50021C12.5 6.56721 10.933 5.00021 8.99996 5.00021H3.70699L4.85348 6.14669L4.91793 6.22482C5.0461 6.4189 5.02434 6.68286 4.85348 6.85372C4.68261 7.02459 4.41865 7.04634 4.22457 6.91818L4.14645 6.85372L2.14645 4.85372C1.95118 4.65846 1.95118 4.34195 2.14645 4.14669L4.14645 2.14669L4.22457 2.08224Z" />
     </svg>
   )
 }

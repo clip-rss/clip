@@ -17,17 +17,22 @@ import {
   ExternalLinkIcon,
   EnterFullScreenIcon,
   FullTextIcon,
+  ResetIcon,
 } from './Icons'
 import ReaderSettingsMenu from './ReaderSettingsMenu'
 import styles from './ReadingView.module.scss'
 
 interface ReaderToolbarProps {
   item: Item
+  /** 是否有「返回上一个阅读位置」记忆（切文章即清空）。 */
+  canBackToPosition: boolean
+  /** 回到锚点跳转前的阅读位置（一次性，返回后按钮消失）。 */
+  onBackToPosition: () => void
 }
 
 function ReaderToolbar(props: ReaderToolbarProps): JSX.Element {
   const { t } = useTranslation()
-  const { item } = props
+  const { item, canBackToPosition, onBackToPosition } = props
   const platform = usePlatform()
   const markRead = useArticleStore((s) => s.markRead)
   const markUnread = useArticleStore((s) => s.markUnread)
@@ -60,6 +65,18 @@ function ReaderToolbar(props: ReaderToolbarProps): JSX.Element {
         {item.title}
       </div>
       <div className={styles.toolbarActions}>
+        {/* 发生了正文内锚点跳转时才出现：回到跳转前的阅读位置，置于首位 */}
+        {canBackToPosition ? (
+          <button
+            type="button"
+            className={styles.toolbarBtn}
+            onClick={onBackToPosition}
+            title={t('reader.toolbar.backToPosition')}
+            aria-label={t('reader.toolbar.backToPosition')}
+          >
+            <ResetIcon size={18} />
+          </button>
+        ) : null}
         <button
           type="button"
           className={styles.toolbarBtn}

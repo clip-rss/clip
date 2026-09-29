@@ -12,6 +12,7 @@ import {
   hasArticleBody,
   readerBackgroundClass,
   readerContentStyle,
+  restoreScrollFraction,
 } from '../../Utils'
 import {
   ReaderArticle,
@@ -41,6 +42,7 @@ function FocusMode(): JSX.Element | null {
   const focusMode = useLayoutStore((s) => s.focusMode)
   const exitFocus = useLayoutStore((s) => s.exitFocus)
   const notePanelOpen = useLayoutStore((s) => s.notePanelOpen)
+  const readerReturnRatio = useLayoutStore((s) => s.readerReturnRatio)
   const closeNotePanel = useLayoutStore((s) => s.closeNotePanel)
   const platform = usePlatform()
 
@@ -171,6 +173,17 @@ function FocusMode(): JSX.Element | null {
     scheduleHide()
   }
 
+  // 「返回上一个阅读位置」：一次性回到锚点跳转前的进度，之后清空记忆（按钮消失）。
+  // 记忆在切文章时由常驻挂载的 ReadingView 清空（见 ReadingView 的 itemId effect），
+  // 专注模式只是 overlay，此处只管恢复。
+  function handleBackToPosition(): void {
+    const ratio = useLayoutStore.getState().readerReturnRatio
+    const el = scrollRef.current
+    if (ratio === null || !el) return
+    restoreScrollFraction(el, ratio)
+    useLayoutStore.getState().clearReaderReturnRatio()
+  }
+
   if (!mounted) return null
 
   const sourceName = item
@@ -189,6 +202,8 @@ function FocusMode(): JSX.Element | null {
         item={item}
         visible={barVisible}
         platform={platform}
+        canBackToPosition={readerReturnRatio !== null}
+        onBackToPosition={handleBackToPosition}
         onExit={exitFocus}
         onBarEnter={() => {
           hoveringBar.current = true

@@ -109,7 +109,8 @@
       "note": "添加笔记",
       "viewNote": "查看笔记",
       "closeNote": "关闭笔记",
-      "openInBrowser": "在浏览器打开"
+      "openInBrowser": "在浏览器打开",
+      "backToPosition": "返回上一个阅读位置"
     },
     "settings": {
       "title": "阅读设置",

@@ -109,7 +109,8 @@
       "note": "新增筆記",
       "viewNote": "查看筆記",
       "closeNote": "關閉筆記",
-      "openInBrowser": "在浏览器打开"
+      "openInBrowser": "在浏览器打开",
+      "backToPosition": "返回上一個閱讀位置"
     },
     "settings": {
       "title": "閱讀設定",

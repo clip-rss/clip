@@ -109,7 +109,8 @@
       "note": "Add note",
       "viewNote": "View note",
       "closeNote": "Close note",
-      "openInBrowser": "Open in browser"
+      "openInBrowser": "Open in browser",
+      "backToPosition": "Back to previous position"
     },
     "settings": {
       "title": "Reading Settings",

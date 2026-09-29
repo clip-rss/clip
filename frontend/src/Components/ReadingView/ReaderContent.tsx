@@ -5,8 +5,11 @@ import {
   openURL,
   resolveLink,
   videoFailedPlaceholder,
+  prefersReducedMotion,
+  scrollFraction,
   type ReaderContentStyle,
 } from '../../Utils'
+import { useLayoutStore } from '../../Stores'
 import styles from './ReadingView.module.scss'
 
 interface ReaderContentProps {
@@ -17,13 +20,6 @@ interface ReaderContentProps {
   onImageClick: (src: string) => void
   onVideoClick: (src: string) => void
   onLinkHover?: (url: string | null) => void
-}
-
-/** 系统「减弱动态」偏好或设置里的「关闭动画」生效时，锚点跳转不做平滑滚动。
- *  CSS 的 `scroll-behavior: auto` 管不到 `scrollIntoView` 显式传入的 behavior，只能在这判。 */
-function prefersReducedMotion(): boolean {
-  if (document.documentElement.classList.contains('reduce-motion')) return true
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
 /** 渲染清洗后的正文 HTML，委托处理链接（系统浏览器）、图片与视频（灯箱）点击。 */
@@ -117,6 +113,14 @@ function ReaderContent(props: ReaderContentProps): JSX.Element {
   function scrollToAnchor(id: string): void {
     const el = contentRef.current?.querySelector(`#${CSS.escape(id)}`)
     if (!el) return
+    // 跳转前先快照阅读进度，供工具条「返回上一个阅读位置」按钮使用。
+    // 滚动容器带 data-reader-scroll 标记（阅读视图 main / 专注模式 focus），
+    // 锚点元素查得到才记录，否则按钮不会空出现。
+    const container = el.closest('[data-reader-scroll]') as HTMLElement | null
+    const frac = container ? scrollFraction(container) : null
+    if (frac !== null) {
+      useLayoutStore.getState().saveReaderReturnRatio(frac)
+    }
     el.scrollIntoView({
       behavior: prefersReducedMotion() ? 'auto' : 'smooth',
       block: 'start',
