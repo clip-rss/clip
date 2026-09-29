@@ -2,6 +2,29 @@
 
 import type { ReaderBackground, ReaderPrefs } from '../Types'
 
+/** 正文字号可选范围（px）。设置页的 InputNumber 与入站校验共用这一对边界。 */
+export const READER_FONT_SIZE_MIN = 10
+export const READER_FONT_SIZE_MAX = 32
+
+/**
+ * 收窄入站字号。后端字段是宽类型（int），且配置同步会拉取到更高版本客户端写入的载荷，
+ * 其中可能含本端不认识的取值；字号直接进 CSS，故必须收进范围。
+ *
+ * 0 / 负数 / 非数一律回落 fallback：设置在后端是一整个 JSON blob，
+ * 旧版本写下的行里没有 readerFontSize 这个 key，Go 反序列化后就是 int 的零值 0，
+ * 那是「字段缺失」而不是「用户要 0px」。其余越界值收窄到边界而非回落，
+ * 与设置页 InputNumber 的输入行为一致。
+ */
+export function normalizeFontSize(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    return fallback
+  }
+  return Math.min(
+    READER_FONT_SIZE_MAX,
+    Math.max(READER_FONT_SIZE_MIN, Math.round(value)),
+  )
+}
+
 const FONT_FAMILY: Record<ReaderPrefs['fontFamily'], string> = {
   sans: 'var(--font-family)',
   serif: 'Georgia, "Times New Roman", "Songti SC", "Noto Serif CJK SC", serif',

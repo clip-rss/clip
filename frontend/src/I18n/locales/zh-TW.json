@@ -124,11 +124,6 @@
       "serif": "衬线",
       "mono": "等宽"
     },
-    "size": {
-      "small": "小",
-      "medium": "中",
-      "large": "大"
-    },
     "lineHeight": {
       "compact": "紧凑",
       "moderate": "適中",
@@ -546,5 +541,9 @@
   },
   "offline": {
     "banner": "离线模式 – 訂閱更新已暫停"
+  },
+  "common": {
+    "decrease": "減少",
+    "increase": "增加"
   }
 }

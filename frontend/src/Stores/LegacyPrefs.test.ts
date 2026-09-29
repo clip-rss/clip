@@ -28,6 +28,10 @@ const baseSettings: Settings = {
   readerLineHeight: 1.8,
   readerWidth: '640',
   readerBackground: 'default',
+  focusFontFamily: 'sans',
+  focusFontSize: 16,
+  focusLineHeight: 1.8,
+  focusBackground: 'default',
 }
 
 /**
@@ -154,7 +158,7 @@ describe('migrateLegacyPrefs', () => {
     expect(m.hasLegacyPrefs()).toBe(false)
   })
 
-  it('旧排版里的非法值按默认值迁移', async () => {
+  it('旧排版里的非法值：白名单字段回落默认，字号收窄到边界', async () => {
     const m = await loadModules(() => {
       seedLegacyReader({ fontFamily: 'wingdings', fontSize: 42 })
     })
@@ -168,7 +172,8 @@ describe('migrateLegacyPrefs', () => {
     expect(UpdateSettings).toHaveBeenCalledWith(
       expect.objectContaining({
         readerFontFamily: 'sans',
-        readerFontSize: 16,
+        // 字号是连续量：42 收窄到上界而非回落默认，与设置页 InputNumber 一致
+        readerFontSize: 32,
       }),
     )
   })

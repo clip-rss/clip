@@ -9,11 +9,17 @@ vi.mock('../Utils', () => ({
 }))
 
 import { SettingsService } from '../Utils'
+// 走深路径而非 '../Utils'：本文件把那个 barrel mock 掉了，从这里拿不到真值。
+import {
+  READER_FONT_SIZE_MAX,
+  READER_FONT_SIZE_MIN,
+} from '../Utils/ReaderStyle'
 import {
   useReaderStore,
   DEFAULT_READER_PREFS,
   toReaderPrefs,
 } from './ReaderStore'
+import type { ReaderSettingsFields } from './ReaderStore'
 import { useSettingsStore } from './SettingsStore'
 import type { Settings } from '../Types'
 
@@ -39,6 +45,19 @@ const baseSettings: Settings = {
   readerLineHeight: 1.8,
   readerWidth: '640',
   readerBackground: 'default',
+  focusFontFamily: 'sans',
+  focusFontSize: 16,
+  focusLineHeight: 1.8,
+  focusBackground: 'default',
+}
+
+/** toReaderPrefs 的入参基线：各字段均合法，便于按需覆盖单个字段。 */
+const baseReader: ReaderSettingsFields = {
+  readerFontFamily: baseSettings.readerFontFamily,
+  readerFontSize: baseSettings.readerFontSize,
+  readerLineHeight: baseSettings.readerLineHeight,
+  readerWidth: baseSettings.readerWidth,
+  readerBackground: baseSettings.readerBackground,
 }
 
 beforeEach(() => {
@@ -121,16 +140,55 @@ describe('toReaderPrefs 入站校验', () => {
   })
 
   // 同步会拉取到更高版本客户端写入的载荷，其中可能含本端不认识的取值；
-  // 排版值直接进 CSS，必须回落而非照搬。
-  it('越界值回落默认', () => {
+  // 排版值直接进 CSS，必须收窄而非照搬。
+  it('越界值回落默认（白名单字段）', () => {
     const got = toReaderPrefs({
       readerFontFamily: 'comic-sans',
-      readerFontSize: 99,
+      readerFontSize: DEFAULT_READER_PREFS.fontSize,
       readerLineHeight: 3.5,
       readerWidth: '1920',
       readerBackground: 'neon',
     })
     expect(got).toEqual(DEFAULT_READER_PREFS)
+  })
+
+  // 字号是连续量，越界收窄到边界，与设置页 InputNumber 的输入行为一致。
+  it('字号越界收窄到边界而非回落默认', () => {
+    expect(toReaderPrefs({ ...baseReader, readerFontSize: 99 }).fontSize).toBe(
+      READER_FONT_SIZE_MAX,
+    )
+    expect(toReaderPrefs({ ...baseReader, readerFontSize: 5 }).fontSize).toBe(
+      READER_FONT_SIZE_MIN,
+    )
+  })
+
+  it('字号范围内原样通过（含非 14/16/18 的取值）', () => {
+    expect(toReaderPrefs({ ...baseReader, readerFontSize: 21 }).fontSize).toBe(
+      21,
+    )
+    expect(toReaderPrefs({ ...baseReader, readerFontSize: 10 }).fontSize).toBe(
+      10,
+    )
+    expect(toReaderPrefs({ ...baseReader, readerFontSize: 32 }).fontSize).toBe(
+      32,
+    )
+  })
+
+  // 设置在后端是一整个 JSON blob，旧版本写下的行没有 readerFontSize 这个 key，
+  // Go 反序列化后是 int 零值 0 —— 那是「字段缺失」，不能当成「用户要 0px」收窄到 10。
+  it('字号 0 / 负数 / 非数回落默认（字段缺失或非法）', () => {
+    expect(toReaderPrefs({ ...baseReader, readerFontSize: 0 }).fontSize).toBe(
+      DEFAULT_READER_PREFS.fontSize,
+    )
+    expect(toReaderPrefs({ ...baseReader, readerFontSize: -3 }).fontSize).toBe(
+      DEFAULT_READER_PREFS.fontSize,
+    )
+    expect(
+      toReaderPrefs({
+        ...baseReader,
+        readerFontSize: 'big' as unknown as number,
+      }).fontSize,
+    ).toBe(DEFAULT_READER_PREFS.fontSize)
   })
 
   it('空值与零值回落默认（旧库无这些字段）', () => {

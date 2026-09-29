@@ -224,6 +224,24 @@ func TestReaderPrefsDefaults(t *testing.T) {
 	}
 }
 
+// TestFocusPrefsDefaults 专注模式那套独立偏好的出厂值：前端的播种逻辑
+// （seedFocusPrefsFromReader）与回落都以此为准，改这里要一起改。
+func TestFocusPrefsDefaults(t *testing.T) {
+	d := DefaultSettings()
+	if d.FocusFontFamily != "sans" {
+		t.Errorf("focusFontFamily = %q, want sans", d.FocusFontFamily)
+	}
+	if d.FocusFontSize != 16 {
+		t.Errorf("focusFontSize = %d, want 16", d.FocusFontSize)
+	}
+	if d.FocusLineHeight != 1.8 {
+		t.Errorf("focusLineHeight = %v, want 1.8", d.FocusLineHeight)
+	}
+	if d.FocusBackground != "default" {
+		t.Errorf("focusBackground = %q, want default", d.FocusBackground)
+	}
+}
+
 // TestReaderPrefsFallbackOnLegacyDB 老库的 settings JSON 里没有 reader* 字段，
 // 读出来必须是默认值而不是零值（零值会让字号变 0、行高变 0）。
 func TestReaderPrefsFallbackOnLegacyDB(t *testing.T) {

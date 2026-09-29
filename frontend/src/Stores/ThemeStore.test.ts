@@ -62,6 +62,10 @@ const baseSettings: Settings = {
   readerLineHeight: 1.8,
   readerWidth: '640',
   readerBackground: 'default',
+  focusFontFamily: 'sans',
+  focusFontSize: 16,
+  focusLineHeight: 1.8,
+  focusBackground: 'default',
 }
 
 /**

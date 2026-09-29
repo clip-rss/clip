@@ -1,15 +1,28 @@
 import { useTranslation } from 'react-i18next'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { useReaderStore } from '../../Stores'
+import { useFocusReaderStore, useReaderStore } from '../../Stores'
+import { READER_FONT_SIZE_MAX, READER_FONT_SIZE_MIN } from '../../Utils'
 import type {
   ReaderBackground,
   ReaderFontFamily,
-  ReaderFontSize,
   ReaderLineHeight,
   ReaderWidth,
 } from '../../Types'
+import { InputNumber } from '../InputNumber'
 import { LetterCaseIcon, CheckIcon } from './Icons'
 import styles from './ReadingView.module.scss'
+
+interface ReaderSettingsMenuProps {
+  /**
+   * 读写哪一套偏好：'reader'（默认）是阅读视图那套，'focus' 是专注模式独立的那套。
+   * 专注模式没有「宽度」项。
+   */
+  variant?: 'reader' | 'focus'
+  /** 触发按钮的类名。默认用阅读视图工具栏的 .toolbarBtn；专注模式的控制条另有一套按钮样式，由调用方注入。 */
+  triggerClassName?: string
+  /** 菜单展开状态变化。专注模式靠它钉住会自动隐藏的控制条。 */
+  onOpenChange?: (open: boolean) => void
+}
 
 function RadioRow(props: { value: string; label: string }): JSX.Element {
   return (
@@ -24,19 +37,21 @@ function RadioRow(props: { value: string; label: string }): JSX.Element {
   )
 }
 
-function ReaderSettingsMenu(): JSX.Element {
+function ReaderSettingsMenu(props: ReaderSettingsMenuProps): JSX.Element {
+  const { variant = 'reader', triggerClassName, onOpenChange } = props
   const { t } = useTranslation()
-  const s = useReaderStore()
+  const reader = useReaderStore()
+  const focus = useFocusReaderStore()
+
+  // 两套偏好同形（fontFamily / fontSize / lineHeight / background + 同名 setter），
+  // 所以整份菜单可以共用，只把读写目标换掉；宽度只有阅读视图那套才有。
+  const isFocus = variant === 'focus'
+  const s = isFocus ? focus : reader
 
   const fontOptions = [
     { value: 'sans' as ReaderFontFamily, label: t('reader.font.sans') },
     { value: 'serif' as ReaderFontFamily, label: t('reader.font.serif') },
     { value: 'mono' as ReaderFontFamily, label: t('reader.font.mono') },
-  ]
-  const sizeOptions = [
-    { value: 14 as ReaderFontSize, label: t('reader.size.small') },
-    { value: 16 as ReaderFontSize, label: t('reader.size.medium') },
-    { value: 18 as ReaderFontSize, label: t('reader.size.large') },
   ]
   const lineOptions = [
     { value: 1.5 as ReaderLineHeight, label: t('reader.lineHeight.compact') },
@@ -59,11 +74,11 @@ function ReaderSettingsMenu(): JSX.Element {
   ]
 
   return (
-    <DropdownMenu.Root>
+    <DropdownMenu.Root onOpenChange={onOpenChange}>
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
-          className={styles.toolbarBtn}
+          className={triggerClassName ?? styles.toolbarBtn}
           title={t('reader.settings.title')}
           aria-label={t('reader.settings.title')}
         >
@@ -92,14 +107,23 @@ function ReaderSettingsMenu(): JSX.Element {
           <DropdownMenu.Label className={styles.menuLabel}>
             {t('reader.settings.fontSize')}
           </DropdownMenu.Label>
-          <DropdownMenu.RadioGroup
-            value={String(s.fontSize)}
-            onValueChange={(v) => s.setFontSize(Number(v) as ReaderFontSize)}
+          {/*
+            Radix 菜单会劫持键盘：字符键拿去做 typeahead 定位菜单项、方向键拿去做导航、
+            Tab 被 preventDefault。输入框要能正常打字，就得把键盘事件截在这一层，
+            不让它冒泡到 DropdownMenu.Content 上的处理器（见 react-menu 的 MenuContentImpl）。
+          */}
+          <div
+            className={styles.menuStepper}
+            onKeyDown={(e) => e.stopPropagation()}
           >
-            {sizeOptions.map((o) => (
-              <RadioRow key={o.value} value={String(o.value)} label={o.label} />
-            ))}
-          </DropdownMenu.RadioGroup>
+            <InputNumber
+              value={s.fontSize}
+              onChange={s.setFontSize}
+              min={READER_FONT_SIZE_MIN}
+              max={READER_FONT_SIZE_MAX}
+              label={t('reader.settings.fontSize')}
+            />
+          </div>
 
           <DropdownMenu.Separator className={styles.menuSeparator} />
           <DropdownMenu.Label className={styles.menuLabel}>
@@ -116,18 +140,22 @@ function ReaderSettingsMenu(): JSX.Element {
             ))}
           </DropdownMenu.RadioGroup>
 
-          <DropdownMenu.Separator className={styles.menuSeparator} />
-          <DropdownMenu.Label className={styles.menuLabel}>
-            {t('reader.settings.width')}
-          </DropdownMenu.Label>
-          <DropdownMenu.RadioGroup
-            value={s.width}
-            onValueChange={(v) => s.setWidth(v as ReaderWidth)}
-          >
-            {widthOptions.map((o) => (
-              <RadioRow key={o.value} value={o.value} label={o.label} />
-            ))}
-          </DropdownMenu.RadioGroup>
+          {isFocus ? null : (
+            <>
+              <DropdownMenu.Separator className={styles.menuSeparator} />
+              <DropdownMenu.Label className={styles.menuLabel}>
+                {t('reader.settings.width')}
+              </DropdownMenu.Label>
+              <DropdownMenu.RadioGroup
+                value={reader.width}
+                onValueChange={(v) => reader.setWidth(v as ReaderWidth)}
+              >
+                {widthOptions.map((o) => (
+                  <RadioRow key={o.value} value={o.value} label={o.label} />
+                ))}
+              </DropdownMenu.RadioGroup>
+            </>
+          )}
 
           <DropdownMenu.Separator className={styles.menuSeparator} />
           <DropdownMenu.Label className={styles.menuLabel}>

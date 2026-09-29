@@ -124,11 +124,6 @@
       "serif": "Serif",
       "mono": "Monospace"
     },
-    "size": {
-      "small": "Small",
-      "medium": "Medium",
-      "large": "Large"
-    },
     "lineHeight": {
       "compact": "Compact",
       "moderate": "Moderate",
@@ -547,5 +542,9 @@
   },
   "offline": {
     "banner": "Offline Mode – Automatic updates paused"
+  },
+  "common": {
+    "decrease": "Decrease",
+    "increase": "Increase"
   }
 }

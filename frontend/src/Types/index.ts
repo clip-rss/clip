@@ -50,4 +50,5 @@ export type {
   ReaderWidth,
   ReaderBackground,
   ReaderPrefs,
+  FocusReaderPrefs,
 } from './Reader'

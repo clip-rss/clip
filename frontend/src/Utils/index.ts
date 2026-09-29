@@ -76,5 +76,11 @@ export { markdownToHtml } from './Markdown'
 export { sanitizeHtml, videoFailedPlaceholder } from './Sanitize'
 // 正文媒体代理地址改写（防盗链）
 export { mediaProxyUrl } from './Media'
-export { readerContentStyle, readerBackgroundClass } from './ReaderStyle'
+export {
+  readerContentStyle,
+  readerBackgroundClass,
+  normalizeFontSize,
+  READER_FONT_SIZE_MIN,
+  READER_FONT_SIZE_MAX,
+} from './ReaderStyle'
 export type { ReaderContentStyle } from './ReaderStyle'

@@ -1,0 +1,80 @@
+/* 数字输入：[-] 数字 [+] */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 34px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-button);
+  background-color: var(--bg-tertiary);
+  transition: border-color 0.15s;
+
+  /* 对齐设置面板里的 .input:focus：焦点在内部输入框时高亮整条边框。 */
+  &:focus-within {
+    border-color: var(--accent);
+  }
+}
+
+.step {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  flex: none;
+  width: 26px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--text-secondary);
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+
+  &:hover:not(:disabled) {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+  }
+
+  &:disabled {
+    color: var(--text-tertiary);
+    cursor: not-allowed;
+  }
+}
+
+.icon {
+  width: 15px;
+  height: 15px;
+  background-color: currentColor;
+}
+
+.iconMinus {
+  -webkit-mask: url('/minus.svg') center / contain no-repeat;
+  mask: url('/minus.svg') center / contain no-repeat;
+}
+
+.iconPlus {
+  -webkit-mask: url('/plus.svg') center / contain no-repeat;
+  mask: url('/plus.svg') center / contain no-repeat;
+}
+
+.input {
+  width: 46px;
+  height: 100%;
+  min-width: 0;
+  padding: 0 2px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  /* 定宽数字：9 → 10 时数字不左右跳动。 */
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  outline: none;
+
+  &:disabled {
+    color: var(--text-tertiary);
+    cursor: not-allowed;
+  }
+}

@@ -658,7 +658,10 @@
   z-index: 1;
 }
 
-/* ===== Radix 设置菜单 ===== */
+/* ===== Radix 设置菜单 =====
+   菜单 portal 到 body，与专注模式覆盖层（z-index 100）同处根层叠上下文，
+   所以要压过它必须大于 100，否则整个菜单会被不透明的覆盖层盖住。
+   与 SettingsModal 的 .menuContent 取值相同，理由相同（见那里的注释）。 */
 .menuContent {
   min-width: 160px;
   padding: 4px;
@@ -666,7 +669,7 @@
   border-radius: var(--radius-card);
   background-color: var(--bg-primary);
   box-shadow: var(--shadow);
-  z-index: 50;
+  z-index: 110;
 }
 
 .menuLabel {
@@ -698,6 +701,13 @@
   width: 18px;
   margin-right: 4px;
   color: var(--accent);
+}
+
+/* 数字步进器占一行，水平居中。 */
+.menuStepper {
+  display: flex;
+  justify-content: center;
+  padding: 0 10px 4px;
 }
 
 .menuSeparator {
