@@ -12,6 +12,7 @@ import {
   hasArticleBody,
   readerBackgroundClass,
   readerContentStyle,
+  restoreScrollFraction,
 } from '../../Utils'
 import ReaderToolbar from './ReaderToolbar'
 import ReaderArticle from './ReaderArticle'
@@ -33,6 +34,7 @@ function ReadingView(): JSX.Element {
   const feeds = useSidebarStore((s) => s.feeds)
   const prefs = useReaderStore()
   const notePanelOpen = useLayoutStore((s) => s.notePanelOpen)
+  const readerReturnRatio = useLayoutStore((s) => s.readerReturnRatio)
   const closeNotePanel = useLayoutStore((s) => s.closeNotePanel)
 
   const [lightbox, setLightbox] = useState<MediaLightbox | null>(null)
@@ -47,6 +49,8 @@ function ReadingView(): JSX.Element {
   // 切换文章时恢复该文的滚动位置
   useLayoutEffect(() => {
     currentIdRef.current = itemId
+    // 切文章即清空「返回上一个阅读位置」记忆（只服务当前文章的阅读过程）
+    if (itemId !== null) useLayoutStore.getState().clearReaderReturnRatio()
     if (itemId !== null && scrollRef.current) {
       scrollRef.current.scrollTop = positionsRef.current.get(itemId) ?? 0
     }
@@ -66,6 +70,15 @@ function ReadingView(): JSX.Element {
     } else {
       setPreviewVisible(false)
     }
+  }
+
+  // 「返回上一个阅读位置」：一次性回到锚点跳转前的进度，之后清空记忆（按钮消失）。
+  function handleBackToPosition(): void {
+    const ratio = useLayoutStore.getState().readerReturnRatio
+    const el = scrollRef.current
+    if (ratio === null || !el) return
+    restoreScrollFraction(el, ratio)
+    useLayoutStore.getState().clearReaderReturnRatio()
   }
 
   const contentStyle = useMemo(
@@ -108,7 +121,11 @@ function ReadingView(): JSX.Element {
 
   return (
     <div className={styles.reader}>
-      <ReaderToolbar item={item} />
+      <ReaderToolbar
+        item={item}
+        canBackToPosition={readerReturnRatio !== null}
+        onBackToPosition={handleBackToPosition}
+      />
       <div
         ref={scrollRef}
         className={clsx(styles.scroll, bgClass)}

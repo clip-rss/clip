@@ -26,6 +26,15 @@ describe('sanitizeHtml', () => {
     expect(out).toContain('href="https://x.com"')
   })
 
+  // 「目录」锚点能不能滚动，全看正文里的 id 有没有活下来（ReaderContent 按 #id 查元素）。
+  // DOMPurify 默认放行 id，但这是隐式依赖，钉住它。
+  it('保留 id 属性（页内锚点靠它定位）', () => {
+    const out = sanitizeHtml('<h2 id="toc-1">一</h2><a href="#toc-1">跳</a>')
+
+    expect(out).toContain('id="toc-1"')
+    expect(out).toContain('href="#toc-1"')
+  })
+
   it('图片加 loading=lazy/decoding=async/referrerpolicy=no-referrer，外链加 rel/target', () => {
     const img = sanitizeHtml('<img src="https://x.com/a.png">')
     expect(img).toContain('loading="lazy"')
