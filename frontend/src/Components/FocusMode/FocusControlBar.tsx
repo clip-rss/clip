@@ -14,6 +14,7 @@ import {
   FullTextIcon,
   ResetIcon,
 } from '../ReadingView/Icons'
+import { ReaderSettingsMenu } from '../ReadingView'
 import styles from './FocusMode.module.scss'
 
 interface FocusControlBarProps {
@@ -27,6 +28,8 @@ interface FocusControlBarProps {
   onExit: () => void
   onBarEnter: () => void
   onBarLeave: () => void
+  /** 阅读设置下拉的展开状态：展开期间要钉住控制条，见 FocusMode 的 scheduleHide。 */
+  onSettingsMenuOpenChange: (open: boolean) => void
 }
 
 function FocusControlBar(props: FocusControlBarProps): JSX.Element {
@@ -40,6 +43,7 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
     onExit,
     onBarEnter,
     onBarLeave,
+    onSettingsMenuOpenChange,
   } = props
   const markRead = useArticleStore((s) => s.markRead)
   const markUnread = useArticleStore((s) => s.markUnread)
@@ -185,6 +189,11 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
             >
               <NoteIcon size={18} />
             </button>
+            <ReaderSettingsMenu
+              variant="focus"
+              triggerClassName={styles.barBtn}
+              onOpenChange={onSettingsMenuOpenChange}
+            />
           </>
         ) : null}
       </div>

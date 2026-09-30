@@ -887,7 +887,7 @@ export class Settings {
         }
         if (!("readerFontSize" in $$source)) {
             /**
-             * 14 / 16 / 18
+             * px，10–32，默认 16
              * @member
              * @type {number}
              */
@@ -916,6 +916,40 @@ export class Settings {
              * @type {string}
              */
             this["readerBackground"] = "";
+        }
+        if (!("focusFontFamily" in $$source)) {
+            /**
+             * 专注模式的排版偏好，与上面那套相互独立：改专注模式不影响三栏阅读，反之亦然。
+             * 没有宽度项。
+             * sans / serif / mono
+             * @member
+             * @type {string}
+             */
+            this["focusFontFamily"] = "";
+        }
+        if (!("focusFontSize" in $$source)) {
+            /**
+             * px，10–32，默认 16
+             * @member
+             * @type {number}
+             */
+            this["focusFontSize"] = 0;
+        }
+        if (!("focusLineHeight" in $$source)) {
+            /**
+             * 1.5 / 1.8 / 2.0
+             * @member
+             * @type {number}
+             */
+            this["focusLineHeight"] = 0;
+        }
+        if (!("focusBackground" in $$source)) {
+            /**
+             * default / light / sepia / dark
+             * @member
+             * @type {string}
+             */
+            this["focusBackground"] = "";
         }
 
         Object.assign(this, $$source);

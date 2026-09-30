@@ -24,6 +24,8 @@ import {
   toApiError,
   logInfo,
   logError,
+  READER_FONT_SIZE_MAX,
+  READER_FONT_SIZE_MIN,
 } from '../../Utils'
 import type {
   OPMLImportProgressPayload,
@@ -35,7 +37,6 @@ import type {
   ImportResult,
   ReaderBackground,
   ReaderFontFamily,
-  ReaderFontSize,
   ReaderLineHeight,
   ReaderWidth,
   ThemePreference,
@@ -43,6 +44,7 @@ import type {
 import { usePlatform } from '../../Hooks'
 import type { Platform } from '../../Hooks'
 import { SegmentedControl, SettingRow, Toggle } from './Controls'
+import { InputNumber } from '../InputNumber'
 import styles from './SettingsModal.module.scss'
 
 /* ============================ 通用 ============================ */
@@ -127,11 +129,6 @@ export function ReadingSection(): JSX.Element {
     { value: 'serif' as ReaderFontFamily, label: t('reader.font.serif') },
     { value: 'mono' as ReaderFontFamily, label: t('reader.font.mono') },
   ]
-  const sizeOptions = [
-    { value: 14 as ReaderFontSize, label: t('reader.size.small') },
-    { value: 16 as ReaderFontSize, label: t('reader.size.medium') },
-    { value: 18 as ReaderFontSize, label: t('reader.size.large') },
-  ]
   const lineOptions = [
     { value: 1.5 as ReaderLineHeight, label: t('reader.lineHeight.compact') },
     { value: 1.8 as ReaderLineHeight, label: t('reader.lineHeight.moderate') },
@@ -169,10 +166,12 @@ export function ReadingSection(): JSX.Element {
         />
       </SettingRow>
       <SettingRow label={t('reader.settings.fontSize')}>
-        <SegmentedControl
+        <InputNumber
           value={reader.fontSize}
-          options={sizeOptions}
           onChange={reader.setFontSize}
+          min={READER_FONT_SIZE_MIN}
+          max={READER_FONT_SIZE_MAX}
+          label={t('reader.settings.fontSize')}
         />
       </SettingRow>
       <SettingRow label={t('reader.settings.lineHeight')}>

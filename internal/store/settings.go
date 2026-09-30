@@ -39,10 +39,17 @@ type Settings struct {
 	// 阅读视图排版偏好。原先存于前端 localStorage（clip-reader），
 	// 收归后端以便随配置一起备份同步。
 	ReaderFontFamily string  `json:"readerFontFamily"` // sans / serif / mono
-	ReaderFontSize   int     `json:"readerFontSize"`   // 14 / 16 / 18
+	ReaderFontSize   int     `json:"readerFontSize"`   // px，10–32，默认 16
 	ReaderLineHeight float64 `json:"readerLineHeight"` // 1.5 / 1.8 / 2.0
 	ReaderWidth      string  `json:"readerWidth"`      // 640 / 800 / full
 	ReaderBackground string  `json:"readerBackground"` // default / light / sepia / dark
+
+	// 专注模式的排版偏好，与上面那套相互独立：改专注模式不影响三栏阅读，反之亦然。
+	// 没有宽度项。
+	FocusFontFamily string  `json:"focusFontFamily"` // sans / serif / mono
+	FocusFontSize   int     `json:"focusFontSize"`   // px，10–32，默认 16
+	FocusLineHeight float64 `json:"focusLineHeight"` // 1.5 / 1.8 / 2.0
+	FocusBackground string  `json:"focusBackground"` // default / light / sepia / dark
 }
 
 // DefaultSettings 返回出厂默认设置。
@@ -63,6 +70,10 @@ func DefaultSettings() Settings {
 		ReaderLineHeight:      1.8,
 		ReaderWidth:           "640",
 		ReaderBackground:      "default",
+		FocusFontFamily:       "sans",
+		FocusFontSize:         16,
+		FocusLineHeight:       1.8,
+		FocusBackground:       "default",
 	}
 }
 

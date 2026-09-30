@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type {
+  FocusReaderPrefs,
   ReaderBackground,
   ReaderFontFamily,
   ReaderFontSize,
@@ -9,6 +10,7 @@ import type {
   Settings,
 } from '../Types'
 import { useSettingsStore } from './SettingsStore'
+import { normalizeFontSize } from '../Utils/ReaderStyle'
 
 interface ReaderState extends ReaderPrefs {
   setFontFamily: (fontFamily: ReaderFontFamily) => void
@@ -32,8 +34,8 @@ export const DEFAULT_READER_PREFS: ReaderPrefs = {
 // 后端字段是宽类型（string / number / float64），Go 没有联合类型。
 // 且配置同步允许拉取到更高版本客户端写入的载荷，其中可能含本端不认识的取值。
 // 排版值直接进 CSS，非法值会渲染错乱，故逐字段按白名单收窄，越界回落默认。
+// 字号是连续量（10–32），走 normalizeFontSize 收窄而非白名单。
 const FONT_FAMILIES: ReaderFontFamily[] = ['sans', 'serif', 'mono']
-const FONT_SIZES: ReaderFontSize[] = [14, 16, 18]
 const LINE_HEIGHTS: ReaderLineHeight[] = [1.5, 1.8, 2.0]
 const WIDTHS: ReaderWidth[] = ['640', '800', 'full']
 const BACKGROUNDS: ReaderBackground[] = ['default', 'light', 'sepia', 'dark']
@@ -52,15 +54,49 @@ export type ReaderSettingsFields = Pick<
   | 'readerBackground'
 >
 
+/** 后端设置中专注模式排版的相关字段（无宽度项）。 */
+export type FocusReaderSettingsFields = Pick<
+  Settings,
+  'focusFontFamily' | 'focusFontSize' | 'focusLineHeight' | 'focusBackground'
+>
+
+/** 一组待收窄的原始排版取值（不含宽度）。 */
+export interface RawReaderPrefs {
+  fontFamily: unknown
+  fontSize: unknown
+  lineHeight: unknown
+  background: unknown
+}
+
+/**
+ * 逐字段收窄一组排版取值。阅读视图与专注模式两套偏好共用同一套白名单，
+ * 区别只在字段来源（reader* / focus*）与默认值，故收窄逻辑收在这里一份。
+ */
+export function narrowReaderPrefs(
+  raw: RawReaderPrefs,
+  fallback: FocusReaderPrefs,
+): FocusReaderPrefs {
+  return {
+    fontFamily: pick(FONT_FAMILIES, raw.fontFamily, fallback.fontFamily),
+    fontSize: normalizeFontSize(raw.fontSize, fallback.fontSize),
+    lineHeight: pick(LINE_HEIGHTS, raw.lineHeight, fallback.lineHeight),
+    background: pick(BACKGROUNDS, raw.background, fallback.background),
+  }
+}
+
 /** 把后端设置收窄为合法排版偏好。 */
 export function toReaderPrefs(settings: ReaderSettingsFields): ReaderPrefs {
-  const d = DEFAULT_READER_PREFS
   return {
-    fontFamily: pick(FONT_FAMILIES, settings.readerFontFamily, d.fontFamily),
-    fontSize: pick(FONT_SIZES, settings.readerFontSize, d.fontSize),
-    lineHeight: pick(LINE_HEIGHTS, settings.readerLineHeight, d.lineHeight),
-    width: pick(WIDTHS, settings.readerWidth, d.width),
-    background: pick(BACKGROUNDS, settings.readerBackground, d.background),
+    ...narrowReaderPrefs(
+      {
+        fontFamily: settings.readerFontFamily,
+        fontSize: settings.readerFontSize,
+        lineHeight: settings.readerLineHeight,
+        background: settings.readerBackground,
+      },
+      DEFAULT_READER_PREFS,
+    ),
+    width: pick(WIDTHS, settings.readerWidth, DEFAULT_READER_PREFS.width),
   }
 }
 

@@ -3,8 +3,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
 import {
   useArticleStore,
+  useFocusReaderStore,
   useLayoutStore,
-  useReaderStore,
   useSidebarStore,
 } from '../../Stores'
 import { useArticleNavigation, usePlatform, useSelectedItem } from '../../Hooks'
@@ -29,8 +29,6 @@ const TRANSITION_MS = 300
 const TOP_ZONE = 40
 /** 无操作后控制条自动隐藏延迟（ms）。 */
 const BAR_HIDE_MS = 3000
-/** 专注模式固定阅读宽度。 */
-const FOCUS_MAX_WIDTH = '680px'
 
 /**
  * 专注阅读模式：全屏单栏覆盖层。
@@ -48,7 +46,8 @@ function FocusMode(): JSX.Element | null {
 
   const item = useSelectedItem()
   const feeds = useSidebarStore((s) => s.feeds)
-  const prefs = useReaderStore()
+  // 专注模式读写自己那套偏好，与三栏阅读的互不影响（无 width：宽度下面固定 680px）
+  const prefs = useFocusReaderStore()
   const nav = useArticleNavigation()
 
   // ===== 挂载 / 过渡生命周期 =====
@@ -70,11 +69,15 @@ function FocusMode(): JSX.Element | null {
   const [barVisible, setBarVisible] = useState(true)
   const hideTimer = useRef<number | null>(null)
   const hoveringBar = useRef(false)
+  // 阅读设置菜单展开时也不能隐藏控制条：菜单是 portal 出去的，鼠标多半停在菜单上，
+  // 控制条会先收到 mouseleave，若只看 hoveringBar 就会在菜单开着的时候淡出。
+  const settingsMenuOpen = useRef(false)
 
   const scheduleHide = useCallback(() => {
     if (hideTimer.current) window.clearTimeout(hideTimer.current)
     hideTimer.current = window.setTimeout(() => {
-      if (!hoveringBar.current) setBarVisible(false)
+      if (!hoveringBar.current && !settingsMenuOpen.current)
+        setBarVisible(false)
     }, BAR_HIDE_MS)
   }, [])
 
@@ -82,6 +85,19 @@ function FocusMode(): JSX.Element | null {
     setBarVisible(true)
     scheduleHide()
   }, [scheduleHide])
+
+  const handleSettingsMenuOpenChange = useCallback(
+    (open: boolean) => {
+      settingsMenuOpen.current = open
+      if (open) {
+        setBarVisible(true)
+        if (hideTimer.current) window.clearTimeout(hideTimer.current)
+        return
+      }
+      scheduleHide()
+    },
+    [scheduleHide],
+  )
 
   // 进入时显示控制条并启动自动隐藏；卸载时清理计时器
   useEffect(() => {
@@ -126,6 +142,10 @@ function FocusMode(): JSX.Element | null {
       switch (e.key) {
         case 'Escape':
           if (lightboxRef.current) return // 灯箱开启时优先关闭灯箱
+          // 阅读设置菜单开着时，这一下 Escape 已经被 Radix 消费掉了——它在 document
+          // 捕获阶段就响应（早于这里的 window 冒泡监听），关闭菜单的同时 preventDefault。
+          // 不认这个标记的话，一次 Escape 会既关菜单又退出专注模式。
+          if (e.defaultPrevented) return
           e.preventDefault()
           exitFocus()
           break
@@ -149,22 +169,19 @@ function FocusMode(): JSX.Element | null {
     return () => window.removeEventListener('keydown', onKey)
   }, [mounted, exitFocus])
 
-  const contentStyle = useMemo(() => {
-    const base = readerContentStyle({
-      fontFamily: prefs.fontFamily,
-      fontSize: prefs.fontSize,
-      lineHeight: prefs.lineHeight,
-      width: prefs.width,
-      background: prefs.background,
-    })
-    return { ...base, maxWidth: FOCUS_MAX_WIDTH }
-  }, [
-    prefs.fontFamily,
-    prefs.fontSize,
-    prefs.lineHeight,
-    prefs.width,
-    prefs.background,
-  ])
+  // 宽度不走偏好设置：专注模式正文铺满窗口，等同阅读视图的「全宽」。
+  // 两侧留白由 ReaderArticle 的 .article padding 提供。
+  const contentStyle = useMemo(
+    () =>
+      readerContentStyle({
+        fontFamily: prefs.fontFamily,
+        fontSize: prefs.fontSize,
+        lineHeight: prefs.lineHeight,
+        width: 'full',
+        background: prefs.background,
+      }),
+    [prefs.fontFamily, prefs.fontSize, prefs.lineHeight, prefs.background],
+  )
 
   const bgClass = readerBackgroundClass(prefs.background)
 
@@ -213,6 +230,7 @@ function FocusMode(): JSX.Element | null {
           hoveringBar.current = false
           scheduleHide()
         }}
+        onSettingsMenuOpenChange={handleSettingsMenuOpenChange}
       />
 
       <div ref={scrollRef} className={styles.scroll} data-reader-scroll="focus">

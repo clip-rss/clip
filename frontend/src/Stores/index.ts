@@ -11,6 +11,11 @@ export { useSidebarStore } from './SidebarStore'
 export { useArticleStore } from './ArticleStore'
 export { useSearchHistoryStore } from './SearchHistoryStore'
 export { useReaderStore, DEFAULT_READER_PREFS } from './ReaderStore'
+export {
+  useFocusReaderStore,
+  DEFAULT_FOCUS_READER_PREFS,
+  seedFocusPrefsFromReader,
+} from './FocusReaderStore'
 export { useSettingsStore } from './SettingsStore'
 export { migrateLegacyPrefs } from './LegacyPrefs'
 export { useUpdateStore } from './UpdateStore'

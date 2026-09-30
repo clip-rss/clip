@@ -13,7 +13,12 @@ import {
 import { useAppHotkeys, useDockBadge, useNotificationNavigation } from './Hooks'
 import './I18n'
 import i18next from 'i18next'
-import { migrateLegacyPrefs, useSettingsStore, useUpdateStore } from './Stores'
+import {
+  migrateLegacyPrefs,
+  seedFocusPrefsFromReader,
+  useSettingsStore,
+  useUpdateStore,
+} from './Stores'
 import { CheckForUpdatesSilent } from '../bindings/github.com/clip-rss/clip/api/systemservice'
 import { Events } from '@wailsio/runtime'
 
@@ -39,6 +44,10 @@ function App() {
       // 主题与阅读排版原存于 localStorage，收归后端后搬一次。
       // 必须在 load() 之后：迁移是把本地旧值覆盖到后端基线上。
       await migrateLegacyPrefs()
+      // 专注模式偏好与阅读视图拆成两套后，首次运行拿阅读视图的值播种
+      // （设计稿要求两者排版一致起步）。必须排在 migrateLegacyPrefs 之后，
+      // 否则复制到的是迁移前的旧值。
+      await seedFocusPrefsFromReader()
       const lang = useSettingsStore.getState().settings?.language
       if (lang) i18next.changeLanguage(lang)
     })()

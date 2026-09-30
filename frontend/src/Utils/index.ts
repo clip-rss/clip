@@ -83,7 +83,13 @@ export { mediaProxyUrl } from './Media'
 // 正文链接落点判定（相对地址解析 / 页内锚点 / 打不开的地址）
 export { resolveLink } from './Links'
 export type { LinkTarget } from './Links'
-export { readerContentStyle, readerBackgroundClass } from './ReaderStyle'
+export {
+  readerContentStyle,
+  readerBackgroundClass,
+  normalizeFontSize,
+  READER_FONT_SIZE_MIN,
+  READER_FONT_SIZE_MAX,
+} from './ReaderStyle'
 export type { ReaderContentStyle } from './ReaderStyle'
 // 阅读区滚动工具（锚点跳转前位置快照/恢复）
 export {
