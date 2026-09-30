@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useBackupStore } from '../../Stores/BackupStore'
 import { formatRelativeTime, showToast, toApiError } from '../../Utils'
 import { SettingRow } from './Controls'
+import { clampToRange } from '../InputNumber/InputNumber'
+import { InputNumber } from '../InputNumber'
 import styles from './SettingsModal.module.scss'
 
 import type {
@@ -11,6 +13,10 @@ import type {
   OPMLBackupInfo,
   OPMLImportResult,
 } from '../../Types'
+
+/** 保留版本数的可调范围（UI 约束；后端只要求 retention > 0）。 */
+const RETENTION_MIN = 3
+const RETENTION_MAX = 10
 
 /** 待确认的破坏性操作。操作结果只走 toast，界面上不留反馈文案。 */
 interface PendingBackupAction {
@@ -72,10 +78,12 @@ export function BackupSection(): JSX.Element {
     setPassword('')
   }, [webdavConfig])
 
-  // 同步 OPML 配置到表单
+  // 同步 OPML 配置到表单（历史值可能超出 3-10，收进区间）
   useEffect(() => {
     if (opmlConfig) {
-      setRetention(opmlConfig.retention)
+      setRetention(
+        clampToRange(opmlConfig.retention, RETENTION_MIN, RETENTION_MAX),
+      )
     }
   }, [opmlConfig])
 
@@ -346,13 +354,12 @@ export function BackupSection(): JSX.Element {
             label={t('settings.backup.opml.retention')}
             description={t('settings.backup.opml.retentionDesc')}
           >
-            <input
-              className={styles.input}
-              type="number"
+            <InputNumber
               value={retention}
-              onChange={(e) => setRetention(parseInt(e.target.value, 10) || 7)}
-              min="1"
-              max="30"
+              onChange={setRetention}
+              min={RETENTION_MIN}
+              max={RETENTION_MAX}
+              label={t('settings.backup.opml.retention')}
             />
           </SettingRow>
 
