@@ -71,6 +71,32 @@ export function IsOnline() {
 }
 
 /**
+ * Log 记录一条来自前端的运行时日志，落进与后端同一个日志文件。
+ * 
+ * level 取 debug/info/warn/error（其它值按 info 处理），scope 是来源（组件/store），
+ * message 是内容。前端封装见 Utils/Log.ts。刻意无返回值：日志尽力而为，
+ * 不该因桥接失败反过来打断用户操作。
+ * @param {string} level
+ * @param {string} scope
+ * @param {string} message
+ * @returns {$CancellablePromise<void>}
+ */
+export function Log(level, scope, message) {
+    return $Call.ByID(2365012677, level, scope, message);
+}
+
+/**
+ * OpenLogDir 在系统文件管理器中打开运行日志目录（<configDir>/clip/logs）。
+ * 
+ * 目录路径的唯一定义在后端（同 DatabasePath 的既有原则），前端不重复拼接。
+ * Dir() 会确保目录存在，再交给系统的默认处理器打开（Explorer / Finder / xdg-open）。
+ * @returns {$CancellablePromise<void>}
+ */
+export function OpenLogDir() {
+    return $Call.ByID(4102998112);
+}
+
+/**
  * Platform 返回当前运行的操作系统标识。
  * 
  * 仅区分本项目支持的两个桌面平台：
@@ -92,9 +118,11 @@ export function SetOnline(online) {
 }
 
 /**
- * SetTheme 在非 Windows 平台上是空操作。
+ * SetTheme 将原生窗口标题栏切换为指定的主题。
  * 
- * macOS 使用隐藏式标题栏（MacTitleBarHiddenInset），无需切换原生主题。
+ * mode 的值：
+ *   - "dark"  — 暗色主题
+ *   - 其它值  — 亮色主题（默认）
  * @param {string} mode
  * @returns {$CancellablePromise<void>}
  */

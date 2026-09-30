@@ -7,9 +7,9 @@ package notify
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/clip-rss/clip/internal/i18n"
+	"github.com/clip-rss/clip/internal/logging"
 	"github.com/clip-rss/clip/internal/scheduler"
 	"github.com/clip-rss/clip/internal/store"
 )
@@ -132,7 +132,7 @@ func NewService(sp SettingsProvider, sd Sender) *Service {
 		settings: sp,
 		sender:   sd,
 		reportError: func(err error) {
-			log.Printf("notification: %v", err)
+			logging.Printf("notify", "notification: %v", err)
 		},
 	}
 }
