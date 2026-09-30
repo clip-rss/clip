@@ -245,11 +245,48 @@
   color: var(--text-secondary);
 }
 
+/* ===== 链接预览条（与阅读视图同款，见 ReadingView.module.scss） ===== */
+.linkPreview {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 26px;
+  width: fit-content;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  background-color: color-mix(in srgb, var(--bg-primary) 85%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  font-size: 12px;
+  line-height: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  z-index: 15;
+  user-select: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 0.15s ease-out,
+    transform 0.15s ease-out;
+}
+
+.linkPreviewVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* ===== 降低动态偏好：关闭过渡与位移 ===== */
 @media (prefers-reduced-motion: reduce) {
   .overlay,
   .bar,
-  .fadeIn {
+  .fadeIn,
+  .linkPreview {
     transition: none;
     animation: none;
   }

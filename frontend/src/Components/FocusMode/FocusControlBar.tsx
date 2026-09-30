@@ -107,6 +107,25 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
             ) : null}
             <button
               type="button"
+              className={styles.barBtn}
+              onClick={() =>
+                item.isRead ? markUnread(item.id) : markRead(item.id)
+              }
+              title={
+                item.isRead
+                  ? t('reader.toolbar.markUnread')
+                  : t('reader.toolbar.markRead')
+              }
+              aria-label={
+                item.isRead
+                  ? t('reader.toolbar.markUnread')
+                  : t('reader.toolbar.markRead')
+              }
+            >
+              {item.isRead ? <ReadIcon size={18} /> : <UnreadIcon size={18} />}
+            </button>
+            <button
+              type="button"
               className={clsx(styles.barBtn, item.isStarred && styles.starred)}
               onClick={() => toggleStar(item.id)}
               title={
@@ -124,22 +143,28 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
             </button>
             <button
               type="button"
-              className={styles.barBtn}
-              onClick={() =>
-                item.isRead ? markUnread(item.id) : markRead(item.id)
-              }
+              className={clsx(
+                styles.barBtn,
+                notePanelOpen && styles.noteActive,
+                item.note.trim() !== '' && styles.hasNote,
+              )}
+              onClick={toggleNotePanel}
               title={
-                item.isRead
-                  ? t('reader.toolbar.markUnread')
-                  : t('reader.toolbar.markRead')
+                notePanelOpen ? t('reader.toolbar.closeNote') : t('note.title')
               }
-              aria-label={
-                item.isRead
-                  ? t('reader.toolbar.markUnread')
-                  : t('reader.toolbar.markRead')
-              }
+              aria-label={t('note.title')}
+              aria-pressed={notePanelOpen}
             >
-              {item.isRead ? <ReadIcon size={18} /> : <UnreadIcon size={18} />}
+              <NoteIcon size={18} />
+            </button>
+            <button
+              type="button"
+              className={styles.barBtn}
+              onClick={() => openURL(item.url)}
+              title={t('reader.toolbar.openInBrowser')}
+              aria-label={t('reader.toolbar.openInBrowser')}
+            >
+              <ExternalLinkIcon size={18} />
             </button>
             <button
               type="button"
@@ -163,31 +188,6 @@ function FocusControlBar(props: FocusControlBarProps): JSX.Element {
               aria-pressed={canToggleBody ? fullTextMode === 'full' : undefined}
             >
               <FullTextIcon size={18} />
-            </button>
-            <button
-              type="button"
-              className={styles.barBtn}
-              onClick={() => openURL(item.url)}
-              title={t('reader.toolbar.openInBrowser')}
-              aria-label={t('reader.toolbar.openInBrowser')}
-            >
-              <ExternalLinkIcon size={18} />
-            </button>
-            <button
-              type="button"
-              className={clsx(
-                styles.barBtn,
-                notePanelOpen && styles.noteActive,
-                item.note.trim() !== '' && styles.hasNote,
-              )}
-              onClick={toggleNotePanel}
-              title={
-                notePanelOpen ? t('reader.toolbar.closeNote') : t('note.title')
-              }
-              aria-label={t('note.title')}
-              aria-pressed={notePanelOpen}
-            >
-              <NoteIcon size={18} />
             </button>
             <ReaderSettingsMenu
               variant="focus"

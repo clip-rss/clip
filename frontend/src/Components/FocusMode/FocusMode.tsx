@@ -116,6 +116,10 @@ function FocusMode(): JSX.Element | null {
   const lightboxRef = useRef(lightbox)
   lightboxRef.current = lightbox
 
+  // ===== 链接预览条（与阅读视图同款：hover 段落链接时显示目标地址） =====
+  const [previewUrl, setPreviewUrl] = useState('')
+  const [previewVisible, setPreviewVisible] = useState(false)
+
   // item 有正文才渲染文章体，否则展示空状态。
   // 与阅读视图共用 hasArticleBody，两处对「提取到全文后」的判断不会分叉；
   // 显示模式也要一起传，否则空状态判定会与 ReaderArticle 实际渲染的正文对不上。
@@ -129,6 +133,8 @@ function FocusMode(): JSX.Element | null {
     if (!mounted) return
     if (scrollRef.current) scrollRef.current.scrollTop = 0
     flashBar()
+    // j/k 切文时不经过 mouseout，残留的链接预览会指向旧文章，直接清掉。
+    setPreviewVisible(false)
   }, [itemId, mounted, flashBar])
 
   // ===== 键盘：Esc 退出 / J·↓ 下一篇 / K·↑ 上一篇 =====
@@ -190,6 +196,16 @@ function FocusMode(): JSX.Element | null {
     scheduleHide()
   }
 
+  // 正文段落链接 hover：显示目标地址，与阅读视图同一套逻辑（见 ReadingView）。
+  function handleLinkHover(url: string | null): void {
+    if (url) {
+      setPreviewUrl(url)
+      setPreviewVisible(true)
+    } else {
+      setPreviewVisible(false)
+    }
+  }
+
   // 「返回上一个阅读位置」：一次性回到锚点跳转前的进度，之后清空记忆（按钮消失）。
   // 记忆在切文章时由常驻挂载的 ReadingView 清空（见 ReadingView 的 itemId effect），
   // 专注模式只是 overlay，此处只管恢复。
@@ -242,6 +258,7 @@ function FocusMode(): JSX.Element | null {
               contentStyle={contentStyle}
               onImageClick={(src) => setLightbox({ kind: 'image', src })}
               onVideoClick={(src) => setLightbox({ kind: 'video', src })}
+              onLinkHover={handleLinkHover}
             />
           </div>
         ) : (
@@ -249,6 +266,15 @@ function FocusMode(): JSX.Element | null {
             {item ? t('reader.noContent') : t('focus.empty')}
           </div>
         )}
+      </div>
+
+      <div
+        className={clsx(
+          styles.linkPreview,
+          previewVisible && styles.linkPreviewVisible,
+        )}
+      >
+        {previewUrl}
       </div>
 
       {item && notePanelOpen ? (
