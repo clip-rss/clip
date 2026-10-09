@@ -7,12 +7,14 @@ import {
   NotificationOpenEvent,
   OPMLImportProgressEvent,
   DatabaseRestoreProgressEvent,
+  FontDownloadProgressEvent,
   type ItemsUpdatedPayload,
   type FeedErrorPayload,
   type FeedRefreshingPayload,
   type NotificationOpenPayload,
   type OPMLImportProgressPayload,
   type DatabaseRestoreProgressPayload,
+  type FontDownloadProgressPayload,
 } from '../../Types/Events'
 
 /**
@@ -79,5 +81,17 @@ export function onDatabaseRestoreProgress(
 ): () => void {
   return Events.On(DatabaseRestoreProgressEvent, (ev) =>
     handler(ev.data as DatabaseRestoreProgressPayload),
+  )
+}
+
+/**
+ * 订阅"字体下载进度"事件。
+ * @returns 取消订阅函数，组件卸载时调用。
+ */
+export function onFontDownloadProgress(
+  handler: (payload: FontDownloadProgressPayload) => void,
+): () => void {
+  return Events.On(FontDownloadProgressEvent, (ev) =>
+    handler(ev.data as FontDownloadProgressPayload),
   )
 }

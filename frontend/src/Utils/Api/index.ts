@@ -27,6 +27,7 @@ export {
   onNotificationOpen,
   onOPMLImportProgress,
   onDatabaseRestoreProgress,
+  onFontDownloadProgress,
 } from './Events'
 
 import { Browser } from '@wailsio/runtime'

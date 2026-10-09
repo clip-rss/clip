@@ -16,6 +16,19 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 import * as $models from "./models.js";
 
 /**
+ * DownloadFont 把指定字体族的全部字重下载到本地字体目录并逐个校验 SHA256。
+ * 已存在且校验通过的文件跳过，因此重复调用不会重下。
+ * 
+ * 目录现取现用、不缓存：清单可能随 release 更新，缓存会让「装某款字体」和「看到它
+ * 在列表里」的版本错位。进度按累计字节数推送 FontDownloadProgressEvent。
+ * @param {string} id
+ * @returns {$CancellablePromise<void>}
+ */
+export function DownloadFont(id) {
+    return $Call.ByID(4183256440, id);
+}
+
+/**
  * FetchFontCatalog 拉取并解析远程字体目录清单。
  * @returns {$CancellablePromise<$models.FontCatalog | null>}
  */

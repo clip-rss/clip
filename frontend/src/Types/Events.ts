@@ -64,3 +64,19 @@ export interface DatabaseRestoreProgressPayload {
   total: number
   percent: number
 }
+
+/** 字体下载进度事件名（对应 api.FontDownloadProgressEvent）。 */
+export const FontDownloadProgressEvent = 'fonts:download:progress'
+
+/**
+ * 字体下载进度事件负载。
+ *
+ * downloaded/total 是**该字体族全部字重**的累计字节数，total 为 0 表示清单没给
+ * 文件大小，此时 percent 恒为 0，应展示不确定态进度条。
+ */
+export interface FontDownloadProgressPayload {
+  id: string
+  downloaded: number
+  total: number
+  percent: number
+}

@@ -219,7 +219,12 @@
       "loading": "正在加载字体目录…",
       "failed": "字体目录加载失败",
       "retry": "重试",
-      "empty": "暂无可用字体"
+      "empty": "暂无可用字体",
+      "download": "下载",
+      "downloading": "下载中 {{percent}}%",
+      "downloadingIndeterminate": "下载中…",
+      "downloaded": "已下载",
+      "downloadFailed": "下载失败，点击重试"
     },
     "accessibility": {
       "title": "无障碍",

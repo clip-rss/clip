@@ -116,10 +116,54 @@
   color: var(--text-secondary);
 }
 
+.cardFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .cardLicense {
   font-size: 12px;
   color: var(--text-secondary);
   font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 按钮不改变光标（全局约定 cursor: default），点击反馈靠 hover 背景色。 */
+.downloadBtn {
+  flex: 0 0 auto;
+  max-width: 60%;
+  height: 26px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+
+  &:hover:not(:disabled) {
+    background-color: var(--bg-tertiary);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    color: var(--text-secondary);
+  }
+
+  &[data-status='done'] {
+    color: var(--text-secondary);
+  }
+
+  &[data-status='failed'] {
+    color: var(--danger);
+  }
 }
 
 /* ===== 加载 / 失败 / 空态 ===== */

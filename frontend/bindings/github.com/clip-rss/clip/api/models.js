@@ -317,7 +317,7 @@ export class FontFile {
         }
         if (!("file" in $$source)) {
             /**
-             * 文件 basename，配合 FontDef.URL 拼下载地址
+             * 清单内路径；拼下载地址前须经 assetName 取 basename
              * @member
              * @type {string}
              */

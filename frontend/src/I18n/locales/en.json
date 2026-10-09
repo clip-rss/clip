@@ -219,7 +219,12 @@
       "loading": "Loading font catalog…",
       "failed": "Failed to load font catalog",
       "retry": "Retry",
-      "empty": "No fonts available"
+      "empty": "No fonts available",
+      "download": "Download",
+      "downloading": "Downloading {{percent}}%",
+      "downloadingIndeterminate": "Downloading…",
+      "downloaded": "Downloaded",
+      "downloadFailed": "Download failed, click to retry"
     },
     "accessibility": {
       "title": "Accessibility",

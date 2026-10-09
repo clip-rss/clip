@@ -18,6 +18,7 @@ export {
   onNotificationOpen,
   onOPMLImportProgress,
   onDatabaseRestoreProgress,
+  onFontDownloadProgress,
   toApiError,
   openURL,
 } from './Api'

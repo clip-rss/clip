@@ -219,7 +219,12 @@
       "loading": "正在載入字型目錄…",
       "failed": "字型目錄載入失敗",
       "retry": "重試",
-      "empty": "暫無可用字型"
+      "empty": "暫無可用字型",
+      "download": "下載",
+      "downloading": "下載中 {{percent}}%",
+      "downloadingIndeterminate": "下載中…",
+      "downloaded": "已下載",
+      "downloadFailed": "下載失敗，點擊重試"
     },
     "accessibility": {
       "title": "無障礙",

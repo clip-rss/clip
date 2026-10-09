@@ -635,6 +635,10 @@ func main() {
 	// 复用抓取客户端，因此用户配置的代理对正文图片同样生效。
 	mediaProxy := mediaproxy.New(ft.Client())
 
+	// 字体资产下载客户端：与更新下载源同一个 Proxy 接收者，因此用户在设置里改代理后
+	// 字体下载一并跟随，不会出现「更新走代理、下字体不走」。清单抓取仍走 ft.Client()。
+	fontClient := updatesrc.NewClient(updProxy)
+
 	app := application.New(application.Options{
 		Name:        "clip",
 		Description: i18n.T(settings.Language, "app.description"),
@@ -661,7 +665,7 @@ func main() {
 			application.NewService(opmlSvc),
 			application.NewService(opmlBackupSvc),
 			application.NewService(notifSvc),
-			application.NewService(api.NewFontService(ft.Client())),
+			application.NewService(api.NewFontService(ft.Client(), fontClient)),
 			application.NewService(dockService),
 		},
 	})
