@@ -10,6 +10,7 @@ export {
   WebDAVConfigService,
   OPMLBackupService,
   SystemService,
+  FontService,
   DockService,
   onItemsUpdated,
   onFeedError,

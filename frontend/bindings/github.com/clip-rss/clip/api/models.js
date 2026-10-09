@@ -142,6 +142,219 @@ export class FeedPreview {
 }
 
 /**
+ * FontCatalog 字体仓库的目录清单。
+ */
+export class FontCatalog {
+    /**
+     * Creates a new FontCatalog instance.
+     * @param {Partial<FontCatalog>} [$$source = {}] - The source object to create the FontCatalog.
+     */
+    constructor($$source = {}) {
+        if (!("version" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["version"] = 0;
+        }
+        if (!("release" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["release"] = "";
+        }
+        if (!("fonts" in $$source)) {
+            /**
+             * @member
+             * @type {FontDef[]}
+             */
+            this["fonts"] = [];
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new FontCatalog instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {FontCatalog}
+     */
+    static createFrom($$source = {}) {
+        const $$createField2_0 = $$createType1;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("fonts" in $$parsedSource) {
+            $$parsedSource["fonts"] = $$createField2_0($$parsedSource["fonts"]);
+        }
+        return new FontCatalog(/** @type {Partial<FontCatalog>} */($$parsedSource));
+    }
+}
+
+/**
+ * FontDef 一个可安装的字体族。
+ */
+export class FontDef {
+    /**
+     * Creates a new FontDef instance.
+     * @param {Partial<FontDef>} [$$source = {}] - The source object to create the FontDef.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * 稳定标识，如 lxgw-wenkai
+             * @member
+             * @type {string}
+             */
+            this["id"] = "";
+        }
+        if (!("name" in $$source)) {
+            /**
+             * 显示名（中文），如「霞鹜文楷」
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("family" in $$source)) {
+            /**
+             * postscript family，如 LXGW WenKai
+             * @member
+             * @type {string}
+             */
+            this["family"] = "";
+        }
+        if (!("version" in $$source)) {
+            /**
+             * 字体版本号，非仓库 tag
+             * @member
+             * @type {string}
+             */
+            this["version"] = "";
+        }
+        if (!("license" in $$source)) {
+            /**
+             * 许可证名，如 SIL OFL 1.1
+             * @member
+             * @type {string}
+             */
+            this["license"] = "";
+        }
+        if (!("licenseFile" in $$source)) {
+            /**
+             * 仓库内许可证文本路径
+             * @member
+             * @type {string}
+             */
+            this["licenseFile"] = "";
+        }
+        if (!("url" in $$source)) {
+            /**
+             * 下载前缀（…/releases/latest/download）
+             * @member
+             * @type {string}
+             */
+            this["url"] = "";
+        }
+        if (!("files" in $$source)) {
+            /**
+             * 该族的字重文件
+             * @member
+             * @type {FontFile[]}
+             */
+            this["files"] = [];
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new FontDef instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {FontDef}
+     */
+    static createFrom($$source = {}) {
+        const $$createField7_0 = $$createType3;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("files" in $$parsedSource) {
+            $$parsedSource["files"] = $$createField7_0($$parsedSource["files"]);
+        }
+        return new FontDef(/** @type {Partial<FontDef>} */($$parsedSource));
+    }
+}
+
+/**
+ * FontFile 单个字体文件（一个字重）。
+ */
+export class FontFile {
+    /**
+     * Creates a new FontFile instance.
+     * @param {Partial<FontFile>} [$$source = {}] - The source object to create the FontFile.
+     */
+    constructor($$source = {}) {
+        if (/** @type {any} */(false)) {
+            /**
+             * OTF 专用变体名，如 Regular / ConRegular / Bold
+             * @member
+             * @type {string | undefined}
+             */
+            this["style"] = undefined;
+        }
+        if (!("weight" in $$source)) {
+            /**
+             * 字重数值：300 / 400 / 500 / 700
+             * @member
+             * @type {number}
+             */
+            this["weight"] = 0;
+        }
+        if (!("format" in $$source)) {
+            /**
+             * ttf | otf
+             * @member
+             * @type {string}
+             */
+            this["format"] = "";
+        }
+        if (!("file" in $$source)) {
+            /**
+             * 文件 basename，配合 FontDef.URL 拼下载地址
+             * @member
+             * @type {string}
+             */
+            this["file"] = "";
+        }
+        if (!("size" in $$source)) {
+            /**
+             * 字节数
+             * @member
+             * @type {number}
+             */
+            this["size"] = 0;
+        }
+        if (!("sha256" in $$source)) {
+            /**
+             * 下载后校验用
+             * @member
+             * @type {string}
+             */
+            this["sha256"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new FontFile instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {FontFile}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new FontFile(/** @type {Partial<FontFile>} */($$parsedSource));
+    }
+}
+
+/**
  * ImportResult 导入结果统计。
  */
 export class ImportResult {
@@ -199,8 +412,8 @@ export class ImportResult {
      * @returns {ImportResult}
      */
     static createFrom($$source = {}) {
-        const $$createField3_0 = $$createType1;
-        const $$createField4_0 = $$createType3;
+        const $$createField3_0 = $$createType5;
+        const $$createField4_0 = $$createType7;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("newFeeds" in $$parsedSource) {
             $$parsedSource["newFeeds"] = $$createField3_0($$parsedSource["newFeeds"]);
@@ -481,7 +694,11 @@ export class WebDAVView {
 }
 
 // Private type creation functions
-const $$createType0 = NewFeed.createFrom;
+const $$createType0 = FontDef.createFrom;
 const $$createType1 = $Create.Array($$createType0);
-const $$createType2 = NewCategory.createFrom;
+const $$createType2 = FontFile.createFrom;
 const $$createType3 = $Create.Array($$createType2);
+const $$createType4 = NewFeed.createFrom;
+const $$createType5 = $Create.Array($$createType4);
+const $$createType6 = NewCategory.createFrom;
+const $$createType7 = $Create.Array($$createType6);

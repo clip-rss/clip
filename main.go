@@ -661,6 +661,7 @@ func main() {
 			application.NewService(opmlSvc),
 			application.NewService(opmlBackupSvc),
 			application.NewService(notifSvc),
+			application.NewService(api.NewFontService(ft.Client())),
 			application.NewService(dockService),
 		},
 	})

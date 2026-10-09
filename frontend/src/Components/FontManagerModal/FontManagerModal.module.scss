@@ -1,0 +1,177 @@
+@use '../../Styles/dialogTransition' as dialog;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 110;
+  @include dialog.overlay;
+}
+
+.content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  width: 480px;
+  max-width: 92vw;
+  max-height: 75vh;
+  border-radius: 12px;
+  background-color: var(--bg-primary);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  z-index: 111;
+  overflow: hidden;
+  @include dialog.content;
+}
+
+/* ===== 头部（与其它弹窗一致） ===== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  height: 56px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: default;
+
+  &:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+  }
+}
+
+/* ===== 列表 ===== */
+.list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background-color: var(--bg-secondary);
+  user-select: none;
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.cardName {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cardFamily {
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.chip {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.cardLicense {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* ===== 加载 / 失败 / 空态 ===== */
+.skeletonCard {
+  border-radius: 10px;
+}
+
+.failed {
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.failedText {
+  margin: 0;
+  font-size: 14px;
+  color: var(--danger);
+  font-style: italic;
+  text-align: center;
+}
+
+.retryBtn {
+  height: 30px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 13px;
+  transition: background-color 0.15s;
+
+  &:hover {
+    background-color: var(--bg-secondary);
+  }
+}
+
+.empty {
+  padding: 48px 24px;
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-style: italic;
+  user-select: none;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .content {
+    animation: none;
+  }
+}

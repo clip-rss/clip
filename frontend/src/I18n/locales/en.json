@@ -116,10 +116,12 @@
     "settings": {
       "title": "Reading Settings",
       "font": "Font",
+      "fontNew": "Font (Beta)",
       "fontSize": "Font Size",
       "lineHeight": "Line Height",
       "width": "Width",
-      "background": "Background"
+      "background": "Background",
+      "chooseFont": "Choose Font"
     },
     "font": {
       "sans": "Sans Serif",
@@ -211,6 +213,13 @@
         "5s": "5 sec",
         "off": "Off"
       }
+    },
+    "fonts": {
+      "title": "Font Library",
+      "loading": "Loading font catalog…",
+      "failed": "Failed to load font catalog",
+      "retry": "Retry",
+      "empty": "No fonts available"
     },
     "accessibility": {
       "title": "Accessibility",

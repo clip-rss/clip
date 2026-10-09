@@ -15,6 +15,7 @@ export {
   WebDAVConfigService,
   OPMLBackupService,
   SystemService,
+  FontService,
 } from '../../../bindings/github.com/clip-rss/clip/api'
 
 export { DockService } from '../../../bindings/github.com/wailsapp/wails/v3/pkg/services/dock'

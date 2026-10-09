@@ -45,6 +45,7 @@ import { usePlatform } from '../../Hooks'
 import type { Platform } from '../../Hooks'
 import { SegmentedControl, SettingRow, Toggle } from './Controls'
 import { InputNumber } from '../InputNumber'
+import { FontManagerModal } from '../FontManagerModal'
 import styles from './SettingsModal.module.scss'
 
 /* ============================ 通用 ============================ */
@@ -123,6 +124,7 @@ export function ReadingSection(): JSX.Element {
   const reader = useReaderStore()
   const settings = useSettingsStore((s) => s.settings)
   const update = useSettingsStore((s) => s.update)
+  const [fontManagerOpen, setFontManagerOpen] = useState(false)
 
   const fontOptions = [
     { value: 'sans' as ReaderFontFamily, label: t('reader.font.sans') },
@@ -164,6 +166,16 @@ export function ReadingSection(): JSX.Element {
           options={fontOptions}
           onChange={reader.setFontFamily}
         />
+      </SettingRow>
+      {/* 字体选择入口（Beta）：按钮唤起字体库管理弹窗 */}
+      <SettingRow label={t('reader.settings.fontNew')}>
+        <button
+          type="button"
+          className={styles.btn}
+          onClick={() => setFontManagerOpen(true)}
+        >
+          {t('reader.settings.chooseFont')}
+        </button>
       </SettingRow>
       <SettingRow label={t('reader.settings.fontSize')}>
         <InputNumber
@@ -208,6 +220,10 @@ export function ReadingSection(): JSX.Element {
           onChange={(v) => update({ autoMarkReadDelay: v })}
         />
       </SettingRow>
+      <FontManagerModal
+        open={fontManagerOpen}
+        onOpenChange={setFontManagerOpen}
+      />
     </div>
   )
 }

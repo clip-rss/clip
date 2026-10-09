@@ -20,6 +20,9 @@ export type {
   ConnectionTestResult,
   WebDAVView,
   WebDAVInput,
+  FontCatalog,
+  FontDef,
+  FontFile,
 } from '../../bindings/github.com/clip-rss/clip/api'
 
 export type {

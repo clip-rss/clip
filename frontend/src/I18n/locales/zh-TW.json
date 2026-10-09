@@ -116,10 +116,12 @@
     "settings": {
       "title": "閱讀設定",
       "font": "字型",
+      "fontNew": "字型（Beta）",
       "fontSize": "字号",
       "lineHeight": "行高",
       "width": "宽度",
-      "background": "閱讀背景"
+      "background": "閱讀背景",
+      "chooseFont": "選擇字型"
     },
     "font": {
       "sans": "无衬线",
@@ -211,6 +213,13 @@
         "5s": "5 秒",
         "off": "關閉"
       }
+    },
+    "fonts": {
+      "title": "字型庫",
+      "loading": "正在載入字型目錄…",
+      "failed": "字型目錄載入失敗",
+      "retry": "重試",
+      "empty": "暫無可用字型"
     },
     "accessibility": {
       "title": "無障礙",
