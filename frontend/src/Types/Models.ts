@@ -31,3 +31,8 @@ export type {
   BackupInfo as OPMLBackupInfo,
   ImportResult as OPMLImportResult,
 } from '../../bindings/github.com/clip-rss/clip/internal/opmlbackup'
+
+export type {
+  Installed as InstalledFont,
+  InstalledFile as InstalledFontFile,
+} from '../../bindings/github.com/clip-rss/clip/internal/fonts'

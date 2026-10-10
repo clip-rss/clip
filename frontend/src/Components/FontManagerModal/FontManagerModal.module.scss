@@ -157,12 +157,56 @@
     color: var(--text-secondary);
   }
 
-  &[data-status='done'] {
-    color: var(--text-secondary);
-  }
-
   &[data-status='failed'] {
     color: var(--danger);
+  }
+}
+
+/* 已下载卡片的操作区：状态文字 + 删除按钮 */
+.downloadActions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.installedLabel {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.deleteBtn {
+  flex: 0 0 auto;
+  height: 26px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--bg-primary);
+  color: var(--danger);
+  font-size: 12px;
+  transition: background-color 0.15s;
+
+  &:hover:not(:disabled) {
+    background-color: var(--bg-tertiary);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    color: var(--text-secondary);
+    opacity: 0.6;
+  }
+
+  /* 待确认态：红边实心强调，提示下一次点击就是真正的删除。 */
+  &[data-status='confirm'] {
+    border-color: var(--danger);
+    background-color: var(--danger);
+    color: var(--bg-primary);
+    font-weight: 600;
+
+    &:hover:not(:disabled) {
+      background-color: var(--bg-tertiary);
+      color: var(--danger);
+    }
   }
 }
 

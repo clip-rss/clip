@@ -65,7 +65,7 @@ type FontService struct {
 	fetch      *fetcher.Client
 	dl         *http.Client
 	catalogURL string
-	// fontDir 覆盖落盘目录，仅测试用；空值时用 fonts.Dir()。
+	// fontDir 覆盖字体根目录，仅测试用；空值时用 fonts.Dir()。
 	fontDir string
 }
 
@@ -97,8 +97,8 @@ func (s *FontService) FetchFontCatalog() (*FontCatalog, error) {
 // FontDownloadProgressEvent 是字体下载进度事件名，前端 Events.ts 里有一份同名镜像。
 const FontDownloadProgressEvent = "fonts:download:progress"
 
-// DownloadFont 把指定字体族的全部字重下载到本地字体目录并逐个校验 SHA256。
-// 已存在且校验通过的文件跳过，因此重复调用不会重下。
+// DownloadFont 把指定字体族的全部字重下载到本地字体目录的 <id>/ 子目录下
+// （按字体族分目录）并逐个校验 SHA256。已存在且校验通过的文件跳过，重复调用不会重下。
 //
 // 目录现取现用、不缓存：清单可能随 release 更新，缓存会让「装某款字体」和「看到它
 // 在列表里」的版本错位。进度按累计字节数推送 FontDownloadProgressEvent。
@@ -132,16 +132,42 @@ func (s *FontService) DownloadFont(id string) error {
 		})
 	}
 
-	dir := s.fontDir
-	if dir == "" {
-		if dir, err = fonts.Dir(); err != nil {
-			return err
-		}
+	dir, err := s.installDir()
+	if err != nil {
+		return err
 	}
 	app := application.Get()
-	return fonts.Download(context.Background(), s.dl, dir, files, func(done, total int64) {
+	return fonts.Download(context.Background(), s.dl, dir, def.ID, files, func(done, total int64) {
 		emitFontProgress(app, id, done, total)
 	})
+}
+
+// installDir 返回字体根目录：测试注入的 fontDir 优先，否则用 fonts.Dir()。
+func (s *FontService) installDir() (string, error) {
+	if s.fontDir != "" {
+		return s.fontDir, nil
+	}
+	return fonts.Dir()
+}
+
+// ListInstalledFonts 扫描本地字体根目录，返回已安装的字体族清单（含每个文件的
+// 名字与大小，以及整族体积）。清单由目录扫描得出，无安装元数据。
+func (s *FontService) ListInstalledFonts() ([]fonts.Installed, error) {
+	dir, err := s.installDir()
+	if err != nil {
+		return nil, err
+	}
+	return fonts.List(dir)
+}
+
+// DeleteFont 删除指定字体族的整目录（卸载）。目标不存在时返回 nil（幂等）。
+// id 来自远端清单，路径安全校验在 fonts.Remove 内完成。
+func (s *FontService) DeleteFont(id string) error {
+	dir, err := s.installDir()
+	if err != nil {
+		return err
+	}
+	return fonts.Remove(dir, id)
 }
 
 // assetName 取清单里 files[].file 的裸文件名。

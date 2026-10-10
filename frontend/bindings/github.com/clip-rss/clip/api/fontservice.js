@@ -13,11 +13,25 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as fonts$0 from "../internal/fonts/models.js";
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as $models from "./models.js";
 
 /**
- * DownloadFont 把指定字体族的全部字重下载到本地字体目录并逐个校验 SHA256。
- * 已存在且校验通过的文件跳过，因此重复调用不会重下。
+ * DeleteFont 删除指定字体族的整目录（卸载）。目标不存在时返回 nil（幂等）。
+ * id 来自远端清单，路径安全校验在 fonts.Remove 内完成。
+ * @param {string} id
+ * @returns {$CancellablePromise<void>}
+ */
+export function DeleteFont(id) {
+    return $Call.ByID(2336077335, id);
+}
+
+/**
+ * DownloadFont 把指定字体族的全部字重下载到本地字体目录的 <id>/ 子目录下
+ * （按字体族分目录）并逐个校验 SHA256。已存在且校验通过的文件跳过，重复调用不会重下。
  * 
  * 目录现取现用、不缓存：清单可能随 release 更新，缓存会让「装某款字体」和「看到它
  * 在列表里」的版本错位。进度按累计字节数推送 FontDownloadProgressEvent。
@@ -38,6 +52,19 @@ export function FetchFontCatalog() {
     }));
 }
 
+/**
+ * ListInstalledFonts 扫描本地字体根目录，返回已安装的字体族清单（含每个文件的
+ * 名字与大小，以及整族体积）。清单由目录扫描得出，无安装元数据。
+ * @returns {$CancellablePromise<fonts$0.Installed[]>}
+ */
+export function ListInstalledFonts() {
+    return $Call.ByID(266725141).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType3($result);
+    }));
+}
+
 // Private type creation functions
 const $$createType0 = $models.FontCatalog.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);
+const $$createType2 = fonts$0.Installed.createFrom;
+const $$createType3 = $Create.Array($$createType2);

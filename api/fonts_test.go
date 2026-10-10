@@ -195,12 +195,79 @@ func TestDownloadFontUsesFlatAssetNames(t *testing.T) {
 	if prefixedHit != 0 {
 		t.Errorf("prefixed asset path was requested %d times, want 0", prefixedHit)
 	}
-	got, err := os.ReadFile(filepath.Join(dir, "LXGWWenKai-Regular.ttf"))
+	// 阶段 A：落盘在 <root>/<id>/<file>，不再是扁平散放。
+	got, err := os.ReadFile(filepath.Join(dir, "lxgw-wenkai", "LXGWWenKai-Regular.ttf"))
 	if err != nil {
 		t.Fatalf("read downloaded font: %v", err)
 	}
 	if string(got) != string(body) {
 		t.Fatalf("content mismatch: got %q", got)
+	}
+}
+
+// 端到端：下载后 ListInstalledFonts 能看到该族；DeleteFont 后消失。
+// List 的结果要可供前端卡片展示：id、文件名、总大小都不缺。
+func TestListAndDeleteInstalledFonts(t *testing.T) {
+	body := []byte("LXGW WenKai Regular")
+	sum := sha256.Sum256(body)
+	var srv *httptest.Server
+	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/manifest.json":
+			_, _ = fmt.Fprintf(w, `{"version":1,"release":"fonts-v1","fonts":[{
+				"id":"lxgw-wenkai","name":"霞鹜文楷","family":"LXGW WenKai","version":"1.522",
+				"license":"SIL OFL 1.1","licenseFile":"lxgw-wenkai/OFL.txt",
+				"url":"%s/releases/latest/download",
+				"files":[{"weight":400,"format":"ttf","file":"lxgw-wenkai/LXGWWenKai-Regular.ttf",
+					"size":%d,"sha256":"%x"}]}]}`, srv.URL, len(body), sum)
+		case "/releases/latest/download/LXGWWenKai-Regular.ttf":
+			_, _ = w.Write(body)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	dir := t.TempDir()
+	client := fetcher.NewClient(fetcher.WithHTTPClient(srv.Client()))
+	svc := &FontService{fetch: client, dl: srv.Client(), catalogURL: srv.URL + "/manifest.json", fontDir: dir}
+
+	if err := svc.DownloadFont("lxgw-wenkai"); err != nil {
+		t.Fatalf("DownloadFont: %v", err)
+	}
+
+	installed, err := svc.ListInstalledFonts()
+	if err != nil {
+		t.Fatalf("ListInstalledFonts: %v", err)
+	}
+	if len(installed) != 1 || installed[0].ID != "lxgw-wenkai" {
+		t.Fatalf("installed = %+v, want exactly one lxgw-wenkai", installed)
+	}
+	if len(installed[0].Files) != 1 || installed[0].Files[0].Name != "LXGWWenKai-Regular.ttf" {
+		t.Fatalf("installed files = %+v, want the regular weight", installed[0].Files)
+	}
+	if installed[0].TotalSize != int64(len(body)) {
+		t.Fatalf("total size = %d, want %d", installed[0].TotalSize, len(body))
+	}
+
+	// 删除后清单应回到空。
+	if err := svc.DeleteFont("lxgw-wenkai"); err != nil {
+		t.Fatalf("DeleteFont: %v", err)
+	}
+	after, err := svc.ListInstalledFonts()
+	if err != nil {
+		t.Fatalf("ListInstalledFonts after delete: %v", err)
+	}
+	if len(after) != 0 {
+		t.Fatalf("installed after delete = %+v, want empty", after)
+	}
+}
+
+// 删除不存在的族幂等返回 nil —— 前端重复点击不会报错。
+func TestDeleteFontUnknownIsIdempotent(t *testing.T) {
+	svc := &FontService{fontDir: t.TempDir()}
+	if err := svc.DeleteFont("nope"); err != nil {
+		t.Fatalf("DeleteFont unknown: %v", err)
 	}
 }
 

@@ -21,6 +21,8 @@ export type {
   FontCatalog,
   FontDef,
   FontFile,
+  InstalledFont,
+  InstalledFontFile,
   OPMLBackupConfig,
   OPMLBackupStatus,
   OPMLBackupInfo,

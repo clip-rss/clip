@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/clip-rss/clip/internal/updatesrc"
@@ -50,13 +51,22 @@ func Dir() (string, error) {
 	return dir, nil
 }
 
-// Download 把 files 依次下载到 dir。已存在且校验通过的文件跳过，其余逐个
-// 「下载到临时文件 → 校验 → 原子改名」，中途失败不会在目录里留下半个文件。
+// Download 把 files 依次下载到 <dir>/<family>。family 是按字体族分目录的稳定目录名
+// （用清单里的 id，不用字族显示名 —— 后者含空格与大写，且与 id 非一一对应）。
+// 已存在且校验通过的文件跳过，其余逐个「下载到临时文件 → 校验 → 原子改名」，
+// 中途失败不会在目录里留下半个文件。
 //
 // onProgress 报告的是**跨文件累计**已写字节数与总量（总量未知时为 0），可为 nil。
-func Download(ctx context.Context, client *http.Client, dir string, files []File, onProgress func(done, total int64)) error {
+func Download(ctx context.Context, client *http.Client, dir, family string, files []File, onProgress func(done, total int64)) error {
+	if !validName(family) {
+		return fmt.Errorf("fonts: invalid family name %q", family)
+	}
 	if len(files) == 0 {
 		return fmt.Errorf("fonts: no files to download")
+	}
+	familyDir := filepath.Join(dir, family)
+	if err := os.MkdirAll(familyDir, 0o755); err != nil {
+		return fmt.Errorf("fonts: create family dir: %w", err)
 	}
 	total := int64(0)
 	for _, f := range files {
@@ -72,11 +82,10 @@ func Download(ctx context.Context, client *http.Client, dir string, files []File
 		}
 		// 文件名必须是裸名。不能只靠 filepath.Base 判定：它在 macOS/Linux 上不把 `\`
 		// 当分隔符，`sub\a.ttf` 会原样返回，而在 Windows 上那是一个真实路径。
-		if f.Name == "" || f.Name != filepath.Base(f.Name) || strings.ContainsAny(f.Name, `/\`) ||
-			f.Name == "." || f.Name == ".." {
+		if !validName(f.Name) {
 			return fmt.Errorf("fonts: invalid file name %q", f.Name)
 		}
-		target := filepath.Join(dir, f.Name)
+		target := filepath.Join(familyDir, f.Name)
 
 		// 已下载且校验通过：跳过。这让「重试安装」不必重下 80 MB。
 		if verify(target, f) == nil {
@@ -85,7 +94,7 @@ func Download(ctx context.Context, client *http.Client, dir string, files []File
 			continue
 		}
 
-		if err := downloadOne(ctx, client, dir, target, f, func(written int64) {
+		if err := downloadOne(ctx, client, familyDir, target, f, func(written int64) {
 			reportProgress(onProgress, base+written, total)
 		}); err != nil {
 			return err
@@ -186,4 +195,96 @@ func reportProgress(onProgress func(done, total int64), done, total int64) {
 	if onProgress != nil {
 		onProgress(done, total)
 	}
+}
+
+// validName 校验族目录名与文件名：必须是单段裸名，挡 `..`、路径分隔符与绝对路径。
+// 族 id 与文件名都来自远端清单，download / list / remove 三个入口共用这一关。
+// 不能用 filepath.Base 单独判定：它在 macOS/Linux 上不把 `\` 当分隔符，
+// `sub\a.ttf` 会原样返回，而在 Windows 上那是一个真实路径。
+func validName(name string) bool {
+	if name == "" || name != filepath.Base(name) || strings.ContainsAny(name, `/\`) ||
+		name == "." || name == ".." {
+		return false
+	}
+	return true
+}
+
+// InstalledFile 已安装字体族里的单个文件。
+type InstalledFile struct {
+	Name string `json:"name"`
+	Size int64  `json:"size"`
+}
+
+// Installed 已安装的一个字体族。安装清单靠扫描目录得出，不落安装元数据：
+// 删目录即卸载，无状态、无迁移；代价是无法显示「有新版本可升级」，本次不做。
+type Installed struct {
+	ID        string          `json:"id"`
+	Files     []InstalledFile `json:"files"`
+	TotalSize int64           `json:"totalSize"`
+}
+
+// List 扫描 <dir> 的一级子目录，把每个目录当作一个已安装字体族。
+// 只统计通过 validName 校验的目录名；<dir> 下的散文件（旧扁平布局残留）忽略。
+// 结果按 ID 排序保证稳定。目录不存在时返回空列表（等价于「什么都没装」）。
+func List(dir string) ([]Installed, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("fonts: scan %s: %w", dir, err)
+	}
+	var out []Installed
+	for _, e := range entries {
+		if !e.IsDir() || !validName(e.Name()) {
+			continue
+		}
+		files, err := os.ReadDir(filepath.Join(dir, e.Name()))
+		if err != nil {
+			return nil, fmt.Errorf("fonts: scan %s: %w", e.Name(), err)
+		}
+		inst := Installed{ID: e.Name()}
+		for _, fe := range files {
+			if fe.IsDir() || !validName(fe.Name()) {
+				continue // 只统计合法裸文件，防远端清单之外的奇怪名字混进清单
+			}
+			info, err := fe.Info()
+			if err != nil {
+				return nil, fmt.Errorf("fonts: stat %s: %w", fe.Name(), err)
+			}
+			inst.Files = append(inst.Files, InstalledFile{Name: fe.Name(), Size: info.Size()})
+			inst.TotalSize += info.Size()
+		}
+		out = append(out, inst)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
+// Remove 删除指定字体族目录及其全部文件，亦即「卸载」。目标不存在时返回 nil（幂等）。
+func Remove(dir, id string) error {
+	if !validName(id) {
+		return fmt.Errorf("fonts: invalid family name %q", id)
+	}
+	target := filepath.Join(dir, id)
+	// 单段 id 经 Join 不可能逃逸 dir，仍显式确认一遍：RemoveAll 是破坏性操作，
+	// 双保险确认最终路径仍在 dir 之内。
+	rel, err := filepath.Rel(dir, target)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+		return fmt.Errorf("fonts: unsafe family path %q", id)
+	}
+	info, err := os.Lstat(target)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("fonts: stat %s: %w", id, err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("fonts: %s is not a directory", id)
+	}
+	if err := os.RemoveAll(target); err != nil {
+		return fmt.Errorf("fonts: remove %s: %w", id, err)
+	}
+	return nil
 }

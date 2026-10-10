@@ -224,7 +224,12 @@
       "downloading": "Downloading {{percent}}%",
       "downloadingIndeterminate": "Downloading…",
       "downloaded": "Downloaded",
-      "downloadFailed": "Download failed, click to retry"
+      "downloadFailed": "Download failed, click to retry",
+      "delete": "Delete",
+      "deleting": "Deleting…",
+      "deleteConfirm": "Confirm delete",
+      "deleted": "Font deleted",
+      "reverted": "This font was in use; the reader has reverted to the preset font"
     },
     "accessibility": {
       "title": "Accessibility",

@@ -224,7 +224,12 @@
       "downloading": "下載中 {{percent}}%",
       "downloadingIndeterminate": "下載中…",
       "downloaded": "已下載",
-      "downloadFailed": "下載失敗，點擊重試"
+      "downloadFailed": "下載失敗，點擊重試",
+      "delete": "刪除",
+      "deleting": "刪除中…",
+      "deleteConfirm": "確認刪除",
+      "deleted": "已刪除字型",
+      "reverted": "該字型正在使用，已回落到預設字型"
     },
     "accessibility": {
       "title": "無障礙",

@@ -224,7 +224,12 @@
       "downloading": "下载中 {{percent}}%",
       "downloadingIndeterminate": "下载中…",
       "downloaded": "已下载",
-      "downloadFailed": "下载失败，点击重试"
+      "downloadFailed": "下载失败，点击重试",
+      "delete": "删除",
+      "deleting": "删除中…",
+      "deleteConfirm": "确认删除",
+      "deleted": "已删除字体",
+      "reverted": "该字体正在使用，已回落到预设字体"
     },
     "accessibility": {
       "title": "无障碍",
