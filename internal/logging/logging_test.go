@@ -304,13 +304,30 @@ func TestLineTaggerMovesShortFilePrefix(t *testing.T) {
 	}
 }
 
-// TestInitEndToEnd 用临时 AppData 跑真实 Init 流程：连续多次「启动 + 关闭」后目录始终
+// tempLogsDir 把 os.UserConfigDir() 重定向到 t.TempDir() 下，并返回本次的日志目录。
+//
+// 三个平台读的变量不同：Windows 读 %AppData%，darwin 读 $HOME（再拼
+// Library/Application Support），linux 读 $XDG_CONFIG_HOME、退到 $HOME/.config。
+// 只设 AppData 在 macOS 上是死代码——os.UserConfigDir() 照旧返回真实配置目录，
+// 测试便去读一个不存在、也不属于本次运行的路径。
+func tempLogsDir(t *testing.T) string {
+	t.Helper()
+	base := t.TempDir()
+	t.Setenv("AppData", base)
+	t.Setenv("XDG_CONFIG_HOME", base)
+	t.Setenv("HOME", base)
+	cfg, err := os.UserConfigDir()
+	if err != nil {
+		t.Fatalf("UserConfigDir: %v", err)
+	}
+	return filepath.Join(cfg, "clip", dirName)
+}
+
+// TestInitEndToEnd 用临时配置目录跑真实 Init 流程：连续多次「启动 + 关闭」后目录始终
 // 不超过 maxLogFiles 个会话文件，且每份文件都写入符合行格式的会话头。这里刻意不做
 // 文件名的顺序断言——同秒内的快速重启会复用带序号的命名，保留逻辑看的是 mtime。
 func TestInitEndToEnd(t *testing.T) {
-	config := t.TempDir()
-	t.Setenv("AppData", config)
-	dir := filepath.Join(config, "clip", dirName)
+	dir := tempLogsDir(t)
 
 	sessionFiles := func() []string {
 		entries, err := os.ReadDir(dir)
