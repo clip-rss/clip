@@ -50,6 +50,7 @@ export type { ArticleFilter, ArticleSort } from './Article'
 // 阅读视图类型
 export type {
   ReaderFontFamily,
+  ReaderFontPreset,
   ReaderFontSize,
   ReaderLineHeight,
   ReaderWidth,
@@ -57,3 +58,4 @@ export type {
   ReaderPrefs,
   FocusReaderPrefs,
 } from './Reader'
+export { READER_FONT_PRESETS } from './Reader'

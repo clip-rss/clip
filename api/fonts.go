@@ -170,6 +170,25 @@ func (s *FontService) DeleteFont(id string) error {
 	return fonts.Remove(dir, id)
 }
 
+// OpenFontDirectory 在系统文件管理器中打开指定字体族的安装目录
+// （<fontsDir>/<id>）。路径的唯一定义在后端（同 OpenLogDir 的既有原则），
+// 前端不重复拼接；打开交给系统默认的文件管理器（Explorer / Finder / xdg-open）。
+func (s *FontService) OpenFontDirectory(id string) error {
+	dir, err := s.installDir()
+	if err != nil {
+		return err
+	}
+	target, err := fonts.FamilyDir(dir, id)
+	if err != nil {
+		return err
+	}
+	app := application.Get()
+	if app == nil {
+		return fmt.Errorf("fonts: app not initialized, cannot open directory")
+	}
+	return app.Browser.OpenFile(target)
+}
+
 // assetName 取清单里 files[].file 的裸文件名。
 //
 // release 清单写的是带目录前缀的仓库内路径（lxgw-wenkai/LXGWWenKai-Regular.ttf），

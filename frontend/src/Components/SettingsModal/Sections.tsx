@@ -36,12 +36,11 @@ import type {
   FeedWithUnread,
   ImportResult,
   ReaderBackground,
-  ReaderFontFamily,
   ReaderLineHeight,
   ReaderWidth,
   ThemePreference,
 } from '../../Types'
-import { usePlatform } from '../../Hooks'
+import { usePlatform, useReaderFontOptions } from '../../Hooks'
 import type { Platform } from '../../Hooks'
 import { SegmentedControl, SettingRow, Toggle } from './Controls'
 import { InputNumber } from '../InputNumber'
@@ -126,11 +125,10 @@ export function ReadingSection(): JSX.Element {
   const update = useSettingsStore((s) => s.update)
   const [fontManagerOpen, setFontManagerOpen] = useState(false)
 
-  const fontOptions = [
-    { value: 'sans' as ReaderFontFamily, label: t('reader.font.sans') },
-    { value: 'serif' as ReaderFontFamily, label: t('reader.font.serif') },
-    { value: 'mono' as ReaderFontFamily, label: t('reader.font.mono') },
-  ]
+  // 字体选项走共享 builder：预设三档 + 已下载（与工具栏菜单同一份）。
+  const fontOptions = useReaderFontOptions()
+  const presetFonts = fontOptions.filter((o) => o.group === 'preset')
+  const downloadedFonts = fontOptions.filter((o) => o.group === 'downloaded')
   const lineOptions = [
     { value: 1.5 as ReaderLineHeight, label: t('reader.lineHeight.compact') },
     { value: 1.8 as ReaderLineHeight, label: t('reader.lineHeight.moderate') },
@@ -161,11 +159,29 @@ export function ReadingSection(): JSX.Element {
     <div>
       <h3 className={styles.sectionTitle}>{t('settings.tabs.reading')}</h3>
       <SettingRow label={t('reader.settings.font')}>
-        <SegmentedControl
+        {/* 静态三档装不下 N 款已装字体，改下拉：预设 / 已下载分组（阶段 D）。 */}
+        <select
+          className={styles.select}
           value={reader.fontFamily}
-          options={fontOptions}
-          onChange={reader.setFontFamily}
-        />
+          onChange={(e) => reader.setFontFamily(e.target.value)}
+        >
+          <optgroup label={t('reader.font.presetGroup')}>
+            {presetFonts.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </optgroup>
+          {downloadedFonts.length ? (
+            <optgroup label={t('reader.font.downloadedGroup')}>
+              {downloadedFonts.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </optgroup>
+          ) : null}
+        </select>
       </SettingRow>
       {/* 字体选择入口（Beta）：按钮唤起字体库管理弹窗 */}
       <SettingRow label={t('reader.settings.fontNew')}>

@@ -1,15 +1,16 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import * as Dialog from '@radix-ui/react-dialog'
 import Skeleton from '../Skeleton/Skeleton'
 import {
   FontService,
   onFontDownloadProgress,
+  openURL,
   showToast,
   toApiError,
 } from '../../Utils'
-import { useReaderStore, useSettingsStore } from '../../Stores'
-import type { FontCatalog, FontDef, InstalledFont } from '../../Types'
+import { useFocusReaderStore, useFontStore, useReaderStore } from '../../Stores'
+import type { FontDef } from '../../Types'
 import styles from './FontManagerModal.module.scss'
 
 interface FontManagerModalProps {
@@ -30,6 +31,12 @@ interface DownloadState {
 /** 字节 → 「x.x MB」。 */
 function formatMB(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+/** 许可证外链：licenseFile 是**仓库内相对路径**（如 lxgw-wenkai/OFL.txt），
+ *  不是 release 资产名，不能做 basename 归一化。 */
+function licenseURL(font: FontDef): string {
+  return `https://github.com/clip-rss/clip-font/blob/main/${font.licenseFile}`
 }
 
 function CloseIcon(): JSX.Element {
@@ -59,8 +66,10 @@ function FontCard(props: {
   state?: DownloadState
   onDownload: (id: string) => void
   onDelete: (id: string) => void
+  onOpenDir: (id: string) => void
 }): JSX.Element {
-  const { font, installed, deleting, state, onDownload, onDelete } = props
+  const { font, installed, deleting, state, onDownload, onDelete, onOpenDir } =
+    props
   const { t } = useTranslation()
   const totalBytes = font.files.reduce((sum, f) => sum + f.size, 0)
 
@@ -73,24 +82,11 @@ function FontCard(props: {
     label = t('settings.fonts.downloadFailed')
   }
 
-  // 内联两段式删除：第一次点击进入「确认删除」待命态，3 秒不操作自动复位，
-  // 再点一次才真正删除。体感等同连点两次，免弹窗。
-  const [armed, setArmed] = useState(false)
-  useEffect(() => {
-    if (!armed) return
-    const timer = window.setTimeout(() => setArmed(false), 3000)
-    return () => window.clearTimeout(timer)
-  }, [armed])
+  const [confirming, setConfirming] = useState(false)
 
-  const deleteLabel = deleting
-    ? t('settings.fonts.deleting')
-    : armed
-      ? t('settings.fonts.deleteConfirm')
-      : t('settings.fonts.delete')
-
-  function handleDelete(): void {
-    if (armed) onDelete(font.id)
-    else setArmed(true)
+  function confirmDelete(): void {
+    setConfirming(false)
+    onDelete(font.id)
   }
 
   return (
@@ -100,33 +96,74 @@ function FontCard(props: {
         <span className={styles.cardFamily}>{font.family}</span>
       </div>
       <div className={styles.cardMeta}>
-        {font.files.map((f) => (
-          <span key={f.file} className={styles.chip}>
-            {f.style || String(f.weight)}
-          </span>
-        ))}
         <span className={styles.chip}>{font.files[0]?.format ?? ''}</span>
         <span className={styles.chip}>{formatMB(totalBytes)}</span>
       </div>
       <div className={styles.cardFoot}>
-        <span className={styles.cardLicense}>{font.license}</span>
+        {font.licenseFile ? (
+          <button
+            type="button"
+            className={styles.licenseLink}
+            title={font.license}
+            aria-label={font.license}
+            onClick={() => openURL(licenseURL(font))}
+          >
+            {font.license}
+          </button>
+        ) : (
+          <span className={styles.cardLicense}>{font.license}</span>
+        )}
         {installed ? (
-          <div className={styles.downloadActions}>
-            <span className={styles.installedLabel}>
-              {t('settings.fonts.downloaded')}
-            </span>
-            <button
-              type="button"
-              className={styles.deleteBtn}
-              data-status={armed ? 'confirm' : 'idle'}
-              disabled={deleting}
-              title={deleteLabel}
-              aria-label={deleteLabel}
-              onClick={handleDelete}
-            >
-              {deleteLabel}
-            </button>
-          </div>
+          confirming ? (
+            <div className={styles.btnGroup}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnDanger}`}
+                disabled={deleting}
+                title={t('settings.fonts.deleteConfirm')}
+                aria-label={t('settings.fonts.deleteConfirm')}
+                onClick={confirmDelete}
+              >
+                {t('settings.fonts.deleteConfirm')}
+              </button>
+              <button
+                type="button"
+                className={styles.btn}
+                title={t('confirm.cancel')}
+                aria-label={t('confirm.cancel')}
+                onClick={() => setConfirming(false)}
+              >
+                {t('confirm.cancel')}
+              </button>
+            </div>
+          ) : (
+            <div className={styles.downloadActions}>
+              <span className={styles.installedLabel}>
+                {t('settings.fonts.downloaded')}
+              </span>
+              <button
+                type="button"
+                className={styles.btn}
+                title={t('settings.fonts.openDir')}
+                aria-label={t('settings.fonts.openDir')}
+                onClick={() => onOpenDir(font.id)}
+              >
+                {t('settings.fonts.openDir')}
+              </button>
+              <button
+                type="button"
+                className={styles.btn}
+                disabled={deleting}
+                title={t('settings.fonts.delete')}
+                aria-label={t('settings.fonts.delete')}
+                onClick={() => setConfirming(true)}
+              >
+                {deleting
+                  ? t('settings.fonts.deleting')
+                  : `${t('settings.fonts.delete')}…`}
+              </button>
+            </div>
+          )
         ) : (
           <button
             type="button"
@@ -148,38 +185,30 @@ function FontCard(props: {
 export function FontManagerModal(props: FontManagerModalProps): JSX.Element {
   const { t } = useTranslation()
   const { open, onOpenChange } = props
-  const [catalog, setCatalog] = useState<FontCatalog | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [failed, setFailed] = useState(false)
+  // 目录与已装清单来自共享 FontStore：@font-face 注入、阅读器选择器分组与这里
+  // 共用同一份，避免各处各拉一次、状态漂移。
+  const catalog = useFontStore((s) => s.catalog)
+  const catalogFailed = useFontStore((s) => s.catalogFailed)
+  const refreshing = useFontStore((s) => s.refreshing)
+  const installed = useFontStore((s) => s.installed)
+  const refresh = useFontStore((s) => s.refresh)
   const [downloads, setDownloads] = useState<Record<string, DownloadState>>({})
-  // 已装字体 id 集合——来自后端的真实跨会话清单，不是本会话临时加工。
-  const [installed, setInstalled] = useState<Set<string>>(new Set())
   // 正在删除的字体 id：删除请求进行中，禁用该卡片的删除按钮。
   const [deleting, setDeleting] = useState<string | null>(null)
 
-  // 每次打开都重新拉取：字体目录可能随版本更新，不缓存到关闭；已装清单同样重取，
-  // 覆盖「别的会话/外部文件变更后」的状态漂移。
-  const load = useCallback((): void => {
-    setLoading(true)
-    setFailed(false)
-    setCatalog(null)
-    // 下载态一并清空：后端对已校验通过的文件会跳过，重开面板再点也不会重下。
-    setDownloads({})
-    FontService.FetchFontCatalog()
-      .then((cat) => setCatalog(cat))
-      .catch(() => setFailed(true))
-      .finally(() => setLoading(false))
-    // 已装清单失败不阻塞面板——最坏是「已下载」标不出来，目录本身还能看。
-    FontService.ListInstalledFonts()
-      .then((list: InstalledFont[]) =>
-        setInstalled(new Set(list.map((f) => f.id))),
-      )
-      .catch(() => {})
-  }, [])
+  const installedIds = useMemo(
+    () => new Set(installed.map((f) => f.id)),
+    [installed],
+  )
 
+  // 每次打开都重新拉取：字体目录可能随版本更新，不缓存到关闭；已装清单同样重取，
+  // 覆盖「别的会话/外部文件变更后」的状态漂移。下载态一并清空——后端对已校验通过
+  // 的文件会跳过，重开面板再点也不会重下。
   useEffect(() => {
-    if (open) load()
-  }, [open, load])
+    if (!open) return
+    setDownloads({})
+    void refresh()
+  }, [open, refresh])
 
   // 进度事件按 id 分发；只保留在下载中的那一条，避免完成后的迟到事件把状态改回去。
   useEffect(() => {
@@ -206,8 +235,8 @@ export function FontManagerModal(props: FontManagerModalProps): JSX.Element {
     }))
     try {
       await FontService.DownloadFont(id)
-      // 成功后即视为已装：文件已落盘且逐个 SHA256 通过，无需再回查一遍清单。
-      setInstalled((prev) => new Set(prev).add(id))
+      // 成功后刷新共享清单：文件已落盘且逐个 SHA256 通过，以磁盘扫描结果为准。
+      void refresh()
       setDownloads((prev) => {
         const next = { ...prev }
         delete next[id]
@@ -222,25 +251,35 @@ export function FontManagerModal(props: FontManagerModalProps): JSX.Element {
     }
   }
 
-  /** 卸载字体，成功后从已装清单移除；若删的正是当前使用的字体则回落预设并写回。 */
+  /** 在系统文件管理器中打开该字体的安装目录。失败多半是目录被挪走/删除，改为报错提示。 */
+  async function openDir(id: string): Promise<void> {
+    try {
+      await FontService.OpenFontDirectory(id)
+    } catch (e) {
+      showToast(toApiError(e), 'error')
+    }
+  }
+
+  /** 卸载字体；若删的正是当前使用的字体（阅读视图或专注模式）则回落预设并写回后端。 */
   async function deleteFont(id: string): Promise<void> {
     setDeleting(id)
     try {
       await FontService.DeleteFont(id)
-      setInstalled((prev) => {
-        const next = new Set(prev)
-        next.delete(id)
-        return next
-      })
-      if (useSettingsStore.getState().settings?.readerFontFamily === id) {
-        // 删的正是当前使用的字体：回落到预设并**写回后端**（用户偏好确实变了）。
-        // 目前字体 id 还不是合法 fontFamily 值（阶段 C 才动态化白名单），但后端字段
-        // 是宽 string，这里防御性兜底，阶段 C 之后自动生效。
+      void refresh()
+      // 使用中的字体必须回落：两套偏好各自独立，逐套检查。这里**写回后端**（用户偏好
+      // 确实变了），与阶段 C「清单变化后重收窄不写回」是两件事，别混。
+      let fellBack = false
+      if (useReaderStore.getState().fontFamily === id) {
         useReaderStore.getState().setFontFamily('sans')
-        showToast(t('settings.fonts.reverted'))
-      } else {
-        showToast(t('settings.fonts.deleted'))
+        fellBack = true
       }
+      if (useFocusReaderStore.getState().fontFamily === id) {
+        useFocusReaderStore.getState().setFontFamily('sans')
+        fellBack = true
+      }
+      showToast(
+        fellBack ? t('settings.fonts.reverted') : t('settings.fonts.deleted'),
+      )
     } catch (e) {
       showToast(toApiError(e), 'error')
     } finally {
@@ -272,15 +311,19 @@ export function FontManagerModal(props: FontManagerModalProps): JSX.Element {
             </Dialog.Close>
           </header>
 
-          {loading ? (
+          {refreshing && !catalog ? (
             <div className={styles.list}>
               <Skeleton className={styles.skeletonCard} height={64} />
               <Skeleton className={styles.skeletonCard} height={64} />
             </div>
-          ) : failed ? (
+          ) : catalogFailed && !catalog ? (
             <div className={styles.failed}>
               <p className={styles.failedText}>{t('settings.fonts.failed')}</p>
-              <button type="button" className={styles.retryBtn} onClick={load}>
+              <button
+                type="button"
+                className={styles.retryBtn}
+                onClick={() => void refresh()}
+              >
                 {t('settings.fonts.retry')}
               </button>
             </div>
@@ -290,11 +333,12 @@ export function FontManagerModal(props: FontManagerModalProps): JSX.Element {
                 <FontCard
                   key={font.id}
                   font={font}
-                  installed={installed.has(font.id)}
+                  installed={installedIds.has(font.id)}
                   deleting={deleting === font.id}
                   state={downloads[font.id]}
                   onDownload={download}
                   onDelete={(id) => void deleteFont(id)}
+                  onOpenDir={(id) => void openDir(id)}
                 />
               ))}
             </div>

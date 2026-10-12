@@ -1,6 +1,12 @@
 // 阅读排版偏好 → CSS 取值映射（纯函数，便于测试）。
 
-import type { ReaderBackground, ReaderPrefs } from '../Types'
+import type {
+  ReaderBackground,
+  ReaderFontFamily,
+  ReaderFontPreset,
+  ReaderPrefs,
+} from '../Types'
+import { fontFaceFamily, isSafeFontSegment } from './fonts'
 
 /** 正文字号可选范围（px）。设置页的 InputNumber 与入站校验共用这一对边界。 */
 export const READER_FONT_SIZE_MIN = 10
@@ -25,10 +31,28 @@ export function normalizeFontSize(value: unknown, fallback: number): number {
   )
 }
 
-const FONT_FAMILY: Record<ReaderPrefs['fontFamily'], string> = {
+const FONT_FAMILY: Record<ReaderFontPreset, string> = {
   sans: 'var(--font-family)',
   serif: 'Georgia, "Times New Roman", "Songti SC", "Noto Serif CJK SC", serif',
   mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+}
+
+/**
+ * 字体取值 → CSS font-family。
+ *
+ * 预设三档走既有字体栈；已下载字体 id 用「合成家族名 + 无衬线兜底」——
+ * 自定义字体缺字时落回界面同一套 `--font-family`，而不是跳到衬线/等宽栈
+ * （下载的都是正文用中文字体，落到 Georgia 会非常突兀）。
+ * id 来自远端清单，进 CSS 前再走一次字符白名单；不合法的当作预设栈处理。
+ */
+export function cssFontFamily(fontFamily: ReaderFontFamily): string {
+  if (fontFamily in FONT_FAMILY) {
+    return FONT_FAMILY[fontFamily as ReaderFontPreset]
+  }
+  if (!isSafeFontSegment(fontFamily)) {
+    return FONT_FAMILY.sans
+  }
+  return `"${fontFaceFamily(fontFamily)}", var(--font-family)`
 }
 
 export interface ReaderContentStyle {
@@ -41,7 +65,7 @@ export interface ReaderContentStyle {
 /** 正文排版样式取值。 */
 export function readerContentStyle(prefs: ReaderPrefs): ReaderContentStyle {
   return {
-    fontFamily: FONT_FAMILY[prefs.fontFamily],
+    fontFamily: cssFontFamily(prefs.fontFamily),
     fontSize: `${prefs.fontSize}px`,
     lineHeight: String(prefs.lineHeight),
     maxWidth: prefs.width === 'full' ? '100%' : `${prefs.width}px`,

@@ -10,12 +10,18 @@ import {
   ToastContainer,
   Toolbar,
 } from './Components'
-import { useAppHotkeys, useDockBadge, useNotificationNavigation } from './Hooks'
+import {
+  useAppHotkeys,
+  useDockBadge,
+  useFontFaceCss,
+  useNotificationNavigation,
+} from './Hooks'
 import './I18n'
 import i18next from 'i18next'
 import {
   migrateLegacyPrefs,
   seedFocusPrefsFromReader,
+  useFontStore,
   useSettingsStore,
   useUpdateStore,
 } from './Stores'
@@ -25,6 +31,8 @@ import { Events } from '@wailsio/runtime'
 function App() {
   const [addOpen, setAddOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  // 已下载字体的 @font-face 规则（装了哪款注入哪款）。
+  const fontFaceCss = useFontFaceCss()
 
   function openAddFeed(): void {
     setAddOpen(true)
@@ -51,6 +59,10 @@ function App() {
       const lang = useSettingsStore.getState().settings?.language
       if (lang) i18next.changeLanguage(lang)
     })()
+
+    // 字体清单：启动时拉一次，让下载过的字体在阅读器里直接可用（也决定 @font-face
+    // 注入与动态白名单）。与上面那次设置加载并行，不互相阻塞。
+    void useFontStore.getState().refresh()
 
     // 监听更新可用事件
     const unsubscribe = Events.On('clip:update:available', () => {
@@ -122,6 +134,10 @@ function App() {
 
   return (
     <>
+      {/* 已下载字体的 @font-face（内容来自目录清单，已做字符白名单过滤）。 */}
+      {fontFaceCss ? (
+        <style dangerouslySetInnerHTML={{ __html: fontFaceCss }} />
+      ) : null}
       <Layout
         toolbar={
           <Toolbar onAddFeed={openAddFeed} onOpenSettings={openSettings} />

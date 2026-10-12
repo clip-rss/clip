@@ -126,7 +126,9 @@
     "font": {
       "sans": "Sans Serif",
       "serif": "Serif",
-      "mono": "Monospace"
+      "mono": "Monospace",
+      "presetGroup": "Preset",
+      "downloadedGroup": "Downloaded"
     },
     "lineHeight": {
       "compact": "Compact",
@@ -224,6 +226,7 @@
       "downloading": "Downloading {{percent}}%",
       "downloadingIndeterminate": "Downloading…",
       "downloaded": "Downloaded",
+      "openDir": "Open font folder",
       "downloadFailed": "Download failed, click to retry",
       "delete": "Delete",
       "deleting": "Deleting…",

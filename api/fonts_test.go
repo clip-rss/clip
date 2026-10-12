@@ -281,3 +281,33 @@ func TestDownloadFontUnknownID(t *testing.T) {
 		t.Fatal("expected error for unknown font id, got nil")
 	}
 }
+
+// OpenFontDirectory 的路径解析与安全性：非法 id 被挡、未安装的族报错、已安装的族
+// 能走到「打开文件管理器」这一步。测试环境没有 Wails app（application.Get() 返回
+// nil），因此最后一步改报 app 未初始化的错误 —— 这恰好证明路径校验已通过。
+func TestOpenFontDirectoryResolvesFamilyDir(t *testing.T) {
+	svc := &FontService{fontDir: t.TempDir()}
+
+	// 路径穿越形态的 id 必须先被挡下，不碰文件系统。
+	if err := svc.OpenFontDirectory("../evil"); err == nil {
+		t.Fatal("expected error for invalid id, got nil")
+	}
+	// 合法但未安装的 id：明确报「未安装」，而不是静默失败。
+	if err := svc.OpenFontDirectory("nope"); err == nil {
+		t.Fatal("expected error for not-installed id, got nil")
+	}
+
+	// 造一个真实安装的字体族目录，OpenFontDirectory 应通过路径校验，
+	// 只差 Wails app 那一步（测试环境拿不到，报 app 初始化的错误）。
+	installedDir := filepath.Join(svc.fontDir, "lxgw-wenkai")
+	if err := os.MkdirAll(installedDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	err := svc.OpenFontDirectory("lxgw-wenkai")
+	if err == nil {
+		t.Fatal("expected app-not-initialized error in test env, got nil")
+	}
+	if !strings.Contains(err.Error(), "app not initialized") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}

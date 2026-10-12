@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { useFocusReaderStore, useReaderStore } from '../../Stores'
+import { useReaderFontOptions } from '../../Hooks'
 import { READER_FONT_SIZE_MAX, READER_FONT_SIZE_MIN } from '../../Utils'
 import type {
   ReaderBackground,
-  ReaderFontFamily,
   ReaderLineHeight,
   ReaderWidth,
 } from '../../Types'
@@ -48,11 +48,10 @@ function ReaderSettingsMenu(props: ReaderSettingsMenuProps): JSX.Element {
   const isFocus = variant === 'focus'
   const s = isFocus ? focus : reader
 
-  const fontOptions = [
-    { value: 'sans' as ReaderFontFamily, label: t('reader.font.sans') },
-    { value: 'serif' as ReaderFontFamily, label: t('reader.font.serif') },
-    { value: 'mono' as ReaderFontFamily, label: t('reader.font.mono') },
-  ]
+  // 字体选项走共享 builder：预设三档 + 已下载（与设置面板同一份，消除重复定义）。
+  const fontOptions = useReaderFontOptions()
+  const presetFonts = fontOptions.filter((o) => o.group === 'preset')
+  const downloadedFonts = fontOptions.filter((o) => o.group === 'downloaded')
   const lineOptions = [
     { value: 1.5 as ReaderLineHeight, label: t('reader.lineHeight.compact') },
     { value: 1.8 as ReaderLineHeight, label: t('reader.lineHeight.moderate') },
@@ -96,12 +95,29 @@ function ReaderSettingsMenu(props: ReaderSettingsMenuProps): JSX.Element {
           </DropdownMenu.Label>
           <DropdownMenu.RadioGroup
             value={s.fontFamily}
-            onValueChange={(v) => s.setFontFamily(v as ReaderFontFamily)}
+            onValueChange={s.setFontFamily}
           >
-            {fontOptions.map((o) => (
+            {presetFonts.map((o) => (
               <RadioRow key={o.value} value={o.value} label={o.label} />
             ))}
           </DropdownMenu.RadioGroup>
+
+          {downloadedFonts.length ? (
+            <>
+              <DropdownMenu.Separator className={styles.menuSeparator} />
+              <DropdownMenu.Label className={styles.menuLabel}>
+                {t('reader.font.downloadedGroup')}
+              </DropdownMenu.Label>
+              <DropdownMenu.RadioGroup
+                value={s.fontFamily}
+                onValueChange={s.setFontFamily}
+              >
+                {downloadedFonts.map((o) => (
+                  <RadioRow key={o.value} value={o.value} label={o.label} />
+                ))}
+              </DropdownMenu.RadioGroup>
+            </>
+          ) : null}
 
           <DropdownMenu.Separator className={styles.menuSeparator} />
           <DropdownMenu.Label className={styles.menuLabel}>

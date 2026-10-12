@@ -63,6 +63,17 @@ export function ListInstalledFonts() {
     }));
 }
 
+/**
+ * OpenFontDirectory 在系统文件管理器中打开指定字体族的安装目录
+ * （<fontsDir>/<id>）。路径的唯一定义在后端（同 OpenLogDir 的既有原则），
+ * 前端不重复拼接；打开交给系统默认的文件管理器（Explorer / Finder / xdg-open）。
+ * @param {string} id
+ * @returns {$CancellablePromise<void>}
+ */
+export function OpenFontDirectory(id) {
+    return $Call.ByID(3320145531, id);
+}
+
 // Private type creation functions
 const $$createType0 = $models.FontCatalog.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);

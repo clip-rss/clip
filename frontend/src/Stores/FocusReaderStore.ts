@@ -18,6 +18,7 @@ import {
   type FocusReaderSettingsFields,
 } from './ReaderStore'
 import { useSettingsStore } from './SettingsStore'
+import { installedFontIds, useFontStore } from './FontStore'
 
 interface FocusReaderState extends FocusReaderPrefs {
   setFontFamily: (fontFamily: ReaderFontFamily) => void
@@ -37,6 +38,7 @@ export const DEFAULT_FOCUS_READER_PREFS: FocusReaderPrefs = {
 /** 把后端设置收窄为合法排版偏好。 */
 export function toFocusReaderPrefs(
   settings: FocusReaderSettingsFields,
+  installedIds: string[] = [],
 ): FocusReaderPrefs {
   return narrowReaderPrefs(
     {
@@ -46,6 +48,7 @@ export function toFocusReaderPrefs(
       background: settings.focusBackground,
     },
     DEFAULT_FOCUS_READER_PREFS,
+    installedIds,
   )
 }
 
@@ -80,9 +83,11 @@ export const useFocusReaderStore = create<FocusReaderState>()((set) => ({
 /* ---------- 后端 → store 单向同步 ---------- */
 
 // 仅在取值真正变化时 setState，避免与写后端形成回环。
+// 动态白名单语义与 ReaderStore 相同：清单未到齐时下载字体 id 会被回落，
+// 待清单到齐经 reNarrowFonts 基于后端原始值救回（不写回）。
 function syncFromSettings(settings: Settings | null): void {
   if (!settings) return
-  const next = toFocusReaderPrefs(settings)
+  const next = toFocusReaderPrefs(settings, installedFontIds())
   const cur = useFocusReaderStore.getState()
   if (
     next.fontFamily === cur.fontFamily &&
@@ -94,6 +99,27 @@ function syncFromSettings(settings: Settings | null): void {
   }
   useFocusReaderStore.setState(next)
 }
+
+// 已装清单变化后基于后端原始值重收窄一次，救回被提前回落的下载字体 id（不写回）。
+function reNarrowFonts(): void {
+  const settings = useSettingsStore.getState().settings
+  if (!settings) return
+  const next = toFocusReaderPrefs(settings, installedFontIds())
+  const cur = useFocusReaderStore.getState()
+  if (
+    next.fontFamily === cur.fontFamily &&
+    next.fontSize === cur.fontSize &&
+    next.lineHeight === cur.lineHeight &&
+    next.background === cur.background
+  ) {
+    return
+  }
+  useFocusReaderStore.setState(next)
+}
+
+useFontStore.subscribe(() => {
+  reNarrowFonts()
+})
 
 useSettingsStore.subscribe((state) => {
   syncFromSettings(state.settings)
@@ -132,7 +158,8 @@ export async function seedFocusPrefsFromReader(): Promise<void> {
   if (!settings || !focusPrefsUnset(settings)) return
 
   // 取收窄后的值：后端里可能还是 0/'' 这类零值，不能直接照搬过去。
-  const reader = toReaderPrefs(settings)
+  // 用当前动态白名单收窄，避免把下载字体 id 播种成 sans（清单未到齐时除外）。
+  const reader = toReaderPrefs(settings, installedFontIds())
   await store.update({
     focusFontFamily: reader.fontFamily,
     focusFontSize: reader.fontSize,

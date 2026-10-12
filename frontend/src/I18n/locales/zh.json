@@ -126,7 +126,9 @@
     "font": {
       "sans": "无衬线",
       "serif": "衬线",
-      "mono": "等宽"
+      "mono": "等宽",
+      "presetGroup": "预设",
+      "downloadedGroup": "已下载"
     },
     "lineHeight": {
       "compact": "紧凑",
@@ -224,6 +226,7 @@
       "downloading": "下载中 {{percent}}%",
       "downloadingIndeterminate": "下载中…",
       "downloaded": "已下载",
+      "openDir": "打开字体目录",
       "downloadFailed": "下载失败，点击重试",
       "delete": "删除",
       "deleting": "删除中…",

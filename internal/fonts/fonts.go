@@ -288,3 +288,44 @@ func Remove(dir, id string) error {
 	}
 	return nil
 }
+
+// FamilyDir 返回 <dir>/<family> 的安装路径，并校验 family 是合法单段目录名
+// （同 validName）。目录必须已经存在且确实是目录 —— 本函数供「打开已装字体的
+// 目录」这类用途，不负责创建。
+func FamilyDir(dir, family string) (string, error) {
+	if !validName(family) {
+		return "", fmt.Errorf("fonts: invalid family name %q", family)
+	}
+	target := filepath.Join(dir, family)
+	info, err := os.Stat(target)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", fmt.Errorf("fonts: %s not installed", family)
+		}
+		return "", fmt.Errorf("fonts: stat %s: %w", family, err)
+	}
+	if !info.IsDir() {
+		return "", fmt.Errorf("fonts: %s is not a directory", family)
+	}
+	return target, nil
+}
+
+// ServeAssetPath 校验 <id>/<file> 都是合法单段裸名，返回 <root>/<id>/<file>。
+//
+// 供资产中间件把 WebView 的 /__clip/font/<id>/<file> 映射到磁盘：
+// 与 Download / List / Remove 共用同一套 validName（挡 `..`、分隔符、绝对路径），
+// 另加 Rel 二次确认最终路径不逃出 root。id 与文件名都来自远端清单，这一关不能省。
+func ServeAssetPath(root, id, file string) (string, error) {
+	if !validName(id) {
+		return "", fmt.Errorf("fonts: invalid family name %q", id)
+	}
+	if !validName(file) {
+		return "", fmt.Errorf("fonts: invalid file name %q", file)
+	}
+	target := filepath.Join(root, id, file)
+	rel, err := filepath.Rel(root, target)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+		return "", fmt.Errorf("fonts: unsafe asset path %q/%q", id, file)
+	}
+	return target, nil
+}
