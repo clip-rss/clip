@@ -18,10 +18,27 @@ import (
 // internal/logging 的帧」，而本包的函数名是 .../internal/logging_test.*，前缀对不上，
 // 于是能像普通调用方一样被记进来源位。同目录下的包内测试（package logging）则会一路
 // 跳到 testing 包那一帧，所以那边只能用 stripSource 抹掉来源再断言。
+// tempLogsDir 把 os.UserConfigDir() 重定向到 t.TempDir() 下，并返回本次的日志目录。
+//
+// 三个平台读的变量不同：Windows 读 %AppData%，darwin 读 $HOME（再拼
+// Library/Application Support），linux 读 $XDG_CONFIG_HOME、退到 $HOME/.config。
+// 只设 AppData 在 macOS 上是死代码——os.UserConfigDir() 照旧返回真实配置目录，
+// 测试便去读一个不存在、也不属于本次运行的路径。
+func tempLogsDir(t *testing.T) string {
+	t.Helper()
+	base := t.TempDir()
+	t.Setenv("AppData", base)
+	t.Setenv("XDG_CONFIG_HOME", base)
+	t.Setenv("HOME", base)
+	cfg, err := os.UserConfigDir()
+	if err != nil {
+		t.Fatalf("UserConfigDir: %v", err)
+	}
+	return filepath.Join(cfg, "clip", "logs")
+}
+
 func TestSourcePointsAtCallSite(t *testing.T) {
-	config := t.TempDir()
-	t.Setenv("AppData", config)
-	dir := filepath.Join(config, "clip", "logs")
+	dir := tempLogsDir(t)
 
 	if err := logging.Init(); err != nil {
 		t.Fatal(err)

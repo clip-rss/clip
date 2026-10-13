@@ -1,3 +1,64 @@
+## 0.8.0
+
+#### 2026-10-12
+
+### 新增
+- 专注模式新增独立的阅读设置：字体、字号、行高、背景可单独调整，与阅读区互不影响
+- 新增「返回上一个阅读位置」：点击正文里的目录项或引用锚点跳转后，可一键回到跳转前的位置
+- 正文里的目录项与引用锚点现在可以点击跳转，相对链接改由系统浏览器打开
+- 新增日志记录功能
+
+### 修复
+- 修复点击正文里的锚点链接（如目录项）会导致阅读区崩溃的问题
+- 修复正文的 `id` 属性被清洗掉、导致目录与引用锚点跳不过去的问题
+- 修复专注模式下按 Esc 会同时关闭设置菜单并退出专注模式的问题
+
+### 优化
+- 阅读字号改为连续调节
+- 专注模式正文改为铺满窗口，不再固定
+- 专注模式阅读区滚动条改为常显，链接悬停预览只对外部链接显示
+- 备份「保留版本数」范围调整
+- 侧边栏刷新中的悬停提示文案优化
+- 部分 UI 优化
+
+### New Features
+- Focus mode now has its own reading settings: font, size, line height and background are adjustable independently of the reading view
+- Added "Back to previous position": after jumping to a table-of-contents or citation anchor, one click returns you to where you were
+- Table-of-contents entries and citation anchors in article bodies are now clickable, and relative links open in the system browser
+- Added file logging
+
+### Bug Fixes
+- Fixed the reading view crashing when clicking an anchor link (such as a table-of-contents entry) inside an article
+- Fixed `id` attributes being stripped from article bodies, which made table-of-contents and citation anchors unclickable
+- Fixed Esc in focus mode closing the settings menu and exiting focus mode at the same time
+
+### Improvements
+- Reading font size is now continuously adjustable
+- Focus mode body text now fills the window instead of being a fixed width
+- The focus mode scrollbar is always visible, and the link hover preview only shows for external links
+- Adjusted the backup "keep versions" range
+- Improved the sidebar hint shown while refreshing
+- Minor UI polish
+
+### 新增
+- 專注模式新增獨立的閱讀設定：字型、字級、行高、背景可單獨調整，與閱讀區互不影響
+- 新增「返回上一個閱讀位置」：點擊正文的目錄項目或引用錨點跳轉後，可一鍵回到跳轉前的位置
+- 正文的目錄項目與引用錨點現在可以點擊跳轉，相對連結改由系統瀏覽器開啟
+- 新增日誌記錄功能
+
+### 修復
+- 修復點擊正文的錨點連結（如目錄項目）會導致閱讀區崩潰的問題
+- 修復正文的 `id` 屬性被清洗掉、導致目錄與引用錨點跳不過去的問題
+- 修復專注模式下按 Esc 會同時關閉設定選單並退出專注模式的問題
+
+### 優化
+- 閱讀字級改為連續調整
+- 專注模式正文改為鋪滿視窗，不再固定
+- 專注模式閱讀區捲軸改為常駐，連結懸停預覽只對外部連結顯示
+- 備份「保留版本數」範圍調整
+- 側邊欄更新中的懸停提示文案優化
+- 部分 UI 優化
+
 ## 0.7.0
 
 #### 2026-09-23
