@@ -1,0 +1,97 @@
+name: Bug 报告 / Bug Report
+description: 反馈程序 bug / Report a bug
+title: "[Bug] 请用一句话描述问题 / One-line summary of the issue"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **中文**：感谢反馈！提交前请先搜索 [已有 issues](https://github.com/clip-rss/clip/issues) 确认没有重复，并尽量用最新版本复现。「标题」请用一句话概括问题。
+
+        **English**: Thanks for reporting! Before submitting, search [existing issues](https://github.com/clip-rss/clip/issues) to avoid duplicates, and try to reproduce with the latest version. Please summarize the issue in the "Title" field in one sentence.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述 / Description
+      description: 发生了什么？请描述复现步骤、期望行为与实际行为。 / What went wrong? Please give reproduction steps, expected and actual behavior.
+      placeholder: |
+        中文：
+        1. 复现步骤 Reproduction steps：
+           - 打开…→ 点击… / Open … → Click …
+           - …
+        2. 期望行为 Expected：应该… / It should …
+        3. 实际行为 Actual：出现了… / It actually …
+      render: markdown
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+
+        ## 系统信息 / System Info
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: 操作系统 / Operating System
+      description: 出现问题的操作系统（可多选） / The OS where the issue occurs (multi-select)
+      multiple: true
+      options:
+        - Windows
+        - macOS
+    validations:
+      required: true
+
+  - type: input
+    id: os_version
+    attributes:
+      label: 系统版本与架构（选填） / OS Version & Architecture (optional)
+      description: 便于复现 / Helps us reproduce, e.g. Windows 11 24H2 x64, macOS 15.5 (Apple Silicon)
+      placeholder: "例如 / e.g. Windows 11 24H2 x64"
+
+  - type: input
+    id: app_version
+    attributes:
+      label: Clip 当前版本号 / Clip App Version
+      description: 在「设置 → 关于」中查看 / Shown in Settings → About
+      placeholder: "例如 / e.g. 0.8.0"
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ### 日志（选填） / Logs (optional)
+
+        **中文**：如有报错或崩溃，建议附上最近一次会话的日志文件，能大幅加快定位。日志位于各系统配置目录下的 `clip/logs/`（文件名形如 `clip-2026-10-14-09-30-00.log`）：
+        - **Windows**：`%AppData%\clip\logs\`
+        - **macOS**：`~/Library/Application Support/clip/logs/`
+
+        **English**: If there was an error or crash, please attach the most recent session log — it greatly speeds up debugging. Logs live in `clip/logs/` under each OS's config directory (filename like `clip-2026-10-14-09-30-00.log`).
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志内容 / Log Content
+      description: 直接粘贴关键日志；或把日志文件拖拽到文本框（GitHub 会自动上传）。注意先去掉其中的个人敏感信息。 / Paste the relevant log lines, or drag the log file here (GitHub uploads it). Remove any personal info first.
+      placeholder: "粘贴日志内容，或拖入日志文件… / Paste logs here, or drag in the log file…"
+      render: shell
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 图片 / 截图（选填） / Screenshots (optional)
+      description: 直接拖拽图片到这里，或按 Ctrl+V 粘贴剪贴板截图。 / Drag images here, or press Ctrl+V to paste from the clipboard.
+      placeholder: "拖拽截图到此，或粘贴（Ctrl+V） / Drag a screenshot here, or paste (Ctrl+V)"
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 提交前检查 / Before submitting
+      options:
+        - label: 我已搜索过已有 issues，确认没有重复 / I searched existing issues and found no duplicate
+          required: true
+        - label: 我在最新版本的 Clip 上仍能复现此问题 / I can still reproduce this on the latest Clip version
