@@ -6,9 +6,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        **中文**：感谢反馈！提交前请先搜索 [已有 issues](https://github.com/clip-rss/clip/issues) 确认没有重复，并尽量用最新版本复现。「标题」请用一句话概括问题。
+        感谢反馈！提交前请先搜索 [已有 issues](https://github.com/clip-rss/clip/issues) 确认没有重复，并尽量用最新版本复现。「标题」请用一句话概括问题。
 
-        **English**: Thanks for reporting! Before submitting, search [existing issues](https://github.com/clip-rss/clip/issues) to avoid duplicates, and try to reproduce with the latest version. Please summarize the issue in the "Title" field in one sentence.
+        Thanks for reporting! Before submitting, search [existing issues](https://github.com/clip-rss/clip/issues) to avoid duplicates, and try to reproduce with the latest version. Please summarize the issue in the "Title" field in one sentence.
 
   - type: textarea
     id: description
@@ -16,7 +16,6 @@ body:
       label: 问题描述 / Description
       description: 发生了什么？请描述复现步骤、期望行为与实际行为。 / What went wrong? Please give reproduction steps, expected and actual behavior.
       placeholder: |
-        中文：
         1. 复现步骤 Reproduction steps：
            - 打开…→ 点击… / Open … → Click …
            - …
@@ -50,14 +49,14 @@ body:
     attributes:
       label: 系统版本与架构（选填） / OS Version & Architecture (optional)
       description: 便于复现 / Helps us reproduce, e.g. Windows 11 24H2 x64, macOS 15.5 (Apple Silicon)
-      placeholder: "例如 / e.g. Windows 11 24H2 x64"
+      placeholder: "e.g. Windows 11 24H2 x64"
 
   - type: input
     id: app_version
     attributes:
       label: Clip 当前版本号 / Clip App Version
       description: 在「设置 → 关于」中查看 / Shown in Settings → About
-      placeholder: "例如 / e.g. 0.8.0"
+      placeholder: "e.g. 0.8.0"
     validations:
       required: true
 
@@ -66,11 +65,11 @@ body:
       value: |
         ### 日志（选填） / Logs (optional)
 
-        **中文**：如有报错或崩溃，建议附上最近一次会话的日志文件，能大幅加快定位。日志位于各系统配置目录下的 `clip/logs/`（文件名形如 `clip-2026-10-14-09-30-00.log`）：
+        如有报错或崩溃，建议附上最近一次会话的日志文件，能大幅加快定位。日志位于各系统配置目录下的 `clip/logs/`（文件名形如 `clip-2026-10-14-09-30-00.log`）：
         - **Windows**：`%AppData%\clip\logs\`
         - **macOS**：`~/Library/Application Support/clip/logs/`
 
-        **English**: If there was an error or crash, please attach the most recent session log — it greatly speeds up debugging. Logs live in `clip/logs/` under each OS's config directory (filename like `clip-2026-10-14-09-30-00.log`).
+        If there was an error or crash, please attach the most recent session log — it greatly speeds up debugging. Logs live in `clip/logs/` under each OS's config directory (filename like `clip-2026-10-14-09-30-00.log`).
 
   - type: textarea
     id: logs
