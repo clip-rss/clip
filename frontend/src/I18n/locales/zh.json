@@ -116,7 +116,7 @@
     "settings": {
       "title": "阅读设置",
       "font": "字体",
-      "fontNew": "字体（Beta）",
+      "fontNew": "更多字体",
       "fontSize": "字号",
       "lineHeight": "行高",
       "width": "宽度",
@@ -232,7 +232,9 @@
       "deleting": "删除中…",
       "deleteConfirm": "确认删除",
       "deleted": "已删除字体",
-      "reverted": "该字体正在使用，已回落到预设字体"
+      "reverted": "该字体正在使用，已回落到预设字体",
+      "missingFontHint": "没有心仪的字体？",
+      "missingFontLink": "点此反馈"
     },
     "accessibility": {
       "title": "无障碍",

@@ -183,7 +183,7 @@ export function ReadingSection(): JSX.Element {
           ) : null}
         </select>
       </SettingRow>
-      {/* 字体选择入口（Beta）：按钮唤起字体库管理弹窗 */}
+      {/* 字体选择入口：按钮唤起字体库管理弹窗 */}
       <SettingRow label={t('reader.settings.fontNew')}>
         <button
           type="button"

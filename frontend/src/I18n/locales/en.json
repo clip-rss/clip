@@ -116,7 +116,7 @@
     "settings": {
       "title": "Reading Settings",
       "font": "Font",
-      "fontNew": "Font (Beta)",
+      "fontNew": "More Fonts",
       "fontSize": "Font Size",
       "lineHeight": "Line Height",
       "width": "Width",
@@ -232,7 +232,9 @@
       "deleting": "Deleting…",
       "deleteConfirm": "Confirm delete",
       "deleted": "Font deleted",
-      "reverted": "This font was in use; the reader has reverted to the preset font"
+      "reverted": "This font was in use; the reader has reverted to the preset font",
+      "missingFontHint": "Can't find a font you like?",
+      "missingFontLink": "Request it here"
     },
     "accessibility": {
       "title": "Accessibility",

@@ -116,7 +116,7 @@
     "settings": {
       "title": "閱讀設定",
       "font": "字型",
-      "fontNew": "字型（Beta）",
+      "fontNew": "更多字型",
       "fontSize": "字号",
       "lineHeight": "行高",
       "width": "宽度",
@@ -232,7 +232,9 @@
       "deleting": "刪除中…",
       "deleteConfirm": "確認刪除",
       "deleted": "已刪除字型",
-      "reverted": "該字型正在使用，已回落到預設字型"
+      "reverted": "該字型正在使用，已回落到預設字型",
+      "missingFontHint": "沒有心儀的字型？",
+      "missingFontLink": "點此回饋"
     },
     "accessibility": {
       "title": "無障礙",

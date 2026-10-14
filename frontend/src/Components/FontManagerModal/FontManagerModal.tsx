@@ -311,6 +311,21 @@ export function FontManagerModal(props: FontManagerModalProps): JSX.Element {
             </Dialog.Close>
           </header>
 
+          <div className={styles.feedbackHint}>
+            <span>{t('settings.fonts.missingFontHint')}</span>
+            <button
+              type="button"
+              className={styles.feedbackLink}
+              title={t('settings.fonts.missingFontLink')}
+              aria-label={t('settings.fonts.missingFontLink')}
+              onClick={() =>
+                openURL('https://github.com/clip-rss/clip-font/issues')
+              }
+            >
+              {t('settings.fonts.missingFontLink')}
+            </button>
+          </div>
+
           {refreshing && !catalog ? (
             <div className={styles.list}>
               <Skeleton className={styles.skeletonCard} height={64} />

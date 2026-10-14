@@ -61,6 +61,33 @@
   }
 }
 
+.feedbackHint {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.feedbackLink {
+  all: unset;
+  font-size: inherit;
+  font-style: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+}
+
 /* ===== 列表 ===== */
 .list {
   flex: 1;
