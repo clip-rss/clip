@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   readerContentStyle,
   readerBackgroundClass,
+  cssFontFamily,
   normalizeFontSize,
   READER_FONT_SIZE_MIN,
   READER_FONT_SIZE_MAX,
@@ -44,6 +45,27 @@ describe('readerContentStyle', () => {
 
   it('全宽返回 100%', () => {
     expect(readerContentStyle({ ...base, width: 'full' }).maxWidth).toBe('100%')
+  })
+})
+
+describe('cssFontFamily', () => {
+  it('预设三档走既有字体栈', () => {
+    expect(cssFontFamily('sans')).toContain('--font-family')
+    expect(cssFontFamily('serif')).toContain('serif')
+    expect(cssFontFamily('mono')).toContain('monospace')
+  })
+
+  // 已下载字体 id：用合成家族名 + 无衬线兜底（缺字落回界面同一套字体，不跳 Georgia）。
+  it('已下载字体 id 生成合成家族名并回落到无衬线栈', () => {
+    const css = cssFontFamily('lxgw-wenkai')
+    expect(css).toBe('"clip-font-lxgw-wenkai", var(--font-family)')
+    expect(css).not.toContain('Georgia')
+  })
+
+  // id 来自远端清单，含引号等字符会破坏 CSS —— 最后一道白名单把它当作预设栈。
+  it('非法字体 id 被视为预设（不拼进 CSS）', () => {
+    expect(cssFontFamily('bad"id')).toBe('var(--font-family)')
+    expect(cssFontFamily('a/b')).toBe('var(--font-family)')
   })
 })
 

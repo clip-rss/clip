@@ -136,17 +136,51 @@ func (p *ResumeProvider) Download(ctx context.Context, rel *updater.Release, dst
 		total = rel.Artifact.Size
 	}
 
+	return download(ctx, p.client, p.token, urlStr, total, dst, onProgress, p.sleep)
+}
+
+// Download 是与 updater.Provider 无关的下载入口，复用同一套断点续传 / 指数退避 /
+// 停滞检测。给「不走 Wails 更新流程、但要下大资产」的调用方用（如远程字体库）。
+//
+// totalHint 是已知的资源总长，未知传 0：它只用于「读到 EOF 但字节数不足」的判定与
+// 进度分母，取不到也不影响正确性。不发送 Authorization —— 需要鉴权下载的是
+// ResumeProvider，它走上面的方法变体。
+func Download(ctx context.Context, client *http.Client, urlStr string, totalHint int64, dst io.Writer, onProgress func(written, total int64)) error {
+	if client == nil {
+		return errors.New("updatesrc: nil HTTP client")
+	}
+	if urlStr == "" {
+		return errors.New("updatesrc: empty download URL")
+	}
+	if totalHint < 0 {
+		totalHint = 0
+	}
+	return download(ctx, client, "", urlStr, totalHint, dst, onProgress, sleepCtx)
+}
+
+// download 是 Download 与 ResumeProvider.Download 的共同实现。sleep 单独注入：
+// ResumeProvider 的测试用它免于真实睡眠。
+func download(
+	ctx context.Context,
+	client *http.Client,
+	token, urlStr string,
+	totalHint int64,
+	dst io.Writer,
+	onProgress func(written, total int64),
+	sleep func(context.Context, time.Duration) error,
+) error {
+	total := totalHint
 	var written int64
 	var lastErr error
 
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		if attempt > 0 {
-			if err := p.sleep(ctx, backoff(attempt)); err != nil {
+			if err := sleep(ctx, backoff(attempt)); err != nil {
 				return err
 			}
 		}
 
-		n, discovered, err := p.stream(ctx, urlStr, written, total, dst, onProgress)
+		n, discovered, err := stream(ctx, client, token, urlStr, written, total, dst, onProgress)
 		written += n
 		if discovered > 0 {
 			total = discovered
@@ -177,10 +211,11 @@ func (p *ResumeProvider) Download(ctx context.Context, rel *updater.Release, dst
 }
 
 // stream 执行一次下载尝试，从 from 字节处开始。返回本次写入的字节数、探测到的资源总长
-// （未知时为 0）与错误。
-func (p *ResumeProvider) stream(
+// （未知时为 0）与错误。token 非空时随请求携带，跨主机重定向由 do 剥离。
+func stream(
 	ctx context.Context,
-	urlStr string,
+	client *http.Client,
+	token, urlStr string,
 	from, knownTotal int64,
 	dst io.Writer,
 	onProgress func(written, total int64),
@@ -195,14 +230,14 @@ func (p *ResumeProvider) stream(
 	}
 	req.Header.Set("Accept", "application/octet-stream")
 	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-	if p.token != "" {
-		req.Header.Set("Authorization", "Bearer "+p.token)
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	if from > 0 {
 		req.Header.Set("Range", "bytes="+strconv.FormatInt(from, 10)+"-")
 	}
 
-	resp, err := p.do(req)
+	resp, err := do(client, req)
 	if err != nil {
 		return 0, 0, classifyCancel(ctx, reqCtx, err)
 	}
@@ -276,9 +311,9 @@ func (p *ResumeProvider) stream(
 //
 // GitHub 的 browser_download_url 会 302 到预签名的对象存储地址；把 PAT 一路带过去
 // 会被对端拒绝。内层 provider 有等价逻辑，但那是未导出方法，无法复用。
-func (p *ResumeProvider) do(req *http.Request) (*http.Response, error) {
-	client := *p.client // 浅拷贝：只为改 CheckRedirect，不动共享的 Transport
-	client.CheckRedirect = func(r *http.Request, via []*http.Request) error {
+func do(client *http.Client, req *http.Request) (*http.Response, error) {
+	c := *client // 浅拷贝：只为改 CheckRedirect，不动共享的 Transport
+	c.CheckRedirect = func(r *http.Request, via []*http.Request) error {
 		if len(via) > 0 && !strings.EqualFold(via[len(via)-1].URL.Host, r.URL.Host) {
 			r.Header.Del("Authorization")
 		}
@@ -287,7 +322,7 @@ func (p *ResumeProvider) do(req *http.Request) (*http.Response, error) {
 		}
 		return nil
 	}
-	return client.Do(req)
+	return c.Do(req)
 }
 
 // assetURL 取出 Check 阶段存进 Metadata 的资产下载地址。

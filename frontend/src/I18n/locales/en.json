@@ -116,15 +116,19 @@
     "settings": {
       "title": "Reading Settings",
       "font": "Font",
+      "fontNew": "More Fonts",
       "fontSize": "Font Size",
       "lineHeight": "Line Height",
       "width": "Width",
-      "background": "Background"
+      "background": "Background",
+      "chooseFont": "Choose Font"
     },
     "font": {
       "sans": "Sans Serif",
       "serif": "Serif",
-      "mono": "Monospace"
+      "mono": "Monospace",
+      "presetGroup": "Preset",
+      "downloadedGroup": "Downloaded"
     },
     "lineHeight": {
       "compact": "Compact",
@@ -211,6 +215,26 @@
         "5s": "5 sec",
         "off": "Off"
       }
+    },
+    "fonts": {
+      "title": "Font Library",
+      "loading": "Loading font catalog…",
+      "failed": "Failed to load font catalog",
+      "retry": "Retry",
+      "empty": "No fonts available",
+      "download": "Download",
+      "downloading": "Downloading {{percent}}%",
+      "downloadingIndeterminate": "Downloading…",
+      "downloaded": "Downloaded",
+      "openDir": "Open font folder",
+      "downloadFailed": "Download failed, click to retry",
+      "delete": "Delete",
+      "deleting": "Deleting…",
+      "deleteConfirm": "Confirm delete",
+      "deleted": "Font deleted",
+      "reverted": "This font was in use; the reader has reverted to the preset font",
+      "missingFontHint": "Can't find a font you like?",
+      "missingFontLink": "Request it here"
     },
     "accessibility": {
       "title": "Accessibility",

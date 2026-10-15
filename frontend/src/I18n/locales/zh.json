@@ -116,15 +116,19 @@
     "settings": {
       "title": "阅读设置",
       "font": "字体",
+      "fontNew": "更多字体",
       "fontSize": "字号",
       "lineHeight": "行高",
       "width": "宽度",
-      "background": "阅读背景"
+      "background": "阅读背景",
+      "chooseFont": "选择字体"
     },
     "font": {
       "sans": "无衬线",
       "serif": "衬线",
-      "mono": "等宽"
+      "mono": "等宽",
+      "presetGroup": "预设",
+      "downloadedGroup": "已下载"
     },
     "lineHeight": {
       "compact": "紧凑",
@@ -211,6 +215,26 @@
         "5s": "5 秒",
         "off": "关闭"
       }
+    },
+    "fonts": {
+      "title": "字体库",
+      "loading": "正在加载字体目录…",
+      "failed": "字体目录加载失败",
+      "retry": "重试",
+      "empty": "暂无可用字体",
+      "download": "下载",
+      "downloading": "下载中 {{percent}}%",
+      "downloadingIndeterminate": "下载中…",
+      "downloaded": "已下载",
+      "openDir": "打开字体目录",
+      "downloadFailed": "下载失败，点击重试",
+      "delete": "删除",
+      "deleting": "删除中…",
+      "deleteConfirm": "确认删除",
+      "deleted": "已删除字体",
+      "reverted": "该字体正在使用，已回落到预设字体",
+      "missingFontHint": "没有心仪的字体？",
+      "missingFontLink": "点此反馈"
     },
     "accessibility": {
       "title": "无障碍",

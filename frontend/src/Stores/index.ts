@@ -17,6 +17,7 @@ export {
   seedFocusPrefsFromReader,
 } from './FocusReaderStore'
 export { useSettingsStore } from './SettingsStore'
+export { useFontStore, installedFontIds } from './FontStore'
 export { migrateLegacyPrefs } from './LegacyPrefs'
 export { useUpdateStore } from './UpdateStore'
 export { useBackupStore } from './BackupStore'

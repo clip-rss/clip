@@ -4,6 +4,7 @@
 
 import * as CategoryService from "./categoryservice.js";
 import * as FeedService from "./feedservice.js";
+import * as FontService from "./fontservice.js";
 import * as ItemService from "./itemservice.js";
 import * as OPMLBackupService from "./opmlbackupservice.js";
 import * as OPMLService from "./opmlservice.js";
@@ -13,6 +14,7 @@ import * as WebDAVConfigService from "./webdavconfigservice.js";
 export {
     CategoryService,
     FeedService,
+    FontService,
     ItemService,
     OPMLBackupService,
     OPMLService,
@@ -24,6 +26,9 @@ export {
 export {
     ConnectionTestResult,
     FeedPreview,
+    FontCatalog,
+    FontDef,
+    FontFile,
     ImportResult,
     NewCategory,
     NewFeed,

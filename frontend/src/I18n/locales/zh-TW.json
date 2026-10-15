@@ -116,15 +116,19 @@
     "settings": {
       "title": "閱讀設定",
       "font": "字型",
+      "fontNew": "更多字型",
       "fontSize": "字号",
       "lineHeight": "行高",
       "width": "宽度",
-      "background": "閱讀背景"
+      "background": "閱讀背景",
+      "chooseFont": "選擇字型"
     },
     "font": {
       "sans": "无衬线",
       "serif": "衬线",
-      "mono": "等宽"
+      "mono": "等宽",
+      "presetGroup": "預設",
+      "downloadedGroup": "已下載"
     },
     "lineHeight": {
       "compact": "紧凑",
@@ -211,6 +215,26 @@
         "5s": "5 秒",
         "off": "關閉"
       }
+    },
+    "fonts": {
+      "title": "字型庫",
+      "loading": "正在載入字型目錄…",
+      "failed": "字型目錄載入失敗",
+      "retry": "重試",
+      "empty": "暫無可用字型",
+      "download": "下載",
+      "downloading": "下載中 {{percent}}%",
+      "downloadingIndeterminate": "下載中…",
+      "downloaded": "已下載",
+      "openDir": "開啟字型目錄",
+      "downloadFailed": "下載失敗，點擊重試",
+      "delete": "刪除",
+      "deleting": "刪除中…",
+      "deleteConfirm": "確認刪除",
+      "deleted": "已刪除字型",
+      "reverted": "該字型正在使用，已回落到預設字型",
+      "missingFontHint": "沒有心儀的字型？",
+      "missingFontLink": "點此回饋"
     },
     "accessibility": {
       "title": "無障礙",

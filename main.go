@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -16,6 +17,8 @@ import (
 
 	"github.com/clip-rss/clip/api"
 	"github.com/clip-rss/clip/internal/fetcher"
+	"github.com/clip-rss/clip/internal/fontproxy"
+	"github.com/clip-rss/clip/internal/fonts"
 	"github.com/clip-rss/clip/internal/i18n"
 	"github.com/clip-rss/clip/internal/logging"
 	"github.com/clip-rss/clip/internal/mediaproxy"
@@ -635,6 +638,19 @@ func main() {
 	// 复用抓取客户端，因此用户配置的代理对正文图片同样生效。
 	mediaProxy := mediaproxy.New(ft.Client())
 
+	// 字体资产下载客户端：与更新下载源同一个 Proxy 接收者，因此用户在设置里改代理后
+	// 字体下载一并跟随，不会出现「更新走代理、下字体不走」。清单抓取仍走 ft.Client()。
+	fontClient := updatesrc.NewClient(updProxy)
+
+	// 字体资产供数：WebView 经 /__clip/font/<id>/<file> 读取已下载的字体文件。
+	// root 现取一次，与字体下载/扫描共用一个目录定位（fonts.Dir()）。
+	fontRoot, err := fonts.Dir()
+	if err != nil {
+		logging.Errorf("app", "font dir unavailable, font serving disabled: %v", err)
+		fontRoot = ""
+	}
+	fontProxy := fontproxy.New(fontRoot)
+
 	app := application.New(application.Options{
 		Name:        "clip",
 		Description: i18n.T(settings.Language, "app.description"),
@@ -645,8 +661,12 @@ func main() {
 		Logger:   logging.Logger(),
 		LogLevel: slog.LevelInfo,
 		Assets: application.AssetOptions{
-			Handler:    application.AssetFileServerFS(assets),
-			Middleware: mediaProxy.Middleware,
+			Handler: application.AssetFileServerFS(assets),
+			// 中间件链：媒体代理与字体资产各自只接管自己的前缀，其余请求一路透传到
+			// 资产服务器（页面、HMR）。顺序无关：两条路径互不重叠。
+			Middleware: func(next http.Handler) http.Handler {
+				return mediaProxy.Middleware(fontProxy.Middleware(next))
+			},
 		},
 		Mac: application.MacOptions{
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
@@ -661,6 +681,7 @@ func main() {
 			application.NewService(opmlSvc),
 			application.NewService(opmlBackupSvc),
 			application.NewService(notifSvc),
+			application.NewService(api.NewFontService(ft.Client(), fontClient)),
 			application.NewService(dockService),
 		},
 	})

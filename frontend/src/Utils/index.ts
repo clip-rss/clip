@@ -10,6 +10,7 @@ export {
   WebDAVConfigService,
   OPMLBackupService,
   SystemService,
+  FontService,
   DockService,
   onItemsUpdated,
   onFeedError,
@@ -17,6 +18,7 @@ export {
   onNotificationOpen,
   onOPMLImportProgress,
   onDatabaseRestoreProgress,
+  onFontDownloadProgress,
   toApiError,
   openURL,
 } from './Api'

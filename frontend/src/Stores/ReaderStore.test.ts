@@ -21,6 +21,7 @@ import {
 } from './ReaderStore'
 import type { ReaderSettingsFields } from './ReaderStore'
 import { useSettingsStore } from './SettingsStore'
+import { useFontStore } from './FontStore'
 import type { Settings } from '../Types'
 
 const UpdateSettings = SettingsService.UpdateSettings as Mock
@@ -64,6 +65,14 @@ beforeEach(() => {
   vi.clearAllMocks()
   useReaderStore.setState({ ...DEFAULT_READER_PREFS })
   useSettingsStore.setState({ settings: null, loading: false, error: null })
+  // 字体清单也要归零：上一用例塞进去的已装字体会污染动态白名单。
+  useFontStore.setState({
+    catalog: null,
+    catalogFailed: false,
+    installed: [],
+    ready: false,
+    refreshing: false,
+  })
 })
 
 describe('ReaderStore', () => {
@@ -200,5 +209,55 @@ describe('toReaderPrefs 入站校验', () => {
       readerBackground: '',
     })
     expect(got).toEqual(DEFAULT_READER_PREFS)
+  })
+})
+
+describe('动态字体白名单（阶段 C）', () => {
+  it('已装字体 id 在传入白名单时通过收窄', () => {
+    const got = toReaderPrefs(
+      { ...baseReader, readerFontFamily: 'lxgw-wenkai' },
+      ['lxgw-wenkai'],
+    )
+    expect(got.fontFamily).toBe('lxgw-wenkai')
+  })
+
+  it('缺省白名单（清单未到齐）时下载字体 id 回落默认', () => {
+    const got = toReaderPrefs({
+      ...baseReader,
+      readerFontFamily: 'lxgw-wenkai',
+    })
+    expect(got.fontFamily).toBe(DEFAULT_READER_PREFS.fontFamily)
+  })
+
+  // 已装清单里混进含非法字符的 id（远端清单可能带），白名单要过滤掉它。
+  it('白名单过滤含非法字符的已装 id', () => {
+    const got = toReaderPrefs({ ...baseReader, readerFontFamily: 'bad"id' }, [
+      'bad"id',
+    ])
+    expect(got.fontFamily).toBe(DEFAULT_READER_PREFS.fontFamily)
+  })
+
+  // 阶段 C 的核心时序雷区：偏好启动时同步、已装清单异步到达。清单未到齐时若照收窄
+  // 会把用户选的下载字体回落成 sans；清单到齐后必须基于后端原始值再收窄一次救回，
+  // 且这一步只 setState、不写回后端。
+  it('清单到齐后基于后端原始值重收窄，救回 id 且不写回', () => {
+    UpdateSettings.mockResolvedValue(undefined)
+    useFontStore.setState({ installed: [], ready: false })
+    useSettingsStore.setState({
+      settings: { ...baseSettings, readerFontFamily: 'lxgw-wenkai' },
+      loading: false,
+      error: null,
+    })
+    // 清单未到齐 → 回落 sans（此时后端仍是 id）。
+    expect(useReaderStore.getState().fontFamily).toBe('sans')
+
+    // 清单到齐 → 订阅触发重收窄，值被救回。
+    useFontStore.setState({
+      installed: [{ id: 'lxgw-wenkai', files: [], totalSize: 0 }],
+      ready: true,
+    })
+    expect(useReaderStore.getState().fontFamily).toBe('lxgw-wenkai')
+    // 重收窄只 setState，绝不写回后端。
+    expect(UpdateSettings).not.toHaveBeenCalled()
   })
 })
