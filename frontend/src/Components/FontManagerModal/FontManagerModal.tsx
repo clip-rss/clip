@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import * as Dialog from '@radix-ui/react-dialog'
 import Skeleton from '../Skeleton/Skeleton'
@@ -39,6 +39,13 @@ function licenseURL(font: FontDef): string {
   return `https://github.com/clip-rss/clip-font/blob/main/${font.licenseFile}`
 }
 
+/** 预览样张地址：preview 是**仓库内相对路径**（如 lxgw-wenkai/preview.png），
+ *  **只用 raw**。
+ *  清单缺该字段时调用方不渲染「预览」按钮，不会走到这里。 */
+function previewURL(font: FontDef): string {
+  return `https://raw.githubusercontent.com/clip-rss/clip-font/main/${font.preview}`
+}
+
 function CloseIcon(): JSX.Element {
   return (
     <svg
@@ -56,7 +63,7 @@ function CloseIcon(): JSX.Element {
   )
 }
 
-/** 单个字体族的卡片：名称 / 字重 chips / 格式 / 体积 / 许可证 + 下载 / 删除。 */
+/** 单个字体族的卡片：名称 / 字重 chips / 格式 / 体积 / 许可证 + 预览 / 下载 / 删除。 */
 function FontCard(props: {
   font: FontDef
   /** 是否已在本机装好（来自后端的跨会话清单，跨关闭重开保持）。 */
@@ -67,9 +74,19 @@ function FontCard(props: {
   onDownload: (id: string) => void
   onDelete: (id: string) => void
   onOpenDir: (id: string) => void
+  /** 打开该字体的样张弹窗。 */
+  onPreview: (font: FontDef) => void
 }): JSX.Element {
-  const { font, installed, deleting, state, onDownload, onDelete, onOpenDir } =
-    props
+  const {
+    font,
+    installed,
+    deleting,
+    state,
+    onDownload,
+    onDelete,
+    onOpenDir,
+    onPreview,
+  } = props
   const { t } = useTranslation()
   const totalBytes = font.files.reduce((sum, f) => sum + f.size, 0)
 
@@ -83,6 +100,8 @@ function FontCard(props: {
   }
 
   const [confirming, setConfirming] = useState(false)
+  // 样张图在弹窗内按需拉取，字段缺失时不渲染按钮（见 PreviewDialog）。
+  const hasPreview = font.preview.length > 0
 
   function confirmDelete(): void {
     setConfirming(false)
@@ -113,72 +132,179 @@ function FontCard(props: {
         ) : (
           <span className={styles.cardLicense}>{font.license}</span>
         )}
-        {installed ? (
-          confirming ? (
-            <div className={styles.btnGroup}>
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnDanger}`}
-                disabled={deleting}
-                title={t('settings.fonts.deleteConfirm')}
-                aria-label={t('settings.fonts.deleteConfirm')}
-                onClick={confirmDelete}
-              >
-                {t('settings.fonts.deleteConfirm')}
-              </button>
-              <button
-                type="button"
-                className={styles.btn}
-                title={t('confirm.cancel')}
-                aria-label={t('confirm.cancel')}
-                onClick={() => setConfirming(false)}
-              >
-                {t('confirm.cancel')}
-              </button>
-            </div>
+        <div className={styles.cardActions}>
+          {hasPreview && (
+            <button
+              type="button"
+              className={styles.btn}
+              aria-haspopup="dialog"
+              title={t('settings.fonts.preview')}
+              aria-label={t('settings.fonts.preview')}
+              onClick={() => onPreview(font)}
+            >
+              {t('settings.fonts.preview')}
+            </button>
+          )}
+          {installed ? (
+            confirming ? (
+              <div className={styles.btnGroup}>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnDanger}`}
+                  disabled={deleting}
+                  title={t('settings.fonts.deleteConfirm')}
+                  aria-label={t('settings.fonts.deleteConfirm')}
+                  onClick={confirmDelete}
+                >
+                  {t('settings.fonts.deleteConfirm')}
+                </button>
+                <button
+                  type="button"
+                  className={styles.btn}
+                  title={t('confirm.cancel')}
+                  aria-label={t('confirm.cancel')}
+                  onClick={() => setConfirming(false)}
+                >
+                  {t('confirm.cancel')}
+                </button>
+              </div>
+            ) : (
+              <div className={styles.downloadActions}>
+                <span className={styles.installedLabel}>
+                  {t('settings.fonts.downloaded')}
+                </span>
+                <button
+                  type="button"
+                  className={styles.btn}
+                  title={t('settings.fonts.openDir')}
+                  aria-label={t('settings.fonts.openDir')}
+                  onClick={() => onOpenDir(font.id)}
+                >
+                  {t('settings.fonts.openDir')}
+                </button>
+                <button
+                  type="button"
+                  className={styles.btn}
+                  disabled={deleting}
+                  title={t('settings.fonts.delete')}
+                  aria-label={t('settings.fonts.delete')}
+                  onClick={() => setConfirming(true)}
+                >
+                  {deleting
+                    ? t('settings.fonts.deleting')
+                    : `${t('settings.fonts.delete')}…`}
+                </button>
+              </div>
+            )
           ) : (
-            <div className={styles.downloadActions}>
-              <span className={styles.installedLabel}>
-                {t('settings.fonts.downloaded')}
-              </span>
-              <button
-                type="button"
-                className={styles.btn}
-                title={t('settings.fonts.openDir')}
-                aria-label={t('settings.fonts.openDir')}
-                onClick={() => onOpenDir(font.id)}
-              >
-                {t('settings.fonts.openDir')}
-              </button>
-              <button
-                type="button"
-                className={styles.btn}
-                disabled={deleting}
-                title={t('settings.fonts.delete')}
-                aria-label={t('settings.fonts.delete')}
-                onClick={() => setConfirming(true)}
-              >
-                {deleting
-                  ? t('settings.fonts.deleting')
-                  : `${t('settings.fonts.delete')}…`}
-              </button>
-            </div>
-          )
-        ) : (
-          <button
-            type="button"
-            className={styles.downloadBtn}
-            data-status={state?.status ?? 'idle'}
-            disabled={state?.status === 'downloading'}
-            title={label}
-            aria-label={label}
-            onClick={() => onDownload(font.id)}
-          >
-            {label}
-          </button>
-        )}
+            <button
+              type="button"
+              className={styles.downloadBtn}
+              data-status={state?.status ?? 'idle'}
+              disabled={state?.status === 'downloading'}
+              title={label}
+              aria-label={label}
+              onClick={() => onDownload(font.id)}
+            >
+              {label}
+            </button>
+          )}
+        </div>
       </div>
     </div>
+  )
+}
+
+/**
+ * 字体样张弹窗：预览图**按需拉取**（打开才渲染 <img>），失败显示失败态 + 重试。
+ */
+function PreviewDialog(props: {
+  font: FontDef | null
+  onClose: () => void
+}): JSX.Element {
+  const { font, onClose } = props
+  const { t } = useTranslation()
+  const [loaded, setLoaded] = useState(false)
+  const [failed, setFailed] = useState(false)
+  // 重试要强制 <img> 重新挂载：同 src 的 img 出错后不会自动重拉。
+  const [retryKey, setRetryKey] = useState(0)
+  // 退出动画期间 font 已是 null，用保留的最后一次数据继续渲染淡出内容
+  const lastFontRef = useRef(font)
+  if (font) lastFontRef.current = font
+  const showFont = font ?? lastFontRef.current
+
+  // 每次「打开」（font 从空到有）都重置加载/失败态：Root 常驻挂载后状态不再随
+  // 挂载自然清零，不重置会沿用上一次会话的残留。
+  useEffect(() => {
+    if (!font) return
+    setLoaded(false)
+    setFailed(false)
+  }, [font])
+
+  return (
+    <Dialog.Root
+      open={font !== null}
+      onOpenChange={(open) => !open && onClose()}
+    >
+      <Dialog.Portal>
+        <Dialog.Overlay className={styles.previewOverlay} />
+        <Dialog.Content
+          className={styles.previewContent}
+          aria-describedby={undefined}
+        >
+          <header className={styles.previewHeader}>
+            <Dialog.Title className={styles.previewTitle}>
+              {showFont ? showFont.name : ''}
+            </Dialog.Title>
+            <Dialog.Close asChild>
+              <button
+                type="button"
+                className={styles.closeBtn}
+                aria-label={t('confirm.cancel')}
+              >
+                <CloseIcon />
+              </button>
+            </Dialog.Close>
+          </header>
+          <div className={styles.previewBody}>
+            {showFont ? (
+              failed ? (
+                <div className={styles.previewFailed}>
+                  <span className={styles.previewFailedText}>
+                    {t('settings.fonts.previewFailed')}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.btn}
+                    onClick={() => {
+                      setFailed(false)
+                      setRetryKey((k) => k + 1)
+                    }}
+                  >
+                    {t('settings.fonts.retry')}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {!loaded && (
+                    <Skeleton className={styles.previewSkeleton} height={240} />
+                  )}
+                  <img
+                    key={retryKey}
+                    className={styles.previewImg}
+                    src={previewURL(showFont)}
+                    alt={showFont.name}
+                    draggable={false}
+                    onLoad={() => setLoaded(true)}
+                    onError={() => setFailed(true)}
+                  />
+                </>
+              )
+            ) : null}
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
 
@@ -195,6 +321,8 @@ export function FontManagerModal(props: FontManagerModalProps): JSX.Element {
   const [downloads, setDownloads] = useState<Record<string, DownloadState>>({})
   // 正在删除的字体 id：删除请求进行中，禁用该卡片的删除按钮。
   const [deleting, setDeleting] = useState<string | null>(null)
+  // 正在预览样张的字体：非空时弹预览窗（窗口关闭即清空，图片按需拉取）。
+  const [previewFont, setPreviewFont] = useState<FontDef | null>(null)
 
   const installedIds = useMemo(
     () => new Set(installed.map((f) => f.id)),
@@ -354,6 +482,7 @@ export function FontManagerModal(props: FontManagerModalProps): JSX.Element {
                   onDownload={download}
                   onDelete={(id) => void deleteFont(id)}
                   onOpenDir={(id) => void openDir(id)}
+                  onPreview={(f) => setPreviewFont(f)}
                 />
               ))}
             </div>
@@ -362,6 +491,7 @@ export function FontManagerModal(props: FontManagerModalProps): JSX.Element {
           )}
         </Dialog.Content>
       </Dialog.Portal>
+      <PreviewDialog font={previewFont} onClose={() => setPreviewFont(null)} />
     </Dialog.Root>
   )
 }

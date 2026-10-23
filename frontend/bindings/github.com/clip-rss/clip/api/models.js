@@ -255,6 +255,14 @@ export class FontDef {
              */
             this["url"] = "";
         }
+        if (!("preview" in $$source)) {
+            /**
+             * 仓库内样张图相对路径（如 lxgw-wenkai/preview.png）；缺失时前端不显示「预览」入口
+             * @member
+             * @type {string}
+             */
+            this["preview"] = "";
+        }
         if (!("files" in $$source)) {
             /**
              * 该族的字重文件
@@ -273,10 +281,10 @@ export class FontDef {
      * @returns {FontDef}
      */
     static createFrom($$source = {}) {
-        const $$createField7_0 = $$createType3;
+        const $$createField8_0 = $$createType3;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("files" in $$parsedSource) {
-            $$parsedSource["files"] = $$createField7_0($$parsedSource["files"]);
+            $$parsedSource["files"] = $$createField8_0($$parsedSource["files"]);
         }
         return new FontDef(/** @type {Partial<FontDef>} */($$parsedSource));
     }

@@ -228,6 +228,8 @@
       "downloaded": "已下載",
       "openDir": "開啟字型目錄",
       "downloadFailed": "下載失敗，點擊重試",
+      "preview": "預覽",
+      "previewFailed": "預覽圖載入失敗",
       "delete": "刪除",
       "deleting": "刪除中…",
       "deleteConfirm": "確認刪除",

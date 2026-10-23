@@ -37,6 +37,7 @@ func TestFetchFontCatalog(t *testing.T) {
 					"license": "SIL OFL 1.1",
 					"licenseFile": "lxgw-wenkai/OFL.txt",
 					"url": "https://github.com/clip-rss/clip-font/releases/latest/download",
+					"preview": "lxgw-wenkai/preview.png",
 					"files": [
 						{"weight": 300, "format": "ttf", "file": "LXGWWenKai-Light.ttf", "size": 28267156, "sha256": "abc"},
 						{"weight": 400, "format": "ttf", "file": "LXGWWenKai-Regular.ttf", "size": 25575676, "sha256": "def"}
@@ -69,6 +70,9 @@ func TestFetchFontCatalog(t *testing.T) {
 	wenkai := cat.Fonts[0]
 	if wenkai.ID != "lxgw-wenkai" || wenkai.Name != "霞鹜文楷" || wenkai.Family != "LXGW WenKai" {
 		t.Fatalf("wenkai mismatched: %+v", wenkai)
+	}
+	if wenkai.Preview != "lxgw-wenkai/preview.png" {
+		t.Fatalf("wenkai preview mismatched: %q", wenkai.Preview)
 	}
 	if len(wenkai.Files) != 2 || wenkai.Files[1].Weight != 400 || wenkai.Files[1].File != "LXGWWenKai-Regular.ttf" {
 		t.Fatalf("wenkai files mismatched: %+v", wenkai.Files)

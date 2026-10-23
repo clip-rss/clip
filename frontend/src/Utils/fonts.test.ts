@@ -25,6 +25,7 @@ function catalogWith(
       license: 'SIL OFL 1.1',
       licenseFile: `${f.id}/OFL.txt`,
       url: 'https://example.invalid/releases/latest/download',
+      preview: '',
       files: f.files.map((x) => ({
         style: '',
         weight: x.weight,

@@ -43,6 +43,7 @@ type FontDef struct {
 	License     string     `json:"license"`     // 许可证名，如 SIL OFL 1.1
 	LicenseFile string     `json:"licenseFile"` // 仓库内许可证文本路径
 	URL         string     `json:"url"`         // 下载前缀（…/releases/latest/download）
+	Preview     string     `json:"preview"`     // 仓库内样张图相对路径（如 lxgw-wenkai/preview.png）；缺失时前端不显示「预览」入口
 	Files       []FontFile `json:"files"`       // 该族的字重文件
 }
 

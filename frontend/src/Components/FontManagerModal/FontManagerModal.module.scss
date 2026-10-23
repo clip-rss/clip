@@ -205,6 +205,14 @@
   }
 }
 
+/* 卡片操作区：预览按钮 + 下载/删除 的公共容器（预览对「已下载 / 未下载」两态都生效）。 */
+.cardActions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 /* 已下载卡片的操作区：状态文字 + 「打开字体目录」/「删除」文字按钮 */
 .downloadActions {
   flex: 0 0 auto;
@@ -251,6 +259,90 @@
 .btnGroup {
   display: flex;
   gap: 8px;
+}
+
+/* ===== 预览弹窗 ===== */
+/* 样张弹窗：层级在主弹窗之上；图片打开时才请求，失败态带重试。 */
+.previewOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 120;
+  @include dialog.overlay;
+}
+
+.previewContent {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  width: 680px;
+  max-width: 92vw;
+  max-height: 80vh;
+  border-radius: 12px;
+  background-color: var(--bg-primary);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  z-index: 121;
+  overflow: hidden;
+  @include dialog.content;
+}
+
+.previewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  height: 56px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.previewTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.previewBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.previewSkeleton {
+  border-radius: 8px;
+}
+
+.previewImg {
+  flex: 0 0 auto;
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  /* 样张是纯展示内容，不允许拖走（WKWebView 认 -webkit-user-drag，
+     draggable={false} 兜 Chromium/WebView2）。 */
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.previewFailed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.previewFailedText {
+  margin: 0;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--danger);
 }
 
 /* ===== 加载 / 失败 / 空态 ===== */
@@ -302,7 +394,9 @@
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .overlay,
-  .content {
+  .content,
+  .previewOverlay,
+  .previewContent {
     animation: none;
   }
 }

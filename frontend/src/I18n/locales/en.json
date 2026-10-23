@@ -228,6 +228,8 @@
       "downloaded": "Downloaded",
       "openDir": "Open font folder",
       "downloadFailed": "Download failed, click to retry",
+      "preview": "Preview",
+      "previewFailed": "Preview image failed to load",
       "delete": "Delete",
       "deleting": "Deleting…",
       "deleteConfirm": "Confirm delete",
