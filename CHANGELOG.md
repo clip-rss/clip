@@ -1,3 +1,16 @@
+## 0.9.0
+
+#### 2026-11-07
+
+### 新增
+- 新增字体库：可下载并应用字体
+
+### New Features
+- Added a font library: download and apply fonts
+
+### 新增
+- 新增字型庫：可下載並套用字型
+
 ## 0.8.0
 
 #### 2026-10-12
